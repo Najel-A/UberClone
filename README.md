@@ -1,6 +1,7 @@
 # Uber Clone System Architecture
 
 ## Project Structure
+```text
 uber-clone/
 │
 ├── frontend/ # Frontend microservices (React + Redux)
