@@ -7,6 +7,7 @@ router.post('/customers', customerController.createCustomer);
 router.post('/customers/login', customerController.loginCustomer);
 router.delete('/customers/:id', customerController.deleteCustomer);
 router.get('/customers', customerController.getAllCustomers);
+router.post('/customers/logout', customerController.logoutCustomer);
 
 // Business logic routes
 router.post('/customers/:id/generate-bill', customerController.generateBill);

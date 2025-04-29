@@ -126,3 +126,13 @@ exports.uploadImages = async (req, res) => {
     res.status(500).json({ message: 'Internal server error', error: err.message });
   }
 };
+
+// Customer Logout
+exports.logoutCustomer = (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Error logging out" });
+      }
+      res.json({ message: "Logout successful" });
+    });
+  };
