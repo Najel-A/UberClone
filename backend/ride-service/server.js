@@ -1,0 +1,27 @@
+const app = require('./src/app');
+const mongoose = require('mongoose');
+const { initializeKafka } = require('./src/config/kafka');
+const { startBillingConsumer } = require('./src/events/consumers/BillingConsumer');
+const { startNotificationConsumer } = require('./src/events/consumers/NotificationConsumer');
+
+async function startKafkaConsumers() {
+  try {
+    await initializeKafka();
+    await startBillingConsumer();
+    await startNotificationConsumer();
+    logger.info('Kafka consumers started successfully');
+  } catch (error) {
+    logger.error('Failed to start Kafka consumers', error);
+    process.exit(1);
+  }
+}
+
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log('MongoDB connected');
+    app.listen(3003, () => console.log('Ride service running on port 3003'));
+  })
+  .catch(err => console.error('DB connection failed', err));
+
+
+startKafkaConsumers();

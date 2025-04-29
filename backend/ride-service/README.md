@@ -38,10 +38,10 @@ ride-service/
 │   │
 │   ├── utils/
 │   │   ├── geoUtils.js            # Haversine calculations
-│   │   ├── idempotency.js         # Request deduplication
-│   │   └── pagination.js          # Pagination helper
+│   │   ├── circuitBreaker.js      # Circuit breaker for ML
+│   │   └── logger.js              # Logging for debugging
 │   │
-│   |── app.js                     # Middleware setup
+│   ├── app.js                     # Middleware setup
 |
 ├── server.js                 # Kafka consumers initialization
 │

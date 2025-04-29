@@ -1,0 +1,154 @@
+const RideService = require('../services/RideService');
+const LocationService = require('../services/LocationService');
+const { emitRideEvent } = require('../events/producers/RideProducer');
+const { NotFoundError, BadRequestError } = require('../utils/errors');
+
+class RideController {
+  static async createRide(req, res, next) {
+    try {
+      const rideData = req.body;
+      
+      // Validate required fields
+      if (!rideData.customerId || !rideData.driverId || !rideData.pickupLocation) {
+        throw new BadRequestError('Missing required ride information');
+      }
+
+      const ride = await RideService.createRide(rideData);
+      
+      // Emit ride created event
+      await emitRideEvent('ride.created', ride);
+      
+      res.status(201).json(ride);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async updateRide(req, res, next) {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+
+      if (!id) {
+        throw new BadRequestError('Ride ID is required');
+      }
+
+      const updatedRide = await RideService.updateRide(id, updateData);
+      
+      if (!updatedRide) {
+        throw new NotFoundError('Ride not found');
+      }
+
+      // Emit ride updated event
+      await emitRideEvent('ride.updated', updatedRide);
+      
+      res.json(updatedRide);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async deleteRide(req, res, next) {
+    try {
+      const { id } = req.params;
+
+      if (!id) {
+        throw new BadRequestError('Ride ID is required');
+      }
+
+      const deletedRide = await RideService.deleteRide(id);
+      
+      if (!deletedRide) {
+        throw new NotFoundError('Ride not found');
+      }
+
+      // Emit ride cancelled event
+      await emitRideEvent('ride.cancelled', deletedRide);
+      
+      res.json({ message: 'Ride deleted successfully' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getCustomerRides(req, res, next) {
+    try {
+      const { customerId } = req.params;
+
+      if (!customerId) {
+        throw new BadRequestError('Customer ID is required');
+      }
+
+      const rides = await RideService.getRidesByCustomer(customerId);
+      
+      if (!rides || rides.length === 0) {
+        throw new NotFoundError('No rides found for this customer');
+      }
+
+      res.json(rides);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getDriverRides(req, res, next) {
+    try {
+      const { driverId } = req.params;
+
+      if (!driverId) {
+        throw new BadRequestError('Driver ID is required');
+      }
+
+      const rides = await RideService.getRidesByDriver(driverId);
+      
+      if (!rides || rides.length === 0) {
+        throw new NotFoundError('No rides found for this driver');
+      }
+
+      res.json(rides);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getRideStatistics(req, res, next) {
+    try {
+      const { location } = req.query;
+
+      if (!location) {
+        throw new BadRequestError('Location query parameter is required');
+      }
+
+      const stats = await RideService.getRideStatisticsByLocation(location);
+      res.json(stats);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getNearbyDrivers(req, res, next) {
+    try {
+      const { latitude, longitude } = req.query;
+
+      if (!latitude || !longitude) {
+        throw new BadRequestError('Both latitude and longitude are required');
+      }
+
+      const customerLocation = {
+        latitude: parseFloat(latitude),
+        longitude: parseFloat(longitude)
+      };
+
+      const nearbyDrivers = await LocationService.findDriversWithinRadius(
+        customerLocation,
+        10 // 10 mile radius
+      );
+
+      res.json(nearbyDrivers);
+    } catch (error) {
+      next(error);
+    }
+  }
+}
+
+module.exports = RideController;
