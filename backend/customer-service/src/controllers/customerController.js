@@ -49,12 +49,12 @@ exports.loginCustomer = async (req, res) => {
         { expiresIn: "1h" }
       );
       console.log(token);
-      res.json({ message: "Login successful", id: user._id, token, name: user.name });
+      res.json({ message: "Login successful", id: user._id, token, name: user.firstName });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Error logging in" });
     }
-  };
+};
 
 
 // Delete Customer Account  
