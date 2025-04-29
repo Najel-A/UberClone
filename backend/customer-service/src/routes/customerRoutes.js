@@ -1,0 +1,16 @@
+const express = require('express');
+const router = express.Router();
+const customerController = require('../controllers/customerController');
+
+// Basic CRUD Routes
+router.post('/customers', customerController.createCustomer);
+router.post('/customers/login', customerController.loginCustomer);
+router.delete('/customers/:id', customerController.deleteCustomer);
+router.get('/customers', customerController.getAllCustomers);
+
+// Business logic routes
+router.post('/customers/:id/generate-bill', customerController.generateBill);
+router.get('/customers/:id/nearby-drivers', customerController.findNearbyDrivers);
+router.post('/customers/:id/upload-images', customerController.uploadImages);
+
+module.exports = router;

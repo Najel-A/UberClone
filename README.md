@@ -63,7 +63,7 @@ uber-clone/
 ├── docker-compose.yml # Local development
 ├── .gitignore
 └── README.md
-
+```
 
 ## Key Components
 
