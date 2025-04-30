@@ -1,5 +1,5 @@
 const path = require('path');
-const fs = require('fs');
+const axios = require('axios');
 const jwt = require("jsonwebtoken");
 const Customer = require('../models/customerModel');
 const billingService = require('../services/billingService');
@@ -84,9 +84,12 @@ exports.generateBill = async (req, res) => {
   try {
     const { id } = req.params;
     const rideData = req.body;
+    
 
     const customer = await Customer.findById(id);
     if (!customer) return res.status(404).json({ message: 'Customer not found' });
+
+    // Make a call to the ride-service to get the ride details
 
     const bill = billingService.generateBill(customer, rideData);
     res.status(201).json(bill);
@@ -103,7 +106,17 @@ exports.findNearbyDrivers = async (req, res) => {
 
     if (!latitude || !longitude) return res.status(400).json({ message: 'Missing coordinates' });
 
-    // Replace with actual geolocation API or DB query
+    // Going to need to make a call to the driver-service to fetch nearby drivers
+
+    // const driverServiceUrl = process.env.DRIVER_SERVICE_URL || 'http://localhost:3001/api/drivers/nearby';
+
+    // // Make a request to the driver-service to fetch nearby drivers
+    // const response = await axios.get(driverServiceUrl, {
+    //   params: { latitude, longitude },
+    // });
+    // console.log(response.data);
+
+    // Dummy Data for now
     const drivers = [{ id: 'd1', name: 'John Doe', distance: 5.2 }];
     res.status(200).json(drivers);
   } catch (err) {
@@ -117,10 +130,9 @@ exports.uploadImages = async (req, res) => {
   try {
     const { id } = req.params;
     const files = req.files;
-
     if (!files || files.length === 0) return res.status(400).json({ message: 'No images provided' });
-
-    // Save logic here...
+    
+    // Save images associated with ride ID?
     res.status(200).json({ message: 'Images uploaded successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message });
