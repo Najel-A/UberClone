@@ -31,12 +31,24 @@ data['distance'] = [
     for pickup, dropoff in zip(pickup_coords, dropoff_coords)
 ]
 
+data['pickup_datetime'] = pd.to_datetime(data['pickup_datetime'], errors='coerce')
+data['hour'] = data['pickup_datetime'].dt.hour 
+data['day_of_week'] = data['pickup_datetime'].dt.dayofweek 
+
 data = data.drop(columns=['key', 'pickup_datetime'], errors='ignore')
 
 data['fare_amount'] = pd.to_numeric(data['fare_amount'], errors='coerce')
 data = data[data['fare_amount'] > 0]
 
-features = ['distance', 'pickup_longitude', 'pickup_latitude', 'dropoff_longitude', 'dropoff_latitude', 'passenger_count']
+features = ['distance', 
+            'pickup_longitude', 
+            'pickup_latitude', 
+            'dropoff_longitude', 
+            'dropoff_latitude', 
+            'passenger_count', 
+            'hour', 
+            'day_of_week']
+
 X = data[features]
 y = data['fare_amount']
 
@@ -50,16 +62,39 @@ print("Model saved to model.pkl")
 
 test_cases = [
     # Same location
-    {'pickup_coords': (40.748817, -73.985428), 'dropoff_coords': (40.748900, -73.985500), 'passenger_count': 1},
+    {'pickup_coords': (40.748817, -73.985428), 
+     'dropoff_coords': (40.748900, -73.985500), 
+     'passenger_count': 1,
+     'hour': 12,
+     'day_of_week': 0},
     
     # Medium distance
-    {'pickup_coords': (40.748817, -73.985428), 'dropoff_coords': (40.730610, -73.935242), 'passenger_count': 1},
+    {'pickup_coords': (40.748817, -73.985428), 
+     'dropoff_coords': (40.730610, -73.935242), 
+     'passenger_count': 1,
+     'hour': 9,
+     'day_of_week': 0},
+
+    # Medium distance different time
+    {'pickup_coords': (40.748817, -73.985428), 
+     'dropoff_coords': (40.730610, -73.935242), 
+     'passenger_count': 1,
+     'hour': 17,
+     'day_of_week': 4},
    
-   # Medium distance (San Francisco coordinates)
-    {'pickup_coords': (37.774929, -122.419416), 'dropoff_coords': (37.784929, -122.409416), 'passenger_count': 1},
+    # Medium distance (San Francisco coordinates)
+    #  {'pickup_coords': (37.774929, -122.419416), 
+    #   'dropoff_coords': (37.784929, -122.409416), 
+    #   'passenger_count': 1,
+    #   'hour': 12,
+    #   'day_of_week': 0},
     
-    # Long distance
-    {'pickup_coords': (40.748817, -73.985428), 'dropoff_coords': (40.641311, -73.778139), 'passenger_count': 1}
+     # Long distance
+     {'pickup_coords': (40.748817, -73.985428), 
+      'dropoff_coords': (40.641311, -73.778139), 
+      'passenger_count': 1,
+      'hour': 12,
+      'day_of_week': 0},
 ]
 
 for i, case in enumerate(test_cases):
@@ -73,7 +108,9 @@ for i, case in enumerate(test_cases):
         'pickup_latitude': [pickup_coords[0]],
         'dropoff_longitude': [dropoff_coords[1]],
         'dropoff_latitude': [dropoff_coords[0]],
-        'passenger_count': [case['passenger_count']]
+        'passenger_count': [case['passenger_count']],
+        'hour': [case['hour']],
+        'day_of_week': [case['day_of_week']]
     })
 
     predicted_fare = model.predict(test_case)
