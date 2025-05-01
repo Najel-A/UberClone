@@ -14,3 +14,6 @@ SESSION_SECRET= <Your-Session-Secret>
 JWT_SECRET= <Your-JWT-Secret>
 
 ```
+
+### TODO
+Complete the other services so they can become integrated with the admin service.

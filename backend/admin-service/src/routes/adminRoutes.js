@@ -6,6 +6,9 @@ const adminController = require('../controllers/adminController');
 // Apply admin validation middleware to all routes
 //router.use(validateAdmin); // Apply this later
 
+// Admin Registration
+router.post('/signup', adminController.createAdmin);
+
 // Admin Login
 router.post('/login', adminController.loginAdmin);
 
@@ -16,17 +19,17 @@ router.post('/drivers', adminController.addDriver);
 router.post('/customers', adminController.addCustomer);
 
 // Account Review
-router.get('/accounts/:id', adminController.getAccount);
+// router.get('/accounts/:id', adminController.getAccount);
 
 // Statistics
-router.get('/statistics', adminController.getStatistics);
+// router.get('/statistics', adminController.getStatistics);
 
 // Graphs/Charts
-router.get('/graphs', adminController.getGraphData);
+// router.get('/graphs', adminController.getGraphData);
 
 // Bill Management
-router.get('/bills', adminController.searchBills);
-router.get('/bills/:id', adminController.getBill);
+// router.get('/bills', adminController.searchBills);
+// router.get('/bills/:id', adminController.getBill);
 
 // Logout
 router.post('/logout', adminController.logoutAdmin);

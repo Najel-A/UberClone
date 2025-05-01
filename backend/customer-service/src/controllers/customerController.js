@@ -107,14 +107,12 @@ exports.findNearbyDrivers = async (req, res) => {
     if (!latitude || !longitude) return res.status(400).json({ message: 'Missing coordinates' });
 
     // Going to need to make a call to the driver-service to fetch nearby drivers
-
-    // const driverServiceUrl = process.env.DRIVER_SERVICE_URL || 'http://localhost:3001/api/drivers/nearby';
-
+    const driverServiceUrl = process.env.DRIVER_SERVICE_URL || 'http://localhost:3001/api/drivers/?minRating=3';
     // // Make a request to the driver-service to fetch nearby drivers
-    // const response = await axios.get(driverServiceUrl, {
-    //   params: { latitude, longitude },
-    // });
-    // console.log(response.data);
+    const response = await axios.get(driverServiceUrl, {
+      //params: { latitude, longitude },
+    });
+    console.log(response.data);
 
     // Dummy Data for now
     const drivers = [{ id: 'd1', name: 'John Doe', distance: 5.2 }];

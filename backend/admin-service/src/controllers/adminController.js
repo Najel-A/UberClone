@@ -1,10 +1,8 @@
 const path = require('path');
 const fs = require('fs');
 const jwt = require("jsonwebtoken");
+const axios = require('axios');
 const Admin = require('../models/adminModel');
-const Driver = require('../models/driverModel');
-const Customer = require('../models/customerModel');
-const Bill = require('../models/billModel');
 const { hashPassword, comparePassword } = require("../utils/passwordHash");
 
 // Create a new Admin
@@ -62,19 +60,29 @@ exports.loginAdmin = async (req, res) => {
 exports.addDriver = async (req, res) => {
   try {
     const driverData = req.body;
-    
-    // Check if driver already exists
-    const existingDriver = await Driver.findOne({ email: driverData.email });
-    if (existingDriver) {
-      return res.status(409).json({ message: 'Driver already exists' });
+
+    // Send the driver data to the driver-service signup endpoint
+    const driverServiceUrl = 'http://localhost:3001/api/drivers/signup';
+    const response = await axios.post(driverServiceUrl, driverData, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    // Return the response from the driver-service
+    res.status(201).json(response.data);
+  } catch (err) {
+    console.error('Error adding driver:', err.message);
+
+    // Handle errors from the driver-service
+    if (err.response) {
+      return res.status(err.response.status).json({
+        message: err.response.data.message || 'Error from driver-service',
+        error: err.response.data.error || err.message,
+      });
     }
 
-    const newDriver = await Driver.create(driverData);
-    res.status(201).json(newDriver);
-  } catch (err) {
-    if (err.name === 'ValidationError') {
-      return res.status(400).json({ message: 'Invalid driver data', errors: err.errors });
-    }
+    // Handle internal server errors
     res.status(500).json({ message: 'Internal server error', error: err.message });
   }
 };
@@ -83,135 +91,131 @@ exports.addDriver = async (req, res) => {
 exports.addCustomer = async (req, res) => {
   try {
     const customerData = req.body;
-    
-    const existingCustomer = await Customer.findOne({ email: customerData.email });
-    if (existingCustomer) {
-      return res.status(409).json({ message: 'Customer already exists' });
+
+    // Send the driver data to the customer-service signup endpoint
+    const customerServiceUrl = 'http://localhost:3000/api/customers';
+    const response = await axios.post(customerServiceUrl, customerData, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    // Return the response from the driver-service
+    res.status(201).json(response.data);
+  } catch (err) {
+    console.error('Error adding customer:', err.message);
+
+    // Handle errors from the customer-service
+    if (err.response) {
+      return res.status(err.response.status).json({
+        message: err.response.data.message || 'Error from customer-service',
+        error: err.response.data.error || err.message,
+      });
     }
 
-    const newCustomer = await Customer.create(customerData);
-    res.status(201).json(newCustomer);
-  } catch (err) {
-    if (err.name === 'ValidationError') {
-      return res.status(400).json({ message: 'Invalid customer data', errors: err.errors });
-    }
-    res.status(500).json({ message: 'Internal server error', error: err.message });
-  }
-};
-
-// Get Account (Driver/Customer)
-exports.getAccount = async (req, res) => {
-  try {
-    const account = await Driver.findById(req.params.id) || 
-                   await Customer.findById(req.params.id);
-    
-    if (!account) {
-      return res.status(404).json({ message: 'Account not found' });
-    }
-    res.status(200).json(account);
-  } catch (err) {
+    // Handle internal server errors
     res.status(500).json({ message: 'Internal server error', error: err.message });
   }
 };
 
 // Get Statistics
-exports.getStatistics = async (req, res) => {
-  try {
-    const { date, area } = req.query;
-    if (!date || !area) {
-      return res.status(400).json({ message: 'Date and area parameters are required' });
-    }
+// exports.getStatistics = async (req, res) => {
+//   try {
+//     const { date, area } = req.query;
+//     if (!date || !area) {
+//       return res.status(400).json({ message: 'Date and area parameters are required' });
+//     }
 
-    // Example aggregation - adjust based on your schema
-    const stats = await Bill.aggregate([
-      { 
-        $match: { 
-          date: new Date(date),
-          'pickupLocation.area': area 
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          totalRevenue: { $sum: "$totalAmount" },
-          totalRides: { $sum: 1 }
-        }
-      }
-    ]);
+//     // Example aggregation - adjust based on your schema
+//     const stats = await Bill.aggregate([
+//       { 
+//         $match: { 
+//           date: new Date(date),
+//           'pickupLocation.area': area 
+//         }
+//       },
+//       {
+//         $group: {
+//           _id: null,
+//           totalRevenue: { $sum: "$totalAmount" },
+//           totalRides: { $sum: 1 }
+//         }
+//       }
+//     ]);
 
-    res.status(200).json(stats[0] || { totalRevenue: 0, totalRides: 0 });
-  } catch (err) {
-    res.status(500).json({ message: 'Internal server error', error: err.message });
-  }
-};
+//     res.status(200).json(stats[0] || { totalRevenue: 0, totalRides: 0 });
+//   } catch (err) {
+//     res.status(500).json({ message: 'Internal server error', error: err.message });
+//   }
+// };
 
 // Get Graphs/Charts Data
-exports.getGraphData = async (req, res) => {
-  try {
-    const { type } = req.query;
-    const validTypes = ['area', 'driver', 'customer'];
+// exports.getGraphData = async (req, res) => {
+//   try {
+//     const { type } = req.query;
+//     const validTypes = ['area', 'driver', 'customer'];
     
-    if (!validTypes.includes(type)) {
-      return res.status(400).json({ 
-        message: 'Invalid graph type', 
-        validTypes 
-      });
-    }
+//     if (!validTypes.includes(type)) {
+//       return res.status(400).json({ 
+//         message: 'Invalid graph type', 
+//         validTypes 
+//       });
+//     }
 
-    // Example data aggregation
-    const data = await Bill.aggregate([
-      {
-        $group: {
-          _id: `$${type}Id`,
-          count: { $sum: 1 },
-          totalAmount: { $sum: "$totalAmount" }
-        }
-      },
-      { $limit: 10 }
-    ]);
+//     // Example data aggregation
+//     const data = await Bill.aggregate([
+//       {
+//         $group: {
+//           _id: `$${type}Id`,
+//           count: { $sum: 1 },
+//           totalAmount: { $sum: "$totalAmount" }
+//         }
+//       },
+//       { $limit: 10 }
+//     ]);
 
-    res.status(200).json(data);
-  } catch (err) {
-    res.status(500).json({ message: 'Internal server error', error: err.message });
-  }
-};
+//     res.status(200).json(data);
+//   } catch (err) {
+//     res.status(500).json({ message: 'Internal server error', error: err.message });
+//   }
+// };
 
 // Search Bills
-exports.searchBills = async (req, res) => {
-  try {
-    const { customerId, driverId, rideId, date } = req.query;
-    const query = {};
+// exports.searchBills = async (req, res) => {
+//   try {
+//     const { customerId, driverId, rideId, date } = req.query;
+//     const query = {};
     
-    if (customerId) query.customerId = customerId;
-    if (driverId) query.driverId = driverId;
-    if (rideId) query.rideId = rideId;
-    if (date) query.date = new Date(date);
+//     if (customerId) query.customerId = customerId;
+//     if (driverId) query.driverId = driverId;
+//     if (rideId) query.rideId = rideId;
+//     if (date) query.date = new Date(date);
 
-    const bills = await Bill.find(query);
+//     const bills = await Bill.find(query);
     
-    if (bills.length === 0) {
-      return res.status(404).json({ message: 'No bills found' });
-    }
-    res.status(200).json(bills);
-  } catch (err) {
-    res.status(500).json({ message: 'Internal server error', error: err.message });
-  }
-};
+//     if (bills.length === 0) {
+//       return res.status(404).json({ message: 'No bills found' });
+//     }
+//     res.status(200).json(bills);
+//   } catch (err) {
+//     res.status(500).json({ message: 'Internal server error', error: err.message });
+//   }
+// };
 
 // Get Bill by ID
-exports.getBill = async (req, res) => {
-  try {
-    const bill = await Bill.findById(req.params.id);
-    if (!bill) {
-      return res.status(404).json({ message: 'Bill not found' });
-    }
-    res.status(200).json(bill);
-  } catch (err) {
-    res.status(500).json({ message: 'Internal server error', error: err.message });
-  }
-};
+// exports.getBill = async (req, res) => {
+//   try {
+//     const bill = await Bill.findById(req.params.id);
+//     if (!bill) {
+//       return res.status(404).json({ message: 'Bill not found' });
+//     }
+//     res.status(200).json(bill);
+//   } catch (err) {
+//     res.status(500).json({ message: 'Internal server error', error: err.message });
+//   }
+// };
 
-// Customer Logout
+// Admin Logout
 exports.logoutAdmin = (req, res) => {
     req.session.destroy((err) => {
       if (err) {

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const customerSchema = new mongoose.Schema({
-  ssn: { 
+  _id: { 
     type: String, 
     required: true,
     match: [/^\d{3}-\d{2}-\d{4}$/, 'Please enter a valid SSN in format XXX-XX-XXXX'],

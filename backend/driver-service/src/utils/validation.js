@@ -2,7 +2,7 @@ const { body, validationResult } = require('express-validator');
 
 exports.validateDriverData = [
   // Validate SSN format
-  body('ssn')
+  body('_id')
     .matches(/^\d{3}-\d{2}-\d{4}$/)
     .withMessage('SSN must follow 123-45-6789 format'),
     
@@ -35,7 +35,7 @@ exports.validateDriverData = [
 
 exports.validateDriverUpdate = [
   // Validate SSN format (only if provided)
-  body('ssn')
+  body('_id')
     .optional()
     .matches(/^\d{3}-\d{2}-\d{4}$/)
     .withMessage('SSN must follow 123-45-6789 format'),
