@@ -2,14 +2,12 @@ const mongoose = require('mongoose');
 
 // look into ID format
 const driverSchema = new mongoose.Schema({
-  _id: {
-    type: String,
+  ssn: { 
+    type: String, 
     required: true,
-    validate: {
-      validator: (v) => /^DRIV-\d{8}$/.test(v),
-      message: 'Driver ID must follow DRIV-12345678 format'
-    }
-  },
+    match: [/^\d{3}-\d{2}-\d{4}$/, 'Please enter a valid SSN in format XXX-XX-XXXX'],
+    unique: true 
+  },  
   firstName: {
     type: String,
     required: true,
@@ -46,13 +44,14 @@ const driverSchema = new mongoose.Schema({
       message: 'Invalid email format'
     }
   },
+  password: { type: String, required: true },
   carDetails: {
-    make: { type: String, required: true, enum: ['Toyota', 'Honda', 'Ford', 'Tesla'] },
+    make: { type: String, required: true},
     model: { type: String, required: true },
     year: { 
       type: Number, 
       required: true,
-      min: 2000,
+      min: 1970,
       max: new Date().getFullYear() + 1
     }
   },
@@ -94,7 +93,6 @@ const driverSchema = new mongoose.Schema({
 });
 
 // Indexes for faster queries
-driverSchema.index({ email: 1 }, { unique: true });
 driverSchema.index({ 'address.city': 1, 'address.state': 1 });
 
 module.exports = mongoose.model('Driver', driverSchema);

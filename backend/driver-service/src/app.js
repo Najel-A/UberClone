@@ -1,6 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
-// const customerRoutes = require('./routes/customerRoutes');
+const driverRoutes = require('./routes/driverRoutes');
 const multer = require('multer');
 const path = require('path');
 const session = require('express-session');
@@ -22,6 +22,6 @@ app.use(session({
 const upload = multer({ dest: 'uploads/' });
 // app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// app.use('/api', customerRoutes);
+app.use('/api/drivers', driverRoutes);
 
 module.exports = app;

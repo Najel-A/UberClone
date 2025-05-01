@@ -1,5 +1,7 @@
 const Driver = require('../models/driverModel');
 const { NotFoundError, ConflictError } = require('../utils/errors');
+const { hashPassword, comparePassword } = require('../utils/passwordHash');
+const jwt = require("jsonwebtoken");
 
 // Create Driver
 exports.createDriver = async (req, res) => {
@@ -17,6 +19,8 @@ exports.createDriver = async (req, res) => {
     if (existingDriver) {
       throw new ConflictError('Driver ID or email already exists');
     }
+    // Hash password
+    driverData.password = await hashPassword(driverData.password);
 
     const driver = await Driver.create(driverData);
     res.status(201).json(driver);
@@ -84,16 +88,21 @@ exports.getDriver = async (req, res) => {
 exports.updateDriver = async (req, res) => {
   try {
     const updates = req.body;
-    const driver = await Driver.findByIdAndUpdate(
-      req.params.id,
-      updates,
-      { new: true, runValidators: true }
-    );
-    
+    console.log(updates);
+
+    // Fetch the existing driver data
+    const driver = await Driver.findById(req.params.id);
     if (!driver) {
       throw new NotFoundError('Driver not found');
     }
-    res.status(200).json(driver);
+
+    await Driver.findByIdAndUpdate(req.params.id, updates, { new: true });
+
+    // Save the updated driver
+    const updatedDriver = await driver.save();
+    console.log(updatedDriver);
+
+    res.status(200).json(updatedDriver);
   } catch (err) {
     if (err instanceof NotFoundError) {
       return res.status(404).json({ message: err.message });
@@ -124,20 +133,54 @@ exports.deleteDriver = async (req, res) => {
   }
 };
 
-// List Drivers (with search)
+// List Drivers with Filters
 exports.listDrivers = async (req, res) => {
   try {
     const query = {};
-    
-    // Search by attributes
+
+    // Search by name
     if (req.query.firstName) {
       query.firstName = { $regex: req.query.firstName, $options: 'i' };
     }
     if (req.query.lastName) {
       query.lastName = { $regex: req.query.lastName, $options: 'i' };
     }
+
+    // Search by address fields
     if (req.query.city) {
       query['address.city'] = { $regex: req.query.city, $options: 'i' };
+    }
+    if (req.query.state) {
+      query['address.state'] = { $regex: req.query.state, $options: 'i' };
+    }
+    if (req.query.zipCode) {
+      query['address.zipCode'] = req.query.zipCode;
+    }
+
+    // Search by phone number
+    if (req.query.phoneNumber) {
+      query.phoneNumber = req.query.phoneNumber;
+    }
+
+    // Search by email
+    if (req.query.email) {
+      query.email = { $regex: req.query.email, $options: 'i' };
+    }
+
+    // Search by car make/model/year
+    if (req.query.carMake) {
+      query['carDetails.make'] = { $regex: req.query.carMake, $options: 'i' };
+    }
+    if (req.query.carModel) {
+      query['carDetails.model'] = { $regex: req.query.carModel, $options: 'i' };
+    }
+    if (req.query.carYear) {
+      query['carDetails.year'] = parseInt(req.query.carYear);
+    }
+
+    // Search by minimum rating
+    if (req.query.minRating) {
+      query.rating = { $gte: parseFloat(req.query.minRating) };
     }
 
     const drivers = await Driver.find(query);

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const driverController = require('../controllers/driverController');
-const { validateDriverData } = require('../utils/validation');
+const { validateDriverData, validateDriverUpdate } = require('../utils/validation');
 
 // Login Driver
 router.post('/login', driverController.loginDriver);
@@ -10,7 +10,7 @@ router.post('/login', driverController.loginDriver);
 router.post('/logout', driverController.logoutDriver);
 
 // Create Driver
-router.post('/', 
+router.post('/signup', 
   validateDriverData, 
   driverController.createDriver);
 
@@ -19,7 +19,7 @@ router.get('/:id', driverController.getDriver);
 
 // Update Driver
 router.put('/:id', 
-  validateDriverData, 
+  validateDriverUpdate, 
   driverController.updateDriver);
 
 // Delete Driver

@@ -15,3 +15,6 @@ JWT_SECRET= <Your-JWT-Secret>
 
 mkdir uploads
 ```
+
+### TODO
+Fix the images/media uploads
