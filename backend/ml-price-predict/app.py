@@ -40,4 +40,4 @@ def predict_fare(input_data: PredictionInput):
     })
 
     predicted_fare = model.predict(test_case)
-    return {"predicted_fare": float(predicted_fare[0])}
+    return {"predicted_fare": round(float(predicted_fare[0]), 2)}
