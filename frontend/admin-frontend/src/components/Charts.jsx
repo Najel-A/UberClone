@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Bar } from "react-chartjs-2";
 import axios from "axios";
+import ProtectedRoute from "./ProtectedRoute";
 
 const Charts = () => {
   const [data, setData] = useState([]);

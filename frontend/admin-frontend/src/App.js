@@ -8,6 +8,8 @@ import Statistics from "./components/Statistics";
 import Charts from "./components/Charts";
 import SearchBill from "./components/SearchBill";
 import BillDetails from "./components/BillDetails";
+import Signup from "./components/Signup";
+import Login from "./components/Login";
 
 function App() {
   return (
@@ -22,6 +24,8 @@ function App() {
           <Route path="/charts" element={<Charts />} />
           <Route path="/search-bill" element={<SearchBill />} />
           <Route path="/bill/:id" element={<BillDetails />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/login" element={<Login />} />
         </Routes>
       </div>
     </Router>

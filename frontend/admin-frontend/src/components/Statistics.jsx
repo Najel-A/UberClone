@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import ProtectedRoute from "./ProtectedRoute";
 
 const Statistics = () => {
   const [stats, setStats] = useState({ revenuePerDay: 0, totalRides: 0 });
