@@ -1,31 +1,38 @@
-const Driver = require('../models/Driver');
+const axios = require('axios');
 const geoUtils = require('../utils/geoUtils');
 
 class LocationService {
   static async findDriversWithinRadius(centerPoint, radiusMiles) {
-    const drivers = await Driver.find({
-      'location.coordinates': {
-        $nearSphere: {
-          $geometry: {
-            type: 'Point',
-            coordinates: [centerPoint.longitude, centerPoint.latitude]
-          },
-          $maxDistance: radiusMiles * 1609.34 // Convert miles to meters
-        }
-      },
-      isAvailable: true
-    });
-    
-    return drivers.map(driver => ({
-      driverId: driver._id,
-      coordinates: driver.location.coordinates,
-      distance: geoUtils.calculateDistance(
-        centerPoint.latitude,
-        centerPoint.longitude,
-        driver.location.coordinates[1],
-        driver.location.coordinates[0]
-      )
-    }));
+    // Call driver-service to get all available drivers with coordinates
+    const { data: drivers } = await axios.get(
+      `http://localhost:3001/api/drivers/?minRating=3` // Adjust this later when we use actual location
+    );
+    console.log(drivers);
+
+    // Update the model Driver-Service to include location coordinates
+    // const filteredDrivers = drivers
+    //   .map(driver => {
+    //     const [driverLon, driverLat] = driver.location.coordinates;
+    //     const distance = geoUtils.calculateDistance(
+    //       centerPoint.latitude,
+    //       centerPoint.longitude,
+    //       driverLat,
+    //       driverLon
+    //     );
+
+    //     return {
+    //       driverId: driver._id,
+    //       coordinates: [driverLon, driverLat],
+    //       distance
+    //     };
+    //   })
+    //   .filter(driver => driver.distance <= radiusMiles);
+
+    // // Sort by distance
+    // filteredDrivers.sort((a, b) => a.distance - b.distance);
+
+    // return filteredDrivers;
+    return drivers;
   }
 }
 
