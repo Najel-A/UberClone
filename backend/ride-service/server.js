@@ -1,9 +1,7 @@
 const app = require('./src/app');
 const mongoose = require('mongoose');
 const { initializeKafka } = require('./src/config/kafka');
-const { startBillingConsumer } = require('./src/events/consumers/BillingConsumer');
-const { startNotificationConsumer } = require('./src/events/consumers/NotificationConsumer');
-
+require('dotenv').config();
 async function startKafkaConsumers() {
   try {
     await initializeKafka();
@@ -19,9 +17,9 @@ async function startKafkaConsumers() {
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('MongoDB connected');
-    app.listen(3003, () => console.log('Ride service running on port 3003'));
+    app.listen(process.env.PORT, () => console.log('Ride service running on port,', process.env.PORT));
   })
   .catch(err => console.error('DB connection failed', err));
 
 
-startKafkaConsumers();
+// startKafkaConsumers();

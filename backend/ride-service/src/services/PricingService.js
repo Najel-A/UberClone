@@ -1,6 +1,5 @@
 const axios = require('axios');
-const GeoUtils = require('../utils/geoUtils');
-const { CircuitBreaker } = require('../utils/circuitBreaker');
+const CircuitBreaker = require('../utils/circuitBreaker');
 
 // Circuit breaker configuration for ML service
 const mlServiceCircuitBreaker = new CircuitBreaker({
@@ -13,21 +12,22 @@ const mlServiceCircuitBreaker = new CircuitBreaker({
 class PricingService {
   /**
    * Calculate ride price by calling the FastAPI service
-   * @param {Object} rideDetails - Ride details including pickup/dropoff locations, time, etc.
+   * @param {Object} rideDetails - Ride details matching FastAPI's PredictionInput schema
    * @returns {Promise<Object>} - Price details including base, surge, and total
    */
   static async calculateRidePrice(rideDetails) {
-    const fastApiUrl = process.env.FASTAPI_PRICE_URL || 'http://localhost:8000/calculate-price';
+    const fastApiUrl = process.env.FASTAPI_PRICE_URL || 'http://localhost:8000/predict';
 
     const requestData = {
-      pickup_location: rideDetails.pickupLocation,
-      dropoff_location: rideDetails.dropoffLocation,
-      estimated_time: rideDetails.estimatedTime,
-      request_time: rideDetails.requestTime,
+      pickup_latitude: rideDetails.pickup_latitude,
+      pickup_longitude: rideDetails.pickup_longitude,
+      dropoff_latitude: rideDetails.dropoff_latitude,
+      dropoff_longitude: rideDetails.dropoff_longitude,
+      passenger_count: rideDetails.passenger_count,
+      pickup_datetime: rideDetails.pickup_datetime,
     };
 
     try {
-      // Use circuit breaker for resilient calls
       const response = await mlServiceCircuitBreaker.call(() =>
         axios.post(fastApiUrl, requestData, {
           timeout: 2000,
@@ -37,20 +37,18 @@ class PricingService {
         })
       );
 
-      return {
-        basePrice: response.data.base_price,
-        surgeMultiplier: response.data.surge_multiplier,
-        finalPrice: response.data.final_price,
-        currency: response.data.currency || 'USD',
-        priceComponents: response.data.price_components || {},
-        timestamp: new Date().toISOString(),
-      };
+      // Return the predicted fare from the response
+      return response.data.predicted_fare;
+
     } catch (error) {
-      console.error('FastAPI price calculation failed', error);
+      console.error('FastAPI price calculation failed:', {
+        message: error.message,
+        rideDetails: requestData,
+      });
+
       throw new Error('Price calculation service unavailable');
     }
   }
 }
 
 module.exports = PricingService;
-

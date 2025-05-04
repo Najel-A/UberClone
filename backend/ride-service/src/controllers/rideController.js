@@ -1,23 +1,43 @@
 const RideService = require('../services/RideService');
 const LocationService = require('../services/LocationService');
-const { emitRideEvent } = require('../events/producers/RideProducer');
-const { NotFoundError, BadRequestError } = require('../utils/errors');
+const PricingService = require('../services/PricingService');
 
 class RideController {
   static async createRide(req, res, next) {
     try {
       const rideData = req.body;
-      
-      // Validate required fields
-      if (!rideData.customerId || !rideData.driverId || !rideData.pickupLocation) {
-        throw new BadRequestError('Missing required ride information');
+
+      // Validate required fields, Fix later
+      // if (!rideData.customerId || !rideData.pickupLocation) {
+      //   return res.status(400).json({ message: 'Missing required ride information' });
+      // }
+
+      // Auto-assign nearest driver
+      const nearbyDrivers = await LocationService.findDriversWithinRadius(
+        rideData.pickupLocation,
+        10 // radius in miles
+      );
+
+      if (!nearbyDrivers || nearbyDrivers.length === 0) {
+        return res.status(404).json({ message: 'No available drivers nearby' });
       }
 
+      // Assign the closest available driver (assumes first is closest)
+      rideData.driverId = nearbyDrivers[0].id;
+
+      // Calculate price
+      const price = await PricingService.calculateRidePrice(rideData);
+      rideData.price = price;
+      console.log('Assigned Driver:', rideData.driverId);
+      console.log('Calculated Price:', price);
+
+
+      // Create the ride
       const ride = await RideService.createRide(rideData);
-      
-      // Emit ride created event
-      await emitRideEvent('ride.created', ride);
-      
+
+      // Emit event
+      // await emitRideEvent('ride.created', ride);
+
       res.status(201).json(ride);
     } catch (error) {
       next(error);
@@ -30,18 +50,18 @@ class RideController {
       const updateData = req.body;
 
       if (!id) {
-        throw new BadRequestError('Ride ID is required');
+        return res.status(400).json({ message: 'Ride ID is required' });
       }
 
       const updatedRide = await RideService.updateRide(id, updateData);
-      
+
       if (!updatedRide) {
-        throw new NotFoundError('Ride not found');
+        return res.status(404).json({ message: 'Ride not found' });
       }
 
       // Emit ride updated event
       await emitRideEvent('ride.updated', updatedRide);
-      
+
       res.json(updatedRide);
     } catch (error) {
       next(error);
@@ -53,18 +73,18 @@ class RideController {
       const { id } = req.params;
 
       if (!id) {
-        throw new BadRequestError('Ride ID is required');
+        return res.status(400).json({ message: 'Ride ID is required' });
       }
 
       const deletedRide = await RideService.deleteRide(id);
-      
+
       if (!deletedRide) {
-        throw new NotFoundError('Ride not found');
+        return res.status(404).json({ message: 'Ride not found' });
       }
 
       // Emit ride cancelled event
-      await emitRideEvent('ride.cancelled', deletedRide);
-      
+      //await emitRideEvent('ride.cancelled', deletedRide);
+
       res.json({ message: 'Ride deleted successfully' });
     } catch (error) {
       next(error);
@@ -76,13 +96,13 @@ class RideController {
       const { customerId } = req.params;
 
       if (!customerId) {
-        throw new BadRequestError('Customer ID is required');
+        return res.status(400).json({ message: 'Customer ID is required' });
       }
 
       const rides = await RideService.getRidesByCustomer(customerId);
-      
+
       if (!rides || rides.length === 0) {
-        throw new NotFoundError('No rides found for this customer');
+        return res.status(404).json({ message: 'No rides found for this customer' });
       }
 
       res.json(rides);
@@ -96,13 +116,13 @@ class RideController {
       const { driverId } = req.params;
 
       if (!driverId) {
-        throw new BadRequestError('Driver ID is required');
+        return res.status(400).json({ message: 'Driver ID is required' });
       }
 
       const rides = await RideService.getRidesByDriver(driverId);
-      
+
       if (!rides || rides.length === 0) {
-        throw new NotFoundError('No rides found for this driver');
+        return res.status(404).json({ message: 'No rides found for this driver' });
       }
 
       res.json(rides);
@@ -116,7 +136,7 @@ class RideController {
       const { location } = req.query;
 
       if (!location) {
-        throw new BadRequestError('Location query parameter is required');
+        return res.status(400).json({ message: 'Location query parameter is required' });
       }
 
       const stats = await RideService.getRideStatisticsByLocation(location);
@@ -131,12 +151,12 @@ class RideController {
       const { latitude, longitude } = req.query;
 
       if (!latitude || !longitude) {
-        throw new BadRequestError('Both latitude and longitude are required');
+        return res.status(400).json({ message: 'Both latitude and longitude are required' });
       }
 
       const customerLocation = {
         latitude: parseFloat(latitude),
-        longitude: parseFloat(longitude)
+        longitude: parseFloat(longitude),
       };
 
       const nearbyDrivers = await LocationService.findDriversWithinRadius(
