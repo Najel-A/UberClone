@@ -93,6 +93,7 @@ ADMIN_SERVICE_PORT = <Port>
 BILLING_SERVICE_PORT = <Port>
 CUSTOMER_SERVICE_PORT = <Port>
 DRIVER_SERVICE_PORT = <Port>
+KAFKA_HOST = <localhost or host.docker.internal>
 
 
 ```bash
