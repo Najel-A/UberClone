@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  admin-service:
+    build:
+      context: ./backend/admin-service
+    container_name: admin-service
+    env_file:
+      - ./backend/admin-service/.env.docker
+    ports:
+      - "${ADMIN_SERVICE_PORT}:${ADMIN_SERVICE_PORT}"
+
+  billing-service:
+    build:
+      context: ./backend/billing-service
+    container_name: billing-service
+    env_file:
+      - ./backend/billing-service/.env.docker
+    ports:
+      - "${BILLING_SERVICE_PORT}:${BILLING_SERVICE_PORT}"
+  
+  customer-service:
+    build:
+      context: ./backend/customer-service
+    container_name: customer-service
+    env_file:
+      - ./backend/customer-service/.env.docker
+    ports:
+      - "${CUSTOMER_SERVICE_PORT}:${CUSTOMER_SERVICE_PORT}"
+  
+  driver-service:
+    build:
+      context: ./backend/driver-service
+    container_name: driver-service
+    env_file:
+      - ./backend/driver-service/.env.docker
+    ports:
+      - "${DRIVER_SERVICE_PORT}:${DRIVER_SERVICE_PORT}"
+  
+
+  
