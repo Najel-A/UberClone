@@ -1,6 +1,7 @@
 const RideService = require('../services/RideService');
 const LocationService = require('../services/LocationService');
-const PricingService = require('../services/PricingService');
+// const PricingService = require('../services/PricingService'); // Comment out to fully bypass
+const redisClient = require('../config/redis');
 
 class RideController {
   static async createRide(req, res, next) {
@@ -12,11 +13,30 @@ class RideController {
       //   return res.status(400).json({ message: 'Missing required ride information' });
       // }
 
-      // Auto-assign nearest driver
-      const nearbyDrivers = await LocationService.findDriversWithinRadius(
-        rideData.pickupLocation,
-        10 // radius in miles
-      );
+      // Check cache for nearby drivers
+      const nearbyDriversCacheKey = `nearby_drivers:${rideData.pickupLocation.latitude}:${rideData.pickupLocation.longitude}`;
+      let nearbyDrivers = await redisClient.get(nearbyDriversCacheKey);
+
+      if (!nearbyDrivers) {
+        console.log('Cache miss - fetching drivers from service');
+        // Auto-assign nearest driver
+        nearbyDrivers = await LocationService.findDriversWithinRadius(
+          rideData.pickupLocation,
+          10 // radius in miles
+        );
+
+        // Cache the driver responses for 60 seconds
+        await redisClient.set(
+          nearbyDriversCacheKey,
+          JSON.stringify(nearbyDrivers),
+          'EX',
+          60
+        );
+        console.log('Cached drivers for 60 seconds');
+      } else {
+        console.log('Cache hit - using cached drivers');
+        nearbyDrivers = JSON.parse(nearbyDrivers);
+      }
 
       if (!nearbyDrivers || nearbyDrivers.length === 0) {
         return res.status(404).json({ message: 'No available drivers nearby' });
@@ -24,13 +44,7 @@ class RideController {
 
       // Assign the closest available driver (assumes first is closest)
       rideData.driverId = nearbyDrivers[0].id;
-
-      // Calculate price
-      const price = await PricingService.calculateRidePrice(rideData);
-      rideData.price = price;
-      console.log('Assigned Driver:', rideData.driverId);
-      console.log('Calculated Price:', price);
-
+      rideData.price = 25.50; // Mock price
 
       // Create the ride
       const ride = await RideService.createRide(rideData);

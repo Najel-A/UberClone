@@ -3,36 +3,32 @@ const geoUtils = require('../utils/geoUtils');
 
 class LocationService {
   static async findDriversWithinRadius(centerPoint, radiusMiles) {
-    // Call driver-service to get all available drivers with coordinates
-    const { data: drivers } = await axios.get(
-      `http://localhost:3001/api/drivers/?minRating=3` // Adjust this later when we use actual location
-    );
-    console.log(drivers);
-
-    // Update the model Driver-Service to include location coordinates
-    // const filteredDrivers = drivers
-    //   .map(driver => {
-    //     const [driverLon, driverLat] = driver.location.coordinates;
-    //     const distance = geoUtils.calculateDistance(
-    //       centerPoint.latitude,
-    //       centerPoint.longitude,
-    //       driverLat,
-    //       driverLon
-    //     );
-
-    //     return {
-    //       driverId: driver._id,
-    //       coordinates: [driverLon, driverLat],
-    //       distance
-    //     };
-    //   })
-    //   .filter(driver => driver.distance <= radiusMiles);
-
-    // // Sort by distance
-    // filteredDrivers.sort((a, b) => a.distance - b.distance);
-
-    // return filteredDrivers;
-    return drivers;
+    try {
+      // Temporary mock data until driver service is ready
+      const mockDrivers = [
+        {
+          id: 'driver1',
+          name: 'John Doe',
+          location: {
+            coordinates: [-74.0060, 40.7128]
+          },
+          rating: 4.5,
+          available: true
+        }
+      ];
+      
+      return mockDrivers;
+      
+      // TODO: Uncomment when driver service is ready
+      // const driverServiceUrl = process.env.DRIVER_SERVICE_URL || 'http://driver-service:3000';
+      // const { data: drivers } = await axios.get(
+      //   `${driverServiceUrl}/api/drivers/?minRating=3`
+      // );
+      // return drivers;
+    } catch (error) {
+      console.error('Error finding drivers:', error);
+      return [];
+    }
   }
 }
 
