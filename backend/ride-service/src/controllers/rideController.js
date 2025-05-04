@@ -19,11 +19,11 @@ class RideController {
 
       if (!nearbyDrivers) {
         console.log('Cache miss - fetching drivers from service');
-      // Auto-assign nearest driver
+        // Auto-assign nearest driver
         nearbyDrivers = await LocationService.findDriversWithinRadius(
-        rideData.pickupLocation,
-        10 // radius in miles
-      );
+          rideData.pickupLocation,
+          10 // radius in miles
+        );
 
         // Cache the driver responses for 60 seconds
         await redisClient.set(
