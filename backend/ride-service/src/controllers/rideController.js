@@ -2,6 +2,7 @@ const RideService = require("../services/RideService");
 const LocationService = require("../services/LocationService");
 const PricingService = require("../services/PricingService");
 const { emitRideEvent } = require("../events/rideKafka/rideProducer");
+const redisClient = require("../config/redis");
 
 class RideController {
   static async createRide(req, res, next) {
@@ -158,12 +159,23 @@ class RideController {
         longitude: parseFloat(longitude),
       };
 
-      const nearbyDrivers = await LocationService.findDriversWithinRadius(
-        customerLocation,
-        10 // 10 mile radius
-      );
+      const nearbyDrivers =
+        await LocationService.findDriversWithinRadiusWithCache(
+          customerLocation,
+          10, // 10 mile radius
+          redisClient
+        );
 
       res.json(nearbyDrivers);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async testRedisCaching(req, res, next) {
+    try {
+      const result = await LocationService.testRedisCaching(redisClient);
+      res.json(result);
     } catch (error) {
       next(error);
     }

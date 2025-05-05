@@ -1,26 +1,28 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const RideController = require('../controllers/rideController');
+const RideController = require("../controllers/rideController");
 
 // Create a new ride
-router.post('/', RideController.createRide);
+router.post("/", RideController.createRide);
 
 // Update an existing ride
-router.put('/:id', RideController.updateRide);
+router.put("/:id", RideController.updateRide);
 
 // Delete a ride
-router.delete('/:id', RideController.deleteRide);
+router.delete("/:id", RideController.deleteRide);
 
 // Get rides by customer
-router.get('/customer/:customerId', RideController.getCustomerRides);
+router.get("/customer/:customerId", RideController.getCustomerRides);
 
 // Get rides by driver
-router.get('/driver/:driverId', RideController.getDriverRides);
+router.get("/driver/:driverId", RideController.getDriverRides);
 
 // Get ride statistics by location
-router.get('/statistics', RideController.getRideStatistics);
+router.get("/statistics", RideController.getRideStatistics);
 
 // Get nearby drivers
-router.post('/nearby-drivers', RideController.getNearbyDrivers);
+router.post("/nearby-drivers", RideController.getNearbyDrivers);
+
+router.get("/test-redis-caching", RideController.testRedisCaching);
 
 module.exports = router;
