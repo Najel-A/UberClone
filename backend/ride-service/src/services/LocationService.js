@@ -1,11 +1,11 @@
-const axios = require('axios');
-const geoUtils = require('../utils/geoUtils');
+const axios = require("axios");
+const geoUtils = require("../utils/geoUtils");
 
 class LocationService {
   static async findDriversWithinRadius(centerPoint, radiusMiles) {
     // Call driver-service to get all available drivers with coordinates
     const { data: drivers } = await axios.get(
-      `http://localhost:3001/api/drivers/?minRating=3` // Adjust this later when we use actual location
+      process.env.LOCATION_SERVICE_PORT // Adjust this later when we use actual location
     );
     console.log(drivers);
 

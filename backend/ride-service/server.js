@@ -1,25 +1,31 @@
-const app = require('./src/app');
-const mongoose = require('mongoose');
-const { initializeKafka } = require('./src/config/kafka');
-require('dotenv').config();
-async function startKafkaConsumers() {
+const app = require("./src/app");
+const mongoose = require("mongoose");
+const { initializeKafka } = require("./src/config/kafka");
+const startConsumer = require("./src/events/rideKafka/rideConsumer"); // ✅ Update path if needed
+const { connectProducer } = require("./src/events/rideKafka/rideProducer");
+
+require("dotenv").config();
+
+const startServer = async () => {
   try {
-    await initializeKafka();
-    await startBillingConsumer();
-    await startNotificationConsumer();
-    logger.info('Kafka consumers started successfully');
-  } catch (error) {
-    logger.error('Failed to start Kafka consumers', error);
-    process.exit(1);
+    // Connect to MongoDB
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("MongoDB connected");
+
+    // Connect Kafka producer
+    await connectProducer(); // ✅ Connect Kafka producer here
+
+    // Start Kafka consumer
+    startConsumer(); // ✅ This runs your consumer on server start
+
+    // Start your express app
+    app.listen(process.env.PORT, () =>
+      console.log("Ride service running on port", process.env.PORT)
+    );
+  } catch (err) {
+    console.error("Error starting server:", err);
   }
-}
+};
 
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log('MongoDB connected');
-    app.listen(process.env.PORT, () => console.log('Ride service running on port,', process.env.PORT));
-  })
-  .catch(err => console.error('DB connection failed', err));
-
-
-// startKafkaConsumers();
+// Start the server
+startServer();
