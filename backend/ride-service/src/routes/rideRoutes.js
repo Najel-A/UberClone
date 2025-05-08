@@ -2,11 +2,17 @@ const express = require("express");
 const router = express.Router();
 const RideController = require("../controllers/rideController");
 
-// Request a ride
-router.post("/request", RideController.requestRide);
-
 // Create a new ride
-router.post("/create", RideController.createRide);
+router.post("/", RideController.createRideRequest);
+
+// Get Rides Availble
+router.get("/nearby", RideController.getNearbyRides);
+
+// Assigns Driver to ride
+router.patch("/:id", RideController.assignRide);
+
+// Start ride simulation
+router.post("/simulate", RideController.handleRideStart);
 
 // Update an existing ride
 router.put("/:id", RideController.updateRide);
