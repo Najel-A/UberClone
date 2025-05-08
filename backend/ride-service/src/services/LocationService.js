@@ -18,7 +18,7 @@ class LocationService {
       ];
       
       return mockDrivers;
-      
+
       // TODO: Uncomment when driver service is ready
       // const driverServiceUrl = process.env.DRIVER_SERVICE_URL || 'http://driver-service:3000';
       // const { data: drivers } = await axios.get(
