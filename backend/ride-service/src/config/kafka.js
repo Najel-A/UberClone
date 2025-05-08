@@ -1,5 +1,5 @@
 const { Kafka } = require('kafkajs');
-
+require('dotenv').config({ path: '../../.env' });
 // Kafka client configuration
 const kafka = new Kafka({
   clientId: 'ride-service',
@@ -16,17 +16,11 @@ const producer = kafka.producer();
 const consumers = []; // Track all consumers created
 
 const topics = {
-  RIDE_REQUESTED: 'ride.requested',
-  RIDE_ASSIGNED: 'ride.assigned',
-  RIDE_UPDATED: 'ride.updated',
-  RIDE_COMPLETED: 'ride.completed',
-  BILLING_EVENTS: 'billing.events'
+  RIDE_REQUESTED: 'ride.requested'
 };
 
 const consumerGroups = {
-  RIDE_SERVICE: 'ride-service-group',
-  BILLING_SERVICE: 'billing-service-group',
-  LOCATION_TRACKER: 'location-tracker-group'
+  RIDE_SERVICE: 'ride-service-group'
 };
 
 // Create topics if they don’t exist

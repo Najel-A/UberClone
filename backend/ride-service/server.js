@@ -2,8 +2,8 @@ require("dotenv").config();
 const app = require("./src/app");
 const mongoose = require("mongoose");
 const { initializeKafka, shutdownKafka } = require("./src/config/kafka");
-const  startRideRequestedConsumer = require('./src/events/ride-requested/rideRequestConsumer');
-// const startRideAssignedConsumer = require('./src/events/ride-assigned/rideAssignedConsumer');
+const  rideRequestConsumer = require('./src/events/ride-requested/rideRequestConsumer');
+
 
 let server; // To store the Express server instance
 
@@ -20,8 +20,7 @@ const startServer = async () => {
     await initializeKafka();
 
     // Start Consumers
-    startRideRequestedConsumer();
-    // startRideAssignedConsumer();
+    await rideRequestConsumer.startRideRequestedConsumer();
 
     // Start Express server
     const PORT = process.env.PORT || 3000; // Default to port 3000 if not specified

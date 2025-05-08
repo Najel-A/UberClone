@@ -1,7 +1,7 @@
 const { createConsumer, topics, consumerGroups } = require("../../config/kafka");
 const LocationService = require("../../services/LocationService");
 
-const startRideRequestedConsumer = async () => {
+exports.startRideRequestedConsumer = async () => {
   try {
     const consumer = createConsumer(consumerGroups.RIDE_SERVICE); // Create consumer for the 'ride-service-group'
     
@@ -36,5 +36,3 @@ const startRideRequestedConsumer = async () => {
     console.error("❌ Failed to start ride requested consumer:", error);
   }
 };
-
-module.exports = startRideRequestedConsumer;

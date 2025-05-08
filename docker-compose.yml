@@ -35,6 +35,15 @@ services:
     ports:
       - "${DRIVER_SERVICE_PORT}:${DRIVER_SERVICE_PORT}"
   
+  # ride-service:
+  #   build:
+  #     context: ./backend/ride-service
+  #   container_name: ride-service
+  #   env_file:
+  #     - ./backend/ride-service/.env.docker
+  #   ports:
+  #     - "${RIDE_SERVICE_PORT}:${RIDE_SERVICE_PORT}"
+  
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
     ports:
