@@ -34,9 +34,16 @@ const startServer = async () => {
 
     // Subsriber is to listen to the updates made from the publisher in the ride simulation
     redisSubscriber.subscribe(CHANNEL, (message) => {
-      console.log("Redis message:", message);
-      io.emit("ride-update", JSON.parse(message));
+      console.log("Received Redis message:", message);
+      try {
+        const parsedMessage = JSON.parse(message);
+        console.log("Emitting ride-update event:", parsedMessage);
+        io.emit("ride-update", parsedMessage);  // This should emit the message to frontend
+      } catch (err) {
+        console.error("Error parsing message:", err);
+      }
     });
+    
 
     // Configure a redis for the movements of the ride simulation
 
@@ -59,3 +66,4 @@ const startServer = async () => {
 
 // Start the server
 startServer();
+

@@ -8,7 +8,11 @@ router.post("/", RideController.createRideRequest);
 // Get Rides Availble
 router.get("/nearby", RideController.getNearbyRides);
 
+// Assigns Driver to ride
 router.patch("/:id", RideController.assignRide);
+
+// Start ride simulation
+router.post("/simulate", RideController.handleRideStart);
 
 // Update an existing ride
 router.put("/:id", RideController.updateRide);

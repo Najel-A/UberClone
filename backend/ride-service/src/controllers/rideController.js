@@ -3,6 +3,7 @@ const LocationService = require("../services/LocationService");
 const { emitRideEvent } = require("../events/rideRequest/rideRequestProducer");
 const redisClient = require("../config/redis");
 const Ride = require('../models/Ride');
+const { simulateRide } = require("../utils/simulateRide");
 
 
 exports.createRideRequest = async (req, res, next) => {
@@ -77,6 +78,15 @@ exports.assignRide = async (req, res, next) => {
     next(error);
   }
 }
+
+// Starts ride for WS
+exports.handleRideStart = async (req, res) => {
+  const { rideId, start, end } = req.body;
+
+  simulateRide(rideId, start, end); // Don't await — let it stream in background
+
+  res.status(200).json({ message: "Ride simulation started" });
+};
 
 
 // ToDO: Send updates to the ride via method or WS?
