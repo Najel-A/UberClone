@@ -9,9 +9,6 @@ const adminController = require('../controllers/adminController');
 // Admin Registration
 router.post('/signup', adminController.createAdmin);
 
-// Admin Update
-router.put('/update/:id', adminController.updateAdmin);
-
 // Admin Login
 router.post('/login', adminController.loginAdmin);
 

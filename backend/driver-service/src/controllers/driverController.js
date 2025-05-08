@@ -84,45 +84,36 @@ exports.getDriver = async (req, res) => {
   }
 };
 
-// Update driver details
+// Update Driver
 exports.updateDriver = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { _id, email, password, ...rest } = req.body;
+    const updates = req.body;
+    console.log(updates);
 
-    // Prevent updating `_id`
-    if (_id) {
-      return res.status(400).json({ message: "Updating '_id' is not allowed" });
-    }
-
-    const updateData = { ...rest };
-
-    // If a new email is provided, validate and add it to the update
-    if (email) {
-      const existingDriver = await Driver.findOne({ email });
-      if (existingDriver && existingDriver._id.toString() !== id) {
-        return res.status(409).json({ message: "Email is already in use" });
-      }
-      updateData.email = email;
-    }
-
-    // If a new password is provided, hash it before updating
-    if (password) {
-      const hashedPassword = await hashPassword(password);
-      updateData.password = hashedPassword;
-    }
-
-    // Update the driver
-    const driver = await Driver.findByIdAndUpdate(id, updateData, { new: true });
-
+    // Fetch the existing driver data
+    const driver = await Driver.findById(req.params.id);
     if (!driver) {
-      return res.status(404).json({ message: "Driver not found" });
+      throw new NotFoundError('Driver not found');
     }
 
-    res.json(driver);
+    await Driver.findByIdAndUpdate(req.params.id, updates, { new: true });
+
+    // Save the updated driver
+    const updatedDriver = await driver.save();
+    console.log(updatedDriver);
+
+    res.status(200).json(updatedDriver);
   } catch (err) {
-    console.error("Error updating driver:", err.message);
-    res.status(500).json({ message: "Internal server error", error: err.message });
+    if (err instanceof NotFoundError) {
+      return res.status(404).json({ message: err.message });
+    }
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ 
+        message: 'Validation failed',
+        errors: Object.values(err.errors).map(e => e.message) 
+      });
+    }
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
 
@@ -228,47 +219,4 @@ exports.logoutDriver = (req, res) => {
       }
       res.json({ message: "Logout successful" });
     });
-};
-
-// Update Driver Status and Location
-exports.updateDriverStatusAndLocation = async (req, res) => {
-  try {
-    const { id } = req.params; // driver's _id (SSN in your case)
-    const { status, currentLocation } = req.body;
-
-    // Validate status and location fields (optional but recommended)
-    const updateFields = {};
-    if (status) {
-      if (!['available', 'unavailable'].includes(status)) {
-        return res.status(400).json({ message: "Invalid status value" });
-      }
-      updateFields.status = status;
-    }
-
-    if (currentLocation) {
-      const { latitude, longitude } = currentLocation;
-      if (
-        typeof latitude !== 'number' || latitude < -90 || latitude > 90 ||
-        typeof longitude !== 'number' || longitude < -180 || longitude > 180
-      ) {
-        return res.status(400).json({ message: "Invalid latitude or longitude" });
-      }
-      updateFields.currentLocation = { latitude, longitude };
-    }
-
-    const updatedDriver = await Driver.findByIdAndUpdate(
-      id,
-      { $set: updateFields },
-      { new: true }
-    );
-
-    if (!updatedDriver) {
-      return res.status(404).json({ message: "Driver not found" });
-    }
-
-    res.json(updatedDriver);
-  } catch (err) {
-    console.error("Error updating driver:", err.message);
-    res.status(500).json({ message: "Internal server error", error: err.message });
-  }
-};
+  };

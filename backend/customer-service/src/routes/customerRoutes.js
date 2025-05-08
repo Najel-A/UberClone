@@ -9,7 +9,6 @@ router.post('/customers/login', customerController.loginCustomer);
 router.delete('/customers/:id', customerController.deleteCustomer);
 router.get('/customers', customerController.getAllCustomers);
 router.post('/customers/logout', customerController.logoutCustomer);
-router.put('/customers/:id', customerController.updateCustomer);
 
 // Business logic routes
 router.post('/customers/:id/generate-bill', customerController.generateBill);
