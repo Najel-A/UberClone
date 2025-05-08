@@ -56,6 +56,48 @@ exports.loginAdmin = async (req, res) => {
     }
 };
 
+// Update admin details
+exports.updateAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { _id, email, password, ...rest } = req.body;
+
+    // Prevent updating `_id`
+    if (_id) {
+      return res.status(400).json({ message: "Updating '_id' is not allowed" });
+    }
+
+    const updateData = { ...rest };
+
+    // If a new email is provided, validate and add it to the update
+    if (email) {
+      const existingAdmin = await Admin.findOne({ email });
+      if (existingAdmin && existingAdmin._id.toString() !== id) {
+        return res.status(409).json({ message: "Email is already in use" });
+      }
+      updateData.email = email;
+    }
+
+    // If a new password is provided, hash it before updating
+    if (password) {
+      const hashedPassword = await hashPassword(password);
+      updateData.password = hashedPassword;
+    }
+
+    // Update the admin
+    const admin = await Admin.findByIdAndUpdate(id, updateData, { new: true });
+
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    res.json(admin);
+  } catch (err) {
+    console.error("Error updating admin:", err.message);
+    res.status(500).json({ message: "Internal server error", error: err.message });
+  }
+};
+
 // Add Driver
 exports.addDriver = async (req, res) => {
   try {
