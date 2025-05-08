@@ -1,39 +1,34 @@
 const { Kafka } = require('kafkajs');
+const path =  require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+
 
 const kafka = new Kafka({
   clientId: 'ride-service',
-  brokers: process.env.KAFKA_BROKERS?.split(',') || ['localhost:9092'],
-//   ssl: process.env.KAFKA_SSL === 'true',
-//   sasl: process.env.KAFKA_USERNAME ? {
-//     mechanism: 'plain',
-//     username: process.env.KAFKA_USERNAME,
-//     password: process.env.KAFKA_PASSWORD
-//   } : null,
+  brokers: [process.env.KAFKA_BROKERS],
   retry: {
     initialRetryTime: 100,
     retries: 8
   }
 });
 
-// Admin client for topic management
-const admin = kafka.admin();
 
-// Producer instance (shared across producers)
+const admin = kafka.admin();
 const producer = kafka.producer();
 
 // Consumer groups
+const createConsumer = (groupId) => {
+  const consumer = kafka.consumer({
+    groupId: groupId,
+  });
+  return consumer;
+};
 const consumerGroups = {
   RIDE_EVENTS: 'ride-service-ride-events',
-  BILLING_EVENTS: 'ride-service-billing',
-  NOTIFICATION_EVENTS: 'ride-service-notifications'
 };
-
 // Topics
 const topics = {
-  RIDES: 'rides',
-  DRIVER_LOCATIONS: 'driver-locations',
-  BILLING: 'billing-events',
-  NOTIFICATIONS: 'notification-events'
+  RIDE_REQUESTS: 'ride.requested',
 };
 
 // Ensure topics exist
@@ -61,6 +56,7 @@ module.exports = {
   producer,
   admin,
   topics,
+  createConsumer,
   consumerGroups,
   initializeKafka: async () => {
     await createTopics();

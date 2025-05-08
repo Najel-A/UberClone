@@ -1,8 +1,8 @@
 const app = require("./src/app");
 const mongoose = require("mongoose");
 const { initializeKafka } = require("./src/config/kafka");
-const startConsumer = require("./src/events/rideKafka/rideConsumer"); // ✅ Update path if needed
-const { connectProducer } = require("./src/events/rideKafka/rideProducer");
+const startConsumer = require("./src/events/rideRequest/rideRequestConsumer"); // ✅ Update path if needed
+const { connectProducer } = require("./src/events/rideRequest/rideRequestProducer");
 
 require("dotenv").config();
 
@@ -16,7 +16,7 @@ const startServer = async () => {
     await connectProducer(); // ✅ Connect Kafka producer here
 
     // Start Kafka consumer
-    startConsumer(); // ✅ This runs your consumer on server start
+    await startConsumer.startRideRequestConsumer(); // ✅ This runs your consumer on server start
 
     // Start your express app
     app.listen(process.env.PORT, () =>
