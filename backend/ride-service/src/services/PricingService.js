@@ -1,30 +1,36 @@
-const axios = require('axios');
-const CircuitBreaker = require('../utils/circuitBreaker');
+const axios = require("axios");
+const dayjs = require("dayjs");
+const utc = require("dayjs/plugin/utc");
+const customParseFormat = require("dayjs/plugin/customParseFormat");
+const CircuitBreaker = require("../utils/circuitBreaker");
+
+dayjs.extend(utc);
+dayjs.extend(customParseFormat);
 
 // Circuit breaker configuration for ML service
 const mlServiceCircuitBreaker = new CircuitBreaker({
-  name: 'ml-price-predict',
-  timeout: 3000, // 3 seconds timeout
+  name: "ml-price-predict",
+  timeout: 3000,
   errorThresholdPercentage: 50,
-  resetTimeout: 30000, // 30 seconds before trying again
+  resetTimeout: 30000,
 });
 
 class PricingService {
-  /**
-   * Calculate ride price by calling the FastAPI service
-   * @param {Object} rideDetails - Ride details matching FastAPI's PredictionInput schema
-   * @returns {Promise<Object>} - Price details including base, surge, and total
-   */
   static async calculateRidePrice(rideDetails) {
-    const fastApiUrl = process.env.FASTAPI_PRICE_URL || 'http://localhost:8000/predict';
+    const fastApiUrl =
+      process.env.FASTAPI_PRICE_URL || "http://localhost:8000/predict";
+
+    const formattedDateTime = dayjs(rideDetails.dateTime)
+      .utc()
+      .format("YYYY-MM-DD HH:mm:ss.SSSSSS");
 
     const requestData = {
-      pickup_latitude: rideDetails.pickup_latitude,
-      pickup_longitude: rideDetails.pickup_longitude,
-      dropoff_latitude: rideDetails.dropoff_latitude,
-      dropoff_longitude: rideDetails.dropoff_longitude,
+      pickup_latitude: rideDetails.pickupLocation.latitude,
+      pickup_longitude: rideDetails.pickupLocation.longitude,
+      dropoff_latitude: rideDetails.dropoffLocation.latitude,
+      dropoff_longitude: rideDetails.dropoffLocation.longitude,
       passenger_count: rideDetails.passenger_count,
-      pickup_datetime: rideDetails.pickup_datetime,
+      pickup_datetime: formattedDateTime,
     };
 
     try {
@@ -32,21 +38,19 @@ class PricingService {
         axios.post(fastApiUrl, requestData, {
           timeout: 2000,
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         })
       );
 
-      // Return the predicted fare from the response
       return response.data.predicted_fare;
-
     } catch (error) {
-      console.error('FastAPI price calculation failed:', {
+      console.error("FastAPI price calculation failed:", {
         message: error.message,
         rideDetails: requestData,
       });
 
-      throw new Error('Price calculation service unavailable');
+      throw new Error("Price calculation service unavailable");
     }
   }
 }

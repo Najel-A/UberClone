@@ -146,3 +146,45 @@ exports.logoutCustomer = (req, res) => {
       res.json({ message: "Logout successful" });
     });
   };
+
+// Get Customer by ID
+exports.getCustomer = async (req, res) => {
+  try {
+    const customer = await Customer.findById(req.params.id);
+    if (!customer) {
+      return res.status(404).json({ message: 'Customer not found' });
+    }
+    res.status(200).json(customer);
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message });
+  }
+};
+
+// Update Customer
+exports.updateCustomer = async (req, res) => {
+  try {
+    const { firstName, lastName, phoneNumber, address, creditCardDetails } = req.body;
+    
+    const customer = await Customer.findById(req.params.id);
+    if (!customer) {
+      return res.status(404).json({ message: 'Customer not found' });
+    }
+
+    // Update only allowed fields
+    const updatedCustomer = await Customer.findByIdAndUpdate(
+      req.params.id,
+      {
+        firstName,
+        lastName,
+        phoneNumber,
+        address,
+        creditCardDetails
+      },
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).json(updatedCustomer);
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message });
+  }
+};

@@ -11,6 +11,7 @@ const Signup = () => {
     password: '',
     confirmPassword: '',
     phoneNumber: '',
+    ssn: '',
     address: {
       street: '',
       city: '',
@@ -49,6 +50,13 @@ const Signup = () => {
     const phoneRegex = /^\d{10}$/;
     if (!phoneRegex.test(formData.phoneNumber.replace(/\D/g, ''))) {
       setError('Please enter a valid 10-digit phone number');
+      return false;
+    }
+
+    // SSN validation
+    const ssnRegex = /^\d{3}-\d{2}-\d{4}$/;
+    if (!ssnRegex.test(formData.ssn)) {
+      setError('Please enter a valid SSN in format XXX-XX-XXXX');
       return false;
     }
 
@@ -94,6 +102,9 @@ const Signup = () => {
     try {
       // Remove confirmPassword before sending to backend
       const { confirmPassword, ...signupData } = formData;
+      // Use SSN as _id
+      signupData._id = signupData.ssn;
+      delete signupData.ssn;
       await signup(signupData);
       navigate('/login');
     } catch (err) {
@@ -107,6 +118,7 @@ const Signup = () => {
     <div className="auth-container">
       <div className="auth-card">
         <h2 className="auth-title">Create Your Account</h2>
+        <p className="auth-subtitle">Please fill in your details to create an account</p>
 
         {error && (
           <div className="alert alert-danger" role="alert">
@@ -115,203 +127,190 @@ const Signup = () => {
         )}
 
         <form onSubmit={handleSubmit} className="auth-form">
-          <div className="row g-3">
-            <div className="col-md-6">
+          <div className="row">
+            <div className="col">
               <div className="form-group">
-                <label htmlFor="firstName">First Name</label>
+                <label>First Name</label>
                 <input
                   type="text"
                   className="form-control"
-                  id="firstName"
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleChange}
                   required
-                  disabled={loading}
                 />
               </div>
             </div>
-            
-            <div className="col-md-6">
+            <div className="col">
               <div className="form-group">
-                <label htmlFor="lastName">Last Name</label>
+                <label>Last Name</label>
                 <input
                   type="text"
                   className="form-control"
-                  id="lastName"
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleChange}
                   required
-                  disabled={loading}
                 />
               </div>
             </div>
+          </div>
 
-            <div className="col-12">
-              <div className="form-group">
-                <label htmlFor="email">Email Address</label>
-                <input
-                  type="email"
-                  className="form-control"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                />
-              </div>
-            </div>
+          <div className="form-group">
+            <label>Email Address</label>
+            <input
+              type="email"
+              className="form-control"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-            <div className="col-md-6">
+          <div className="row">
+            <div className="col">
               <div className="form-group">
-                <label htmlFor="password">Password</label>
+                <label>Password</label>
                 <input
                   type="password"
                   className="form-control"
-                  id="password"
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
                   required
-                  disabled={loading}
-                  minLength={6}
                 />
               </div>
             </div>
-
-            <div className="col-md-6">
+            <div className="col">
               <div className="form-group">
-                <label htmlFor="confirmPassword">Confirm Password</label>
+                <label>Confirm Password</label>
                 <input
                   type="password"
                   className="form-control"
-                  id="confirmPassword"
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   required
-                  disabled={loading}
                 />
               </div>
             </div>
+          </div>
 
-            <div className="col-12">
+          <div className="row">
+            <div className="col">
               <div className="form-group">
-                <label htmlFor="phoneNumber">Phone Number</label>
+                <label>Phone Number</label>
                 <input
                   type="tel"
                   className="form-control"
-                  id="phoneNumber"
                   name="phoneNumber"
                   value={formData.phoneNumber}
                   onChange={handleChange}
+                  placeholder="1234567890"
                   required
-                  disabled={loading}
-                  pattern="[0-9]{10}"
-                  title="Please enter a 10-digit phone number"
                 />
               </div>
             </div>
-
-            <div className="col-12">
+            <div className="col">
               <div className="form-group">
-                <label htmlFor="street">Street Address</label>
+                <label>Social Security Number</label>
                 <input
                   type="text"
                   className="form-control"
-                  id="street"
-                  name="address.street"
-                  value={formData.address.street}
+                  name="ssn"
+                  value={formData.ssn}
                   onChange={handleChange}
+                  placeholder="XXX-XX-XXXX"
                   required
-                  disabled={loading}
                 />
               </div>
             </div>
+          </div>
 
-            <div className="col-md-6">
+          <div className="form-group">
+            <label>Street Address</label>
+            <input
+              type="text"
+              className="form-control"
+              name="address.street"
+              value={formData.address.street}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="row">
+            <div className="col">
               <div className="form-group">
-                <label htmlFor="city">City</label>
+                <label>City</label>
                 <input
                   type="text"
                   className="form-control"
-                  id="city"
                   name="address.city"
                   value={formData.address.city}
                   onChange={handleChange}
                   required
-                  disabled={loading}
                 />
               </div>
             </div>
-
-            <div className="col-md-4">
+            <div className="col">
               <div className="form-group">
-                <label htmlFor="state">State</label>
+                <label>State</label>
                 <input
                   type="text"
-                  className="form-control"
-                  id="state"
+                  className="form-control form-control-short"
                   name="address.state"
                   value={formData.address.state}
                   onChange={handleChange}
+                  placeholder="XX"
+                  maxLength={2}
                   required
-                  disabled={loading}
                 />
               </div>
             </div>
-
-            <div className="col-md-2">
+            <div className="col">
               <div className="form-group">
-                <label htmlFor="zipCode">ZIP Code</label>
+                <label>ZIP Code</label>
                 <input
                   type="text"
-                  className="form-control"
-                  id="zipCode"
+                  className="form-control form-control-medium"
                   name="address.zipCode"
                   value={formData.address.zipCode}
                   onChange={handleChange}
+                  placeholder="12345"
                   required
-                  disabled={loading}
                 />
               </div>
             </div>
+          </div>
 
-            <div className="col-md-8">
+          <div className="row">
+            <div className="col">
               <div className="form-group">
-                <label htmlFor="cardNumber">Card Number</label>
+                <label>Card Number</label>
                 <input
                   type="text"
                   className="form-control"
-                  id="cardNumber"
                   name="creditCardDetails.cardNumber"
                   value={formData.creditCardDetails.cardNumber}
                   onChange={handleChange}
+                  placeholder="1234567890123456"
                   required
-                  disabled={loading}
-                  pattern="[0-9]{16}"
-                  title="Please enter a 16-digit card number"
                 />
               </div>
             </div>
-
-            <div className="col-md-4">
+            <div className="col">
               <div className="form-group">
-                <label htmlFor="expiryDate">Expiry Date (MM/YY)</label>
+                <label>Expiry Date</label>
                 <input
                   type="text"
-                  className="form-control"
-                  id="expiryDate"
+                  className="form-control form-control-medium"
                   name="creditCardDetails.expiryDate"
                   value={formData.creditCardDetails.expiryDate}
                   onChange={handleChange}
-                  required
-                  disabled={loading}
                   placeholder="MM/YY"
-                  pattern="(0[1-9]|1[0-2])\/([0-9]{2})"
-                  title="Please enter expiry date in MM/YY format"
+                  required
                 />
               </div>
             </div>
@@ -319,14 +318,10 @@ const Signup = () => {
 
           <button
             type="submit"
-            className="btn btn-primary auth-button mt-4"
+            className="btn btn-primary"
             disabled={loading}
           >
-            {loading ? (
-              <div className="loading-spinner" />
-            ) : (
-              'Sign Up'
-            )}
+            {loading ? 'Creating Account...' : 'Sign Up'}
           </button>
 
           <Link to="/login" className="auth-link">

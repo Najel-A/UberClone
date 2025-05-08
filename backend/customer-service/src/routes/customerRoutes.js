@@ -8,6 +8,8 @@ router.post('/customers', customerController.createCustomer);
 router.post('/customers/login', customerController.loginCustomer);
 router.delete('/customers/:id', customerController.deleteCustomer);
 router.get('/customers', customerController.getAllCustomers);
+router.get('/customers/:id', customerController.getCustomer);
+router.put('/customers/:id', customerController.updateCustomer);
 router.post('/customers/logout', customerController.logoutCustomer);
 
 // Business logic routes
