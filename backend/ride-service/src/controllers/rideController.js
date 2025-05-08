@@ -2,9 +2,36 @@ const RideService = require("../services/RideService");
 const LocationService = require("../services/LocationService");
 const PricingService = require("../services/PricingService");
 const { emitRideEvent } = require("../events/rideKafka/rideProducer");
+const { emitRideRequested } = require("../events/ride-requested/rideRequestProducer");
 const redisClient = require("../config/redis");
 
 class RideController {
+  static async requestRide(req, res, next) {
+    try {
+      const rideData = req.body;
+      console.log("Received ride request:", rideData);
+      if (
+        !rideData.customerId ||
+        !rideData.pickupLocation ||
+        !rideData.dropoffLocation ||
+        !rideData.dateTime ||
+        !rideData.passenger_count
+      ) {
+        return res
+          .status(400)
+          .json({ message: "Missing required ride information" });
+      }
+
+      emitRideRequested(rideData);
+      res
+        .status(202)
+        .json({ message: "Ride request received and being processed" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+
   static async createRide(req, res, next) {
     try {
       const rideData = req.body;
