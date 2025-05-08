@@ -5,6 +5,11 @@ const RideController = require("../controllers/rideController");
 // Create a new ride
 router.post("/", RideController.createRideRequest);
 
+// Get Rides Availble
+router.get("/nearby", RideController.getNearbyRides);
+
+router.patch("/:id", RideController.assignRide);
+
 // Update an existing ride
 router.put("/:id", RideController.updateRide);
 

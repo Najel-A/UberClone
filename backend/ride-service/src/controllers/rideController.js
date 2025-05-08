@@ -2,11 +2,20 @@ const RideService = require("../services/RideService");
 const LocationService = require("../services/LocationService");
 const { emitRideEvent } = require("../events/rideRequest/rideRequestProducer");
 const redisClient = require("../config/redis");
+const Ride = require('../models/Ride');
 
 
 exports.createRideRequest = async (req, res, next) => {
   try {
     const rideData = req.body;
+    // Needed for MongoDB geospatial
+    rideData.pickupPoint = {
+      type: 'Point',
+      coordinates: [
+        rideData.pickupLocation.longitude,
+        rideData.pickupLocation.latitude
+      ]
+    };
     console.log("Received ride request:", rideData);
 
     if (
@@ -14,20 +23,63 @@ exports.createRideRequest = async (req, res, next) => {
       !rideData.pickupLocation ||
       !rideData.dropoffLocation ||
       !rideData.dateTime ||
-      !rideData.passenger_count
+      !rideData.passenger_count ||
+      !rideData.price
     ) {
       return res.status(400).json({ message: "Missing required ride information" });
     }
     // save to db 
     await emitRideEvent(rideData);
+    RideService.createRide(rideData);
     res.status(202).json({ message: "Ride request received and being processed" });
   } catch (error) {
     next(error);
   }
 };
 
+// Match Driver function
+exports.getNearbyRides = async (req, res) => {
+  const { latitude, longitude } = req.query;
 
-//TODO: ADD DRVIER to RIDE
+  if (!latitude || !longitude) {
+    return res.status(400).json({ error: 'Latitude and longitude are required.' });
+  }
+
+  try {
+    const rides = await Ride.find({
+      driverId: null, // ride not yet accepted
+      pickupPoint: {
+        $near: {
+          $geometry: {
+            type: 'Point',
+            coordinates: [parseFloat(longitude), parseFloat(latitude)],
+          },
+          $maxDistance: 16093 // 10 miles in meters
+        }
+      }
+    });
+
+    res.json(rides);
+  } catch (error) {
+    console.error('Error fetching nearby rides:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+exports.assignRide = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const driverId = req.body;
+
+    RideService.assignRide(id, driverId);
+    res.status(200).json({message: "Ride Accepted Confirmed"})
+  } catch (error){
+    next(error);
+  }
+}
+
+
+// ToDO: Send updates to the ride via method or WS?
 exports.updateRide = async (req, res, next) => {
   try {
     const { id } = req.params;

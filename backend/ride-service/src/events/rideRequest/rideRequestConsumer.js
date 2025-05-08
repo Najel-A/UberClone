@@ -18,7 +18,7 @@ exports.startRideRequestConsumer = async () => {
       },
     });
 
-    console.log("✅ Test consumer is running and subscribed to 'test-topic'");
+    console.log("✅ Test consumer is running and subscribed to 'ride.requests'");
   } catch (err) {
     console.error("❌ Failed to start test consumer:", err.message);
   }
