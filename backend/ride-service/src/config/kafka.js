@@ -1,26 +1,35 @@
 const { Kafka } = require('kafkajs');
+const path =  require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+
 
 // Kafka client configuration
 const kafka = new Kafka({
   clientId: 'ride-service',
-  brokers: process.env.KAFKA_BROKERS?.split(',') || ['localhost:29092'],
+  brokers: [process.env.KAFKA_BROKERS],
   retry: {
     initialRetryTime: 100,
     retries: 8
   }
 });
 
-// Kafka admin and producer instances
 const admin = kafka.admin();
 const producer = kafka.producer();
 const consumers = []; // Track all consumers created
 
+// Consumer groups
+const createConsumer = (groupId) => {
+  const consumer = kafka.consumer({
+    groupId: groupId,
+  });
+  return consumer;
+};
+const consumerGroups = {
+  RIDE_EVENTS: 'ride-service-ride-events',
+};
+// Topics
 const topics = {
-  RIDE_REQUESTED: 'ride.requested',
-  RIDE_ASSIGNED: 'ride.assigned',
-  RIDE_UPDATED: 'ride.updated',
-  RIDE_COMPLETED: 'ride.completed',
-  BILLING_EVENTS: 'billing.events'
+  RIDE_REQUESTS: 'ride.requested',
 };
 
 const consumerGroups = {
@@ -98,6 +107,7 @@ module.exports = {
   producer,
   admin,
   topics,
+  createConsumer,
   consumerGroups,
   initializeKafka,
   shutdownKafka,
