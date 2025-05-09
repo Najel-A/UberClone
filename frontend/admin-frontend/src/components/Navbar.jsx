@@ -3,10 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const isLoggedIn = !!localStorage.getItem("adminToken");
+  const isLoggedIn = !!localStorage.getItem("admin_token");
 
   const handleLogout = () => {
-    localStorage.removeItem("adminToken");
+    localStorage.removeItem("admin_token");
     navigate("/admin/login");
   };
 

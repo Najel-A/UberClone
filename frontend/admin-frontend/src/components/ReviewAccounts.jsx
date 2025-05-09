@@ -7,8 +7,12 @@ const ReviewAccounts = () => {
   const [customers, setCustomers] = useState([]);
 
   useEffect(() => {
-    axios.get("/api/drivers").then((res) => setDrivers(res.data));
-    axios.get("/api/customers").then((res) => setCustomers(res.data));
+    axios
+      .get(process.env.REACT_APP_ADMIN_BACKEND_PORT_URL + "/api/drivers")
+      .then((res) => setDrivers(res.data));
+    axios
+      .get(process.env.REACT_APP_ADMIN_BACKEND_PORT_URL + "/api/customers")
+      .then((res) => setCustomers(res.data));
   }, []);
 
   return (

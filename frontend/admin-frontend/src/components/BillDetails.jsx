@@ -8,7 +8,9 @@ const BillDetails = () => {
   const [bill, setBill] = useState(null);
 
   useEffect(() => {
-    axios.get(`/api/bills/${id}`).then((res) => setBill(res.data));
+    axios
+      .get(process.env.REACT_APP_ADMIN_BACKEND_PORT_URL + `/api/bills/${id}`)
+      .then((res) => setBill(res.data));
   }, [id]);
 
   if (!bill) return <p>Loading...</p>;

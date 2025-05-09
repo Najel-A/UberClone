@@ -11,9 +11,17 @@ require("dotenv").config();
 const app = express();
 app.use(
   cors({
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST"],
-    credentials: true, // optional: if you're using cookies or sessions
+    origin: "*",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "Cookie",
+      "Origin",
+      "Accept",
+    ],
+    exposedHeaders: ["set-cookie"],
   })
 );
 app.use(express.json());
