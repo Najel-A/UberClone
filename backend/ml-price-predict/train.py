@@ -13,6 +13,11 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 data = pd.read_csv('uber.csv')
 data = data.drop(columns=['Unnamed: 0'], errors='ignore')
 data = data.dropna()
+data = data[data["passenger_count"] <= 10]
+
+data['large_group_size'] = data['passenger_count'].apply(
+    lambda x: 1 if x >= 5 else 0
+)
 
 valid_longitude_range = (-180, 180)
 valid_latitude_range = (-90, 90)
@@ -31,9 +36,9 @@ data['distance'] = [
     for pickup, dropoff in zip(pickup_coords, dropoff_coords)
 ]
 
-data['pickup_datetime'] = pd.to_datetime(data['pickup_datetime'], errors='coerce')
-data['hour'] = data['pickup_datetime'].dt.hour 
-data['day_of_week'] = data['pickup_datetime'].dt.dayofweek 
+# data['pickup_datetime'] = pd.to_datetime(data['pickup_datetime'], errors='coerce')
+# data['hour'] = data['pickup_datetime'].dt.hour 
+# data['day_of_week'] = data['pickup_datetime'].dt.dayofweek 
 
 data = data.drop(columns=['key', 'pickup_datetime'], errors='ignore')
 
@@ -45,9 +50,7 @@ features = ['distance',
             'pickup_latitude', 
             'dropoff_longitude', 
             'dropoff_latitude', 
-            'passenger_count', 
-            'hour', 
-            'day_of_week']
+            'large_group_size']
 
 X = data[features]
 y = data['fare_amount']
@@ -64,37 +67,22 @@ test_cases = [
     # Same location
     {'pickup_coords': (40.748817, -73.985428), 
      'dropoff_coords': (40.748900, -73.985500), 
-     'passenger_count': 1,
-     'hour': 12,
-     'day_of_week': 0},
+     'large_group_size': 0},
     
     # Medium distance
     {'pickup_coords': (40.748817, -73.985428), 
      'dropoff_coords': (40.730610, -73.935242), 
-     'passenger_count': 1,
-     'hour': 9,
-     'day_of_week': 0},
-
-    # Medium distance different time
-    {'pickup_coords': (40.748817, -73.985428), 
-     'dropoff_coords': (40.730610, -73.935242), 
-     'passenger_count': 1,
-     'hour': 17,
-     'day_of_week': 4},
+     'large_group_size': 0},
    
     # Medium distance (San Francisco coordinates)
-    #  {'pickup_coords': (37.774929, -122.419416), 
-    #   'dropoff_coords': (37.784929, -122.409416), 
-    #   'passenger_count': 1,
-    #   'hour': 12,
-    #   'day_of_week': 0},
+     {'pickup_coords': (37.774929, -122.419416), 
+      'dropoff_coords': (37.759703, -122.428093), 
+      'large_group_size': 0},
     
      # Long distance
      {'pickup_coords': (40.748817, -73.985428), 
       'dropoff_coords': (40.641311, -73.778139), 
-      'passenger_count': 1,
-      'hour': 12,
-      'day_of_week': 0},
+      'large_group_size': 0},
 ]
 
 for i, case in enumerate(test_cases):
@@ -108,9 +96,7 @@ for i, case in enumerate(test_cases):
         'pickup_latitude': [pickup_coords[0]],
         'dropoff_longitude': [dropoff_coords[1]],
         'dropoff_latitude': [dropoff_coords[0]],
-        'passenger_count': [case['passenger_count']],
-        'hour': [case['hour']],
-        'day_of_week': [case['day_of_week']]
+        'large_group_size': [case['large_group_size']],
     })
 
     predicted_fare = model.predict(test_case)

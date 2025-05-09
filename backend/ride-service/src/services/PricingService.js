@@ -1,56 +1,58 @@
-const axios = require('axios');
-const GeoUtils = require('../utils/geoUtils');
-const { CircuitBreaker } = require('../utils/circuitBreaker');
+const axios = require("axios");
+const dayjs = require("dayjs");
+const utc = require("dayjs/plugin/utc");
+const customParseFormat = require("dayjs/plugin/customParseFormat");
+const CircuitBreaker = require("../utils/circuitBreaker");
+
+dayjs.extend(utc);
+dayjs.extend(customParseFormat);
 
 // Circuit breaker configuration for ML service
 const mlServiceCircuitBreaker = new CircuitBreaker({
-  name: 'ml-price-predict',
-  timeout: 3000, // 3 seconds timeout
+  name: "ml-price-predict",
+  timeout: 3000,
   errorThresholdPercentage: 50,
-  resetTimeout: 30000, // 30 seconds before trying again
+  resetTimeout: 30000,
 });
 
 class PricingService {
-  /**
-   * Calculate ride price by calling the FastAPI service
-   * @param {Object} rideDetails - Ride details including pickup/dropoff locations, time, etc.
-   * @returns {Promise<Object>} - Price details including base, surge, and total
-   */
   static async calculateRidePrice(rideDetails) {
-    const fastApiUrl = process.env.FASTAPI_PRICE_URL || 'http://localhost:8000/calculate-price';
+    const fastApiUrl =
+      process.env.FASTAPI_PRICE_URL || "http://localhost:8000/predict";
+
+    const formattedDateTime = dayjs(rideDetails.dateTime)
+      .utc()
+      .format("YYYY-MM-DD HH:mm:ss.SSSSSS");
 
     const requestData = {
-      pickup_location: rideDetails.pickupLocation,
-      dropoff_location: rideDetails.dropoffLocation,
-      estimated_time: rideDetails.estimatedTime,
-      request_time: rideDetails.requestTime,
+      pickup_latitude: rideDetails.pickupLocation.latitude,
+      pickup_longitude: rideDetails.pickupLocation.longitude,
+      dropoff_latitude: rideDetails.dropoffLocation.latitude,
+      dropoff_longitude: rideDetails.dropoffLocation.longitude,
+      passenger_count: rideDetails.passenger_count,
+      pickup_datetime: formattedDateTime,
     };
 
     try {
-      // Use circuit breaker for resilient calls
       const response = await mlServiceCircuitBreaker.call(() =>
         axios.post(fastApiUrl, requestData, {
           timeout: 2000,
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         })
       );
 
-      return {
-        basePrice: response.data.base_price,
-        surgeMultiplier: response.data.surge_multiplier,
-        finalPrice: response.data.final_price,
-        currency: response.data.currency || 'USD',
-        priceComponents: response.data.price_components || {},
-        timestamp: new Date().toISOString(),
-      };
+      return response.data.predicted_fare;
     } catch (error) {
-      console.error('FastAPI price calculation failed', error);
-      throw new Error('Price calculation service unavailable');
+      console.error("FastAPI price calculation failed:", {
+        message: error.message,
+        rideDetails: requestData,
+      });
+
+      throw new Error("Price calculation service unavailable");
     }
   }
 }
 
 module.exports = PricingService;
-
