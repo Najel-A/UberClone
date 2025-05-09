@@ -1,28 +1,99 @@
-import React from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import React, { useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  Navigate,
+} from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchCurrentDriver } from "./redux/slices/authSlice";
 import Navbar from "./components/Navbar";
 import CreateDriver from "./components/CreateDriver";
-import DeleteDriver from "./components/DeleteDriver";
-import ListDrivers from "./components/ListDrivers";
+import Dashboard from "./components/Dashboard";
+import Login from "./components/Login";
 import UpdateDriver from "./components/UpdateDriver";
-import SearchDriver from "./components/SearchDriver";
 import DriverInfo from "./components/DriverInfo";
 import DriverIntroVideo from "./components/DriverIntroVideo";
+import "./App.css";
+
+// Protected route component
+const PrivateRoute = ({ children }) => {
+  const { isAuthenticated, loading } = useSelector((state) => state.auth);
+
+  if (loading) {
+    return <div className="text-center p-5">Loading...</div>;
+  }
+
+  return isAuthenticated ? children : <Navigate to="/login" />;
+};
 
 function App() {
+  const dispatch = useDispatch();
+  const { driverId, token } = useSelector((state) => state.auth);
+
+  // Check authentication on app load
+  useEffect(() => {
+    if (driverId && token) {
+      dispatch(fetchCurrentDriver(driverId));
+    }
+  }, [dispatch, driverId, token]);
+
   return (
     <Router>
-      <div>
+      <div className="d-flex flex-column min-vh-100">
         <Navbar />
-        <Routes>
-          <Route path="/create" element={<CreateDriver />} />
-          <Route path="/delete" element={<DeleteDriver />} />
-          <Route path="/list" element={<ListDrivers />} />
-          <Route path="/update" element={<UpdateDriver />} />
-          <Route path="/search" element={<SearchDriver />} />
-          <Route path="/info" element={<DriverInfo />} />
-          <Route path="/intro" element={<DriverIntroVideo />} />
-        </Routes>
+        <div className="flex-grow-1">
+          <Routes>
+            {/* Public routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<CreateDriver />} />
+
+            {/* Protected routes */}
+            <Route
+              path="/dashboard"
+              element={
+                <PrivateRoute>
+                  <Dashboard />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <PrivateRoute>
+                  <DriverInfo />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/update-profile"
+              element={
+                <PrivateRoute>
+                  <UpdateDriver />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/intro-video"
+              element={
+                <PrivateRoute>
+                  <DriverIntroVideo />
+                </PrivateRoute>
+              }
+            />
+
+            {/* Default redirect */}
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </div>
+        <footer className="text-center py-3 mt-auto">
+          <div className="container">
+            <span className="text-muted">
+              © {new Date().getFullYear()} Uber Driver
+            </span>
+          </div>
+        </footer>
       </div>
     </Router>
   );
