@@ -85,6 +85,17 @@ uber-clone/
 
 ## Development Setup
 
+
+## Docker setup
+```text
+touch .env (Add the following)
+ADMIN_SERVICE_PORT = <Port>
+BILLING_SERVICE_PORT = <Port>
+CUSTOMER_SERVICE_PORT = <Port>
+DRIVER_SERVICE_PORT = <Port>
+KAFKA_HOST = <localhost or host.docker.internal>
+
+
 ```bash
 # Start all services locally
 docker-compose up -d

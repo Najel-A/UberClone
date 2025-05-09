@@ -1,4 +1,6 @@
 .env
+.env.docker
 /node_modules
 /uploads
 package-lock.json
+.env.docker
