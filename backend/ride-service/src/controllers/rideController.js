@@ -38,100 +38,100 @@ exports.createRideRequest = async (req, res, next) => {
   }
 };
 
-// Match Driver function
-exports.getNearbyRides = async (req, res) => {
-  const { latitude, longitude } = req.query;
+// // Match Driver function
+// exports.getNearbyRides = async (req, res) => {
+//   const { latitude, longitude } = req.query;
 
-  if (!latitude || !longitude) {
-    return res.status(400).json({ error: 'Latitude and longitude are required.' });
-  }
+//   if (!latitude || !longitude) {
+//     return res.status(400).json({ error: 'Latitude and longitude are required.' });
+//   }
 
-  try {
-    const rides = await Ride.find({
-      driverId: null, // ride not yet accepted
-      pickupPoint: {
-        $near: {
-          $geometry: {
-            type: 'Point',
-            coordinates: [parseFloat(longitude), parseFloat(latitude)],
-          },
-          $maxDistance: 16093 // 10 miles in meters
-        }
-      }
-    });
+//   try {
+//     const rides = await Ride.find({
+//       driverId: null, // ride not yet accepted
+//       pickupPoint: {
+//         $near: {
+//           $geometry: {
+//             type: 'Point',
+//             coordinates: [parseFloat(longitude), parseFloat(latitude)],
+//           },
+//           $maxDistance: 16093 // 10 miles in meters
+//         }
+//       }
+//     });
 
-    res.json(rides);
-  } catch (error) {
-    console.error('Error fetching nearby rides:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
+//     res.json(rides);
+//   } catch (error) {
+//     console.error('Error fetching nearby rides:', error);
+//     res.status(500).json({ error: 'Internal server error' });
+//   }
+// };
 
-exports.assignRide = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const driverId = req.body;
+// exports.assignRide = async (req, res, next) => {
+//   try {
+//     const { id } = req.params;
+//     const driverId = req.body;
 
-    RideService.assignRide(id, driverId);
-    res.status(200).json({message: "Ride Accepted Confirmed"})
-  } catch (error){
-    next(error);
-  }
-}
+//     RideService.assignRide(id, driverId);
+//     res.status(200).json({message: "Ride Accepted Confirmed"})
+//   } catch (error){
+//     next(error);
+//   }
+// }
 
-// Starts ride for WS
-exports.handleRideStart = async (req, res) => {
-  const { rideId, start, end } = req.body;
+// // Starts ride for WS
+// exports.handleRideStart = async (req, res) => {
+//   const { rideId, start, end } = req.body;
 
-  simulateRide(rideId, start, end); // Don't await — let it stream in background
+//   simulateRide(rideId, start, end); // Don't await — let it stream in background
 
-  res.status(200).json({ message: "Ride simulation started" });
-};
+//   res.status(200).json({ message: "Ride simulation started" });
+// };
 
 
-// ToDO: Send updates to the ride via method or WS?
-exports.updateRide = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const updateData = req.body;
+// // ToDO: Send updates to the ride via method or WS?
+// exports.updateRide = async (req, res, next) => {
+//   try {
+//     const { id } = req.params;
+//     const updateData = req.body;
 
-    if (!id) {
-      return res.status(400).json({ message: "Ride ID is required" });
-    }
+//     if (!id) {
+//       return res.status(400).json({ message: "Ride ID is required" });
+//     }
 
-    const updatedRide = await RideService.updateRide(id, updateData);
+//     const updatedRide = await RideService.updateRide(id, updateData);
 
-    if (!updatedRide) {
-      return res.status(404).json({ message: "Ride not found" });
-    }
+//     if (!updatedRide) {
+//       return res.status(404).json({ message: "Ride not found" });
+//     }
 
-    await emitRideEvent("ride.updated", updatedRide);
-    res.json(updatedRide);
-  } catch (error) {
-    next(error);
-  }
-};
+//     await emitRideEvent("ride.updated", updatedRide);
+//     res.json(updatedRide);
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
-exports.deleteRide = async (req, res, next) => {
-  try {
-    const { id } = req.params;
+// exports.deleteRide = async (req, res, next) => {
+//   try {
+//     const { id } = req.params;
 
-    if (!id) {
-      return res.status(400).json({ message: "Ride ID is required" });
-    }
+//     if (!id) {
+//       return res.status(400).json({ message: "Ride ID is required" });
+//     }
 
-    const deletedRide = await RideService.deleteRide(id);
+//     const deletedRide = await RideService.deleteRide(id);
 
-    if (!deletedRide) {
-      return res.status(404).json({ message: "Ride not found" });
-    }
+//     if (!deletedRide) {
+//       return res.status(404).json({ message: "Ride not found" });
+//     }
 
-    // await emitRideEvent('ride.cancelled', deletedRide);
-    res.json({ message: "Ride deleted successfully" });
-  } catch (error) {
-    next(error);
-  }
-};
+//     // await emitRideEvent('ride.cancelled', deletedRide);
+//     res.json({ message: "Ride deleted successfully" });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
 exports.getCustomerRides = async (req, res, next) => {
   try {

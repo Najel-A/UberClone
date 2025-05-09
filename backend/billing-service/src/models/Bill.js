@@ -56,6 +56,12 @@ const Bill = sequelize.define('Bill', {
     allowNull: false,
     comment: 'ID of the customer',
   },
+  status: {
+  type: DataTypes.ENUM('completed', 'pending', 'cancelled'),
+  allowNull: false,
+  defaultValue: 'pending',
+  comment: 'Status of the transaction',
+},
 }, {
   timestamps: true, // Automatically adds `createdAt` and `updatedAt` fields
   tableName: 'bills', // Name of the table in the database
