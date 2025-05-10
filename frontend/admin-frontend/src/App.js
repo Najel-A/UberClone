@@ -20,6 +20,7 @@ import SearchBill from "./components/SearchBill";
 import BillDetails from "./components/BillDetails";
 import Signup from "./components/Signup";
 import Login from "./components/Login";
+import "./styles/common.css";
 
 function AppContent() {
   const dispatch = useDispatch();
@@ -35,88 +36,105 @@ function AppContent() {
 
   return (
     <Router>
-      <Navbar />
-      <div className="container mt-4">
-        <Routes>
-          <Route
-            path="/login"
-            element={
-              !isAuthenticated ? <Login /> : <Navigate to="/review-accounts" />
-            }
-          />
-          <Route
-            path="/signup"
-            element={
-              !isAuthenticated ? <Signup /> : <Navigate to="/review-accounts" />
-            }
-          />
+      <div
+        style={{
+          minHeight: "100vh",
+          backgroundColor: "var(--uber-light-gray)",
+        }}
+      >
+        <Navbar />
+        <div className="admin-container">
+          <Routes>
+            <Route
+              path="/login"
+              element={
+                !isAuthenticated ? (
+                  <Login />
+                ) : (
+                  <Navigate to="/review-accounts" />
+                )
+              }
+            />
+            <Route
+              path="/signup"
+              element={
+                !isAuthenticated ? (
+                  <Signup />
+                ) : (
+                  <Navigate to="/review-accounts" />
+                )
+              }
+            />
 
-          {/* Protected Routes */}
-          <Route
-            path="/add-driver"
-            element={
-              <Protected>
-                <AddDriver />
-              </Protected>
-            }
-          />
-          <Route
-            path="/add-customer"
-            element={
-              <Protected>
-                <AddCustomer />
-              </Protected>
-            }
-          />
-          <Route
-            path="/review-accounts"
-            element={
-              <Protected>
-                <ReviewAccounts />
-              </Protected>
-            }
-          />
-          <Route
-            path="/statistics"
-            element={
-              <Protected>
-                <Statistics />
-              </Protected>
-            }
-          />
-          <Route
-            path="/charts"
-            element={
-              <Protected>
-                <Charts />
-              </Protected>
-            }
-          />
-          <Route
-            path="/search-bill"
-            element={
-              <Protected>
-                <SearchBill />
-              </Protected>
-            }
-          />
-          <Route
-            path="/bill/:id"
-            element={
-              <Protected>
-                <BillDetails />
-              </Protected>
-            }
-          />
+            {/* Protected Routes */}
+            <Route
+              path="/add-driver"
+              element={
+                <Protected>
+                  <AddDriver />
+                </Protected>
+              }
+            />
+            <Route
+              path="/add-customer"
+              element={
+                <Protected>
+                  <AddCustomer />
+                </Protected>
+              }
+            />
+            <Route
+              path="/review-accounts"
+              element={
+                <Protected>
+                  <ReviewAccounts />
+                </Protected>
+              }
+            />
+            <Route
+              path="/statistics"
+              element={
+                <Protected>
+                  <Statistics />
+                </Protected>
+              }
+            />
+            <Route
+              path="/charts"
+              element={
+                <Protected>
+                  <Charts />
+                </Protected>
+              }
+            />
+            <Route
+              path="/search-bill"
+              element={
+                <Protected>
+                  <SearchBill />
+                </Protected>
+              }
+            />
+            <Route
+              path="/bill/:id"
+              element={
+                <Protected>
+                  <BillDetails />
+                </Protected>
+              }
+            />
 
-          {/* Redirect root to review-accounts if authenticated, otherwise to login */}
-          <Route
-            path="/"
-            element={
-              <Navigate to={isAuthenticated ? "/review-accounts" : "/login"} />
-            }
-          />
-        </Routes>
+            {/* Redirect root to review-accounts if authenticated, otherwise to login */}
+            <Route
+              path="/"
+              element={
+                <Navigate
+                  to={isAuthenticated ? "/review-accounts" : "/login"}
+                />
+              }
+            />
+          </Routes>
+        </div>
       </div>
     </Router>
   );

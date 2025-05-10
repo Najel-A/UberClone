@@ -7,6 +7,7 @@ import {
   loginSuccess,
   loginFailure,
 } from "../store/slices/authSlice";
+import "../styles/common.css";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -37,34 +38,74 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="container mt-4">
-      <h2>Admin Login</h2>
-      {error && <div className="alert alert-danger">{error}</div>}
-      <form onSubmit={login}>
-        <div className="mb-3">
-          <label className="form-label">Email</label>
-          <input
-            className="form-control"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            type="email"
-            required
-          />
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Password</label>
-          <input
-            className="form-control"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            type="password"
-            required
-          />
-        </div>
-        <button className="btn btn-success" disabled={loading}>
-          {loading ? "Logging in..." : "Login"}
-        </button>
-      </form>
+    <div className="admin-container">
+      <div
+        className="admin-card"
+        style={{ maxWidth: "400px", margin: "4rem auto" }}
+      >
+        <h1
+          className="admin-title"
+          style={{ textAlign: "center", marginBottom: "2rem" }}
+        >
+          Admin Dashboard
+        </h1>
+        {error && (
+          <div
+            className="admin-badge admin-badge-error"
+            style={{ marginBottom: "1rem" }}
+          >
+            {error}
+          </div>
+        )}
+        <form onSubmit={login}>
+          <div style={{ marginBottom: "1.5rem" }}>
+            <label
+              style={{
+                display: "block",
+                marginBottom: "0.5rem",
+                fontWeight: "500",
+              }}
+            >
+              Email
+            </label>
+            <input
+              className="admin-input"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              type="email"
+              placeholder="Enter your email"
+              required
+            />
+          </div>
+          <div style={{ marginBottom: "2rem" }}>
+            <label
+              style={{
+                display: "block",
+                marginBottom: "0.5rem",
+                fontWeight: "500",
+              }}
+            >
+              Password
+            </label>
+            <input
+              className="admin-input"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              type="password"
+              placeholder="Enter your password"
+              required
+            />
+          </div>
+          <button
+            className="admin-button admin-button-success"
+            type="submit"
+            disabled={loading}
+            style={{ width: "100%" }}
+          >
+            {loading ? "Signing in..." : "Sign in"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
