@@ -31,7 +31,6 @@ exports.createRideRequest = async (req, res, next) => {
     }
     // save to db 
     await emitRideEvent(rideData);
-    RideService.createRide(rideData);
     res.status(202).json({ message: "Ride request received and being processed" });
   } catch (error) {
     next(error);
