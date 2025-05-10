@@ -18,6 +18,7 @@ const rideSchema = new mongoose.Schema({
     longitude: { type: Number, required: true },
     address: { type: String, required: true }
   },
+  distanceCovered: { type: Number, required: false },
   dateTime: { type: Date, required: true },
   customerId: { type: String, required: true },
   driverId: { type: String, required: false },
