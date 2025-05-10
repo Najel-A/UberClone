@@ -38,34 +38,60 @@ exports.createRideRequest = async (req, res, next) => {
   }
 };
 
-// // Match Driver function
-// exports.getNearbyRides = async (req, res) => {
-//   const { latitude, longitude } = req.query;
 
-//   if (!latitude || !longitude) {
-//     return res.status(400).json({ error: 'Latitude and longitude are required.' });
-//   }
+// Match Driver function
+exports.getNearbyRideRequests = async (req, res) => {
+  const { latitude, longitude } = req.query;
 
-//   try {
-//     const rides = await Ride.find({
-//       driverId: null, // ride not yet accepted
-//       pickupPoint: {
-//         $near: {
-//           $geometry: {
-//             type: 'Point',
-//             coordinates: [parseFloat(longitude), parseFloat(latitude)],
-//           },
-//           $maxDistance: 16093 // 10 miles in meters
-//         }
-//       }
-//     });
+  if (!latitude || !longitude) {
+    return res.status(400).json({ error: 'Latitude and longitude are required.' });
+  }
 
-//     res.json(rides);
-//   } catch (error) {
-//     console.error('Error fetching nearby rides:', error);
-//     res.status(500).json({ error: 'Internal server error' });
-//   }
-// };
+  try {
+    const rides = await Ride.find({
+      driverId: null, // ride not yet accepted
+      pickupPoint: {
+        $near: {
+          $geometry: {
+            type: 'Point',
+            coordinates: [parseFloat(longitude), parseFloat(latitude)],
+          },
+          $maxDistance: 16093 // 10 miles in meters
+        }
+      }
+    });
+
+    res.json(rides);
+  } catch (error) {
+    console.error('Error fetching nearby rides:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+exports.acceptRideRequest = async (req, res, next) => {
+  try {
+    const { id } = req.params; // ride ID
+    const { driverId } = req.body;
+
+    if (!driverId) {
+      return res.status(400).json({ message: "Driver ID is required" });
+    }
+
+    const updatedRide = await RideService.updateRide(id, { driverId });
+
+    if (!updatedRide) {
+      return res.status(404).json({ message: "Ride not found" });
+    }
+
+    res.status(200).json({ message: "Ride accepted", ride: updatedRide });
+  } catch (error) {
+    next(error);
+  }
+};
+updateRide = async (rideId, updateData) => {
+  return await Ride.findByIdAndUpdate(rideId, updateData, { new: true });
+};
+
 
 // exports.assignRide = async (req, res, next) => {
 //   try {

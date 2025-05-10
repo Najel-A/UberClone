@@ -4,7 +4,8 @@ const RideController = require("../controllers/rideController");
 
 // Create a new ride
 router.post("/", RideController.createRideRequest);
-
+router.get("/getRides", RideController.getNearbyRideRequests);
+router.post("/acceptRide/:id", RideController.acceptRideRequest);
 
 
 module.exports = router;
