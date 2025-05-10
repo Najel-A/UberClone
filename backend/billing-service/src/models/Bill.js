@@ -28,7 +28,7 @@ const Bill = sequelize.define('Bill', {
   },
   distanceCovered: {
     type: DataTypes.FLOAT,
-    allowNull: false,
+    allowNull: true,
     comment: 'Distance covered in the ride',
   },
   totalAmount: {
