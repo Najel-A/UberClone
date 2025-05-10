@@ -8,6 +8,9 @@ router.post("/create", RideController.createRideRequest);
 // Update an existing ride
 router.put("/:id", RideController.updateRide);
 
+// Assign driver to a ride
+router.put("/:id/assign", RideController.assignRide);
+
 // Delete a ride
 router.delete("/:id", RideController.deleteRide);
 

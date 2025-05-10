@@ -31,6 +31,7 @@ class PricingService {
     try {
       // Retrieve the number of ride requests from MongoDB
       const rideRequests = await this.getRideRequestCount();
+      rideRequests += 1; // Include the current ride request
       console.log("Number of ride requests:", rideRequests);
 
       // Retrieve the number of drivers from MongoDB
@@ -73,7 +74,7 @@ class PricingService {
       const database = mongoClient.db("uberclone");
       const ridesCollection = database.collection("rides");
 
-      const rideCount = await ridesCollection.countDocuments();
+      const rideCount = await ridesCollection.countDocuments({ driverId: null });
       console.log("Number of rides in the database:", rideCount);
 
       return rideCount;

@@ -78,7 +78,7 @@ exports.getNearbyRides = async (req, res) => {
 exports.assignRide = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const driverId = req.body;
+    const { driverId } = req.body;
 
     RideService.assignRide(id, driverId);
     res.status(200).json({message: "Ride Accepted Confirmed"})

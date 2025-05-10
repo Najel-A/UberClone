@@ -7,15 +7,21 @@ exports.createRide = async (rideData) => {
 
 // Used only for ride assignment
 exports.assignRide = async (rideId, driverId) => {
-  const result = await Ride.updateOne(
-    { _id: rideId, driverId: null }, // Only update if ride is unclaimed
-    { $set: { driverId: driverId} }
-  );
+  try {
+    const objectId = mongoose.Types.ObjectId(rideId);
 
-  if (result.modifiedCount === 1) {
-    return { success: true };
-  } else {
-    return { success: false, message: "Another driver has accepted the ride" };
+    const result = await Ride.updateOne(
+      { _id: objectId, driverId: null }, // Only update if ride is unclaimed
+      { $set: { driverId: driverId } }
+    );
+
+    if (result.modifiedCount === 1) {
+      return { success: true };
+    } else {
+      return { success: false, message: "Another driver has accepted the ride or ride does not exist" };
+    }
+  } catch (error) {
+    throw new Error("Invalid ride ID format");
   }
 };
 
