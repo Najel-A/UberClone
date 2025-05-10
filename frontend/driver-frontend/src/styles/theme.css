@@ -1,0 +1,226 @@
+/* Uber-like theme styles */
+
+:root {
+  /* Primary colors */
+  --primary-color: #000000;
+  --primary-light: #333333;
+  --primary-dark: #000000;
+  
+  /* Secondary colors */
+  --secondary-color: #06C167;  /* Uber green */
+  --secondary-light: #25D366;
+  --secondary-dark: #059452;
+  
+  /* Text colors */
+  --text-primary: #FFFFFF;
+  --text-secondary: #EEEEEE;
+  --text-muted: #BBBBBB;
+  --text-dark: #000000;
+  
+  /* Background colors */
+  --bg-primary: #000000;
+  --bg-secondary: #111111;
+  --bg-light: #222222;
+  --bg-lighter: #333333;
+  --bg-white: #FFFFFF;
+  
+  /* Status colors */
+  --success: #06C167;
+  --danger: #FF0000;
+  --warning: #FFD300;
+  --info: #4A90E2;
+  
+  /* Border radius */
+  --border-radius: 8px;
+  --border-radius-sm: 4px;
+  --border-radius-lg: 12px;
+}
+
+/* Body and background */
+body {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: 'UberMove', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* Button styles */
+.btn-primary {
+  background-color: var(--secondary-color);
+  border-color: var(--secondary-color);
+  color: var(--text-dark);
+  font-weight: 600;
+}
+
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+  background-color: var(--secondary-light) !important;
+  border-color: var(--secondary-light) !important;
+  color: var(--text-dark) !important;
+}
+
+.btn-secondary {
+  background-color: var(--bg-light);
+  border-color: var(--bg-light);
+  color: var(--text-primary);
+}
+
+.btn-secondary:hover, .btn-secondary:focus, .btn-secondary:active {
+  background-color: var(--bg-lighter) !important;
+  border-color: var(--bg-lighter) !important;
+  color: var(--text-primary) !important;
+}
+
+.btn-outline-light {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+}
+
+.btn-outline-light:hover {
+  background-color: var(--text-primary);
+  color: var(--bg-primary);
+}
+
+/* Card styles */
+.card {
+  background-color: var(--bg-light);
+  border: none;
+  border-radius: var(--border-radius);
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.card-header {
+  background-color: var(--bg-primary);
+  border-bottom: 1px solid var(--bg-lighter);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.card-title {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.card-body {
+  color: var(--text-secondary);
+}
+
+/* Navbar styles */
+.navbar-dark {
+  background-color: var(--bg-primary) !important;
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.navbar-brand {
+  color: var(--text-primary) !important;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.nav-link {
+  color: var(--text-secondary) !important;
+  font-weight: 500;
+}
+
+.nav-link.active, .nav-link:hover {
+  color: var(--secondary-color) !important;
+}
+
+/* Form styles */
+.form-control {
+  background-color: var(--bg-lighter);
+  border: 1px solid var(--bg-lighter);
+  color: var(--text-primary);
+  border-radius: var(--border-radius-sm);
+}
+
+.form-control:focus {
+  background-color: var(--bg-lighter);
+  border-color: var(--secondary-color);
+  box-shadow: 0 0 0 0.25rem rgba(6, 193, 103, 0.25);
+  color: var(--text-primary);
+}
+
+.form-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.form-text {
+  color: var(--text-muted) !important;
+}
+
+/* Alert styles */
+.alert-success {
+  background-color: rgba(6, 193, 103, 0.2);
+  border-color: rgba(6, 193, 103, 0.5);
+  color: var(--success);
+}
+
+.alert-danger {
+  background-color: rgba(255, 0, 0, 0.2);
+  border-color: rgba(255, 0, 0, 0.5);
+  color: var(--danger);
+}
+
+.alert-info {
+  background-color: rgba(74, 144, 226, 0.2);
+  border-color: rgba(74, 144, 226, 0.5);
+  color: var(--info);
+}
+
+/* Badge styles */
+.badge.bg-success {
+  background-color: var(--success) !important;
+  color: var(--text-dark);
+}
+
+.badge.bg-secondary {
+  background-color: var(--bg-lighter) !important;
+  color: var(--text-muted);
+}
+
+/* List group styles */
+.list-group-item {
+  background-color: var(--bg-light);
+  border-color: var(--bg-lighter);
+  color: var(--text-secondary);
+}
+
+/* Text colors */
+.text-muted {
+  color: var(--text-muted) !important;
+}
+
+.text-primary {
+  color: var(--secondary-color) !important;
+}
+
+.text-light {
+  color: var(--text-primary) !important;
+}
+
+.text-danger {
+  color: var(--danger) !important;
+}
+
+.text-warning {
+  color: var(--warning) !important;
+}
+
+/* Footer */
+footer {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-muted);
+}
+
+/* Custom Uber-like map container */
+.map-container {
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  border: 1px solid var(--bg-lighter);
+}
+
+/* Rating stars */
+.rating-stars {
+  color: var(--warning);
+  font-size: 1.25rem;
+} 
