@@ -1,5 +1,6 @@
 const RideService = require("../services/RideService");
 const LocationService = require("../services/LocationService");
+const PricingService = require("../services/PricingService");
 const { emitRideEvent } = require("../events/rideRequest/rideRequestProducer");
 const redisClient = require("../config/redis");
 const Ride = require('../models/Ride');
@@ -23,14 +24,22 @@ exports.createRideRequest = async (req, res, next) => {
       !rideData.pickupLocation ||
       !rideData.dropoffLocation ||
       !rideData.dateTime ||
-      !rideData.passenger_count ||
-      !rideData.price
+      !rideData.passenger_count
     ) {
       return res.status(400).json({ message: "Missing required ride information" });
     }
-    // save to db 
+
+    const predictedPrice = await PricingService.calculateRidePrice(rideData);
+
+    if (!predictedPrice) {
+      return res.status(500).json({ message: "Failed to calculate ride price" });
+    }
+    
+    rideData.price = predictedPrice;
+
     await emitRideEvent(rideData);
     RideService.createRide(rideData);
+
     res.status(202).json({ message: "Ride request received and being processed" });
   } catch (error) {
     next(error);
@@ -86,7 +95,6 @@ exports.handleRideStart = async (req, res) => {
 
   res.status(200).json({ message: "Ride simulation started" });
 };
-
 
 // ToDO: Send updates to the ride via method or WS?
 exports.updateRide = async (req, res, next) => {

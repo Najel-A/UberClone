@@ -16,6 +16,8 @@ services:
       - ./backend/billing-service/.env.docker
     ports:
       - "${BILLING_SERVICE_PORT}:${BILLING_SERVICE_PORT}"
+    depends_on:
+      - mysql
   
   customer-service:
     build:
@@ -34,6 +36,26 @@ services:
       - ./backend/driver-service/.env.docker
     ports:
       - "${DRIVER_SERVICE_PORT}:${DRIVER_SERVICE_PORT}"
+  
+  ride-service:
+    build:
+      context: ./backend/ride-service
+    container_name: ride-service
+    env_file:
+      - ./backend/ride-service/.env.docker
+    ports:
+      - "${RIDE_SERVICE_PORT}:${RIDE_SERVICE_PORT}"
+    depends_on:
+      - redis
+    environment:
+      - REDIS_URL=redis://redis:6379
+
+  ml-price-predict:
+    build:
+      context: ./backend/ml-price-predict
+    container_name: ml-price-predict
+    ports:
+      - "8000:8000"
   
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
@@ -73,10 +95,32 @@ services:
       - redis-data:/data
     command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
 
+  mongodb:
+    image: mongo:8
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  mysql:
+    image: mysql:9
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
 
 volumes:
   kafka-data:
   redis-data:
+  mongo-data:
+  mysql-data:
 
 
   

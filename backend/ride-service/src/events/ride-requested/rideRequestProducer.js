@@ -2,7 +2,11 @@ const { producer, topics, connectProducer } = require("../../config/kafka");
 
 const emitRideRequested = async (rideData) => {
   try {
-    // await connectProducer(); // Connect if not connected
+    if (!producer.isConnected()) {
+      console.warn("Kafka producer is not connected. Attempting to reconnect...");
+      await producer.connect();
+    }
+
     await producer.send({
       topic: topics.RIDE_REQUESTED,
       messages: [

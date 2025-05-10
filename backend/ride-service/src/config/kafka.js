@@ -17,22 +17,13 @@ const admin = kafka.admin();
 const producer = kafka.producer();
 const consumers = []; // Track all consumers created
 
-// Consumer groups
-const createConsumer = (groupId) => {
-  const consumer = kafka.consumer({
-    groupId: groupId,
-  });
-  return consumer;
-};
-const consumerGroups = {
-  RIDE_EVENTS: 'ride-service-ride-events',
-};
 // Topics
 const topics = {
   RIDE_REQUESTS: 'ride.requested',
 };
 
 const consumerGroups = {
+  RIDE_EVENTS: 'ride-service-ride-events',
   RIDE_SERVICE: 'ride-service-group',
   BILLING_SERVICE: 'billing-service-group',
   LOCATION_TRACKER: 'location-tracker-group'
@@ -83,8 +74,12 @@ async function initializeKafka() {
 }
 
 async function connectProducer() {
-  await producer.connect();
-  console.log('Kafka Producer Connected');
+  try {
+    await producer.connect();
+    console.log("✅ Kafka producer connected");
+  } catch (error) {
+    console.error("❌ Error connecting Kafka producer:", error);
+  }
 }
 
 // Graceful shutdown: disconnect producer and all consumers
@@ -111,6 +106,6 @@ module.exports = {
   consumerGroups,
   initializeKafka,
   shutdownKafka,
-  createConsumer,
+  // createConsumer,
   connectProducer,
 };

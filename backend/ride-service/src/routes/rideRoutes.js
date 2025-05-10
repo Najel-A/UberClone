@@ -2,11 +2,8 @@ const express = require("express");
 const router = express.Router();
 const RideController = require("../controllers/rideController");
 
-// Request a ride
-router.post("/request", RideController.requestRide);
-
 // Create a new ride
-router.post("/create", RideController.createRide);
+router.post("/create", RideController.createRideRequest);
 
 // Update an existing ride
 router.put("/:id", RideController.updateRide);

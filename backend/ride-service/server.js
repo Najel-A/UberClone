@@ -22,6 +22,9 @@ const startServer = async () => {
     // Initialize Kafka (creates topics, connects producer)
     await initializeKafka();
 
+    // Connect Kafka producer
+    await connectProducer();
+
     // Start Kafka consumer
     await startConsumer.startRideRequestConsumer(); // ✅ This runs your consumer on server start
 
