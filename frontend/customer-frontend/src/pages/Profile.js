@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useSelector, useDispatch } from 'react-redux';
+import { setUser } from '../slices/userSlice';
 import axios from 'axios';
 import '../styles/dashboard.css';
 import { FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt, FaCreditCard } from 'react-icons/fa';
 
 const Profile = () => {
-  const { user } = useAuth();
+  const user = useSelector((state) => state.user.user);
+  const dispatch = useDispatch();
   const [profile, setProfile] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -14,6 +16,7 @@ const Profile = () => {
     firstName: '',
     lastName: '',
     phoneNumber: '',
+    email: '',
     address: {
       street: '',
       city: '',
@@ -27,27 +30,36 @@ const Profile = () => {
   });
 
   useEffect(() => {
-    fetchProfile();
-  }, []);
+    if (user) {
+      fetchProfile();
+    }
+  }, [user]);
 
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:3000/api/customers/${user.id}`);
-      setProfile(response.data);
+      const response = await axios.get('http://localhost:3000/api/customers');
+      const customer = response.data.find(c => c._id === user.id);
+      if (!customer) {
+        setError('Profile not found');
+        setProfile(null);
+        return;
+      }
+      setProfile(customer);
       setFormData({
-        firstName: response.data.firstName,
-        lastName: response.data.lastName,
-        phoneNumber: response.data.phoneNumber,
+        firstName: customer.firstName,
+        lastName: customer.lastName,
+        phoneNumber: customer.phoneNumber,
+        email: customer.email,
         address: {
-          street: response.data.address.street,
-          city: response.data.address.city,
-          state: response.data.address.state,
-          zipCode: response.data.address.zipCode
+          street: customer.address.street,
+          city: customer.address.city,
+          state: customer.address.state,
+          zipCode: customer.address.zipCode
         },
         creditCardDetails: {
-          cardNumber: response.data.creditCardDetails.cardNumber,
-          expiryDate: response.data.creditCardDetails.expiryDate
+          cardNumber: customer.creditCardDetails.cardNumber,
+          expiryDate: customer.creditCardDetails.expiryDate
         }
       });
     } catch (err) {
@@ -81,8 +93,10 @@ const Profile = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      await axios.put(`http://localhost:3000/api/customers/${user.id}`, formData);
+      const { _id, ...updateData } = formData;
+      await axios.put(`http://localhost:3000/api/customers/${user.id}`, updateData);
       setProfile({ ...profile, ...formData });
+      dispatch(setUser({ ...user, ...formData }));
       setIsEditing(false);
       setError('');
     } catch (err) {
@@ -92,6 +106,14 @@ const Profile = () => {
       setLoading(false);
     }
   };
+
+  if (!user) {
+    return (
+      <div className="dashboard-card">
+        <div className="alert alert-danger">You must be logged in to view this page.</div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -232,6 +254,18 @@ const Profile = () => {
               name="phoneNumber"
               className="form-control"
               value={formData.phoneNumber}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Email</label>
+            <input
+              type="email"
+              name="email"
+              className="form-control"
+              value={formData.email}
               onChange={handleInputChange}
               required
             />

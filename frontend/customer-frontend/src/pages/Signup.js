@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import authService from '../services/authService';
 import '../styles/auth.css';
 
 const Signup = () => {
@@ -25,7 +25,6 @@ const Signup = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signup } = useAuth();
   const navigate = useNavigate();
 
   const validateForm = () => {
@@ -105,7 +104,7 @@ const Signup = () => {
       // Use SSN as _id
       signupData._id = signupData.ssn;
       delete signupData.ssn;
-      await signup(signupData);
+      await authService.signup(signupData);
       navigate('/login');
     } catch (err) {
       setError(err.message || 'Failed to sign up. Please try again.');
@@ -168,64 +167,53 @@ const Signup = () => {
             />
           </div>
 
-          <div className="row">
-            <div className="col">
-              <div className="form-group">
-                <label>Password</label>
-                <input
-                  type="password"
-                  className="form-control"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
-            <div className="col">
-              <div className="form-group">
-                <label>Confirm Password</label>
-                <input
-                  type="password"
-                  className="form-control"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
+          <div className="form-group">
+            <label>Password</label>
+            <input
+              type="password"
+              className="form-control"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
           </div>
 
-          <div className="row">
-            <div className="col">
-              <div className="form-group">
-                <label>Phone Number</label>
-                <input
-                  type="tel"
-                  className="form-control"
-                  name="phoneNumber"
-                  value={formData.phoneNumber}
-                  onChange={handleChange}
-                  placeholder="1234567890"
-                  required
-                />
-              </div>
-            </div>
-            <div className="col">
-              <div className="form-group">
-                <label>Social Security Number</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="ssn"
-                  value={formData.ssn}
-                  onChange={handleChange}
-                  placeholder="XXX-XX-XXXX"
-                  required
-                />
-              </div>
-            </div>
+          <div className="form-group">
+            <label>Confirm Password</label>
+            <input
+              type="password"
+              className="form-control"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Phone Number</label>
+            <input
+              type="tel"
+              className="form-control"
+              name="phoneNumber"
+              value={formData.phoneNumber}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>SSN</label>
+            <input
+              type="text"
+              className="form-control"
+              name="ssn"
+              value={formData.ssn}
+              onChange={handleChange}
+              required
+              placeholder="XXX-XX-XXXX"
+            />
           </div>
 
           <div className="form-group">
@@ -259,12 +247,10 @@ const Signup = () => {
                 <label>State</label>
                 <input
                   type="text"
-                  className="form-control form-control-short"
+                  className="form-control"
                   name="address.state"
                   value={formData.address.state}
                   onChange={handleChange}
-                  placeholder="XX"
-                  maxLength={2}
                   required
                 />
               </div>
@@ -274,11 +260,10 @@ const Signup = () => {
                 <label>ZIP Code</label>
                 <input
                   type="text"
-                  className="form-control form-control-medium"
+                  className="form-control"
                   name="address.zipCode"
                   value={formData.address.zipCode}
                   onChange={handleChange}
-                  placeholder="12345"
                   required
                 />
               </div>
@@ -295,7 +280,6 @@ const Signup = () => {
                   name="creditCardDetails.cardNumber"
                   value={formData.creditCardDetails.cardNumber}
                   onChange={handleChange}
-                  placeholder="1234567890123456"
                   required
                 />
               </div>
@@ -305,12 +289,12 @@ const Signup = () => {
                 <label>Expiry Date</label>
                 <input
                   type="text"
-                  className="form-control form-control-medium"
+                  className="form-control"
                   name="creditCardDetails.expiryDate"
                   value={formData.creditCardDetails.expiryDate}
                   onChange={handleChange}
-                  placeholder="MM/YY"
                   required
+                  placeholder="MM/YY"
                 />
               </div>
             </div>
@@ -318,10 +302,14 @@ const Signup = () => {
 
           <button
             type="submit"
-            className="btn btn-primary"
+            className="btn btn-primary auth-button"
             disabled={loading}
           >
-            {loading ? 'Creating Account...' : 'Sign Up'}
+            {loading ? (
+              <div className="loading-spinner" />
+            ) : (
+              'Sign Up'
+            )}
           </button>
 
           <Link to="/login" className="auth-link">

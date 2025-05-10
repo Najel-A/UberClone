@@ -1,20 +1,23 @@
-const Redis = require('ioredis');
+const { createClient } = require("redis");
 
-const redisClient = new Redis({
-    host: process.env.REDIS_HOST || 'redis',
-    port: process.env.REDIS_PORT || 6379,
-    retryStrategy: (times) => {
-        const delay = Math.min(times * 50, 2000);
-        return delay;
-    }
+const redisPublisher = createClient({
+  url: process.env.REDIS_URL || "redis://localhost:6379",
+});
+const redisSubscriber = createClient({
+  url: process.env.REDIS_URL || "redis://localhost:6379",
 });
 
-redisClient.on('error', (err) => {
-    console.error('Redis Client Error:', err);
-});
+// Error handling
+redisPublisher.on("error", (err) => console.error("Redis Publisher Error:", err));
+redisSubscriber.on("error", (err) => console.error("Redis Subscriber Error:", err));
 
-redisClient.on('connect', () => {
-    console.log('Redis Client Connected');
-});
+// Connect both clients
+(async () => {
+  await redisPublisher.connect();
+  await redisSubscriber.connect();
+})();
 
-module.exports = redisClient;
+module.exports = {
+  redisPublisher,
+  redisSubscriber,
+};

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { setUser, logout as logoutAction } from '../slices/userSlice';
+import { setPredictedPrice, setRideHistory } from '../slices/rideSlice';
 import Profile from './Profile';
 import RideSelection from './RideSelection';
 import LocationMap from './Map';
@@ -11,8 +13,12 @@ import '../styles/dashboard.css';
 const LOCATIONIQ_API_KEY = process.env.REACT_APP_LOCATIONIQ_API_KEY;
 
 const Dashboard = () => {
-  const { user, logout } = useAuth();
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.user.user);
+  const predictedPrice = useSelector((state) => state.ride.predictedPrice);
+  const rideHistory = useSelector((state) => state.ride.rideHistory);
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('book-ride');
   const [pickupLocation, setPickupLocation] = useState({
     street: '',
@@ -27,20 +33,18 @@ const Dashboard = () => {
   const [pickupCoords, setPickupCoords] = useState(null);
   const [dropoffCoords, setDropoffCoords] = useState(null);
   const [showRideSelection, setShowRideSelection] = useState(false);
-  const [predictedPrice, setPredictedPrice] = useState(null);
-  const [rideHistory, setRideHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectingLocation, setSelectingLocation] = useState(null);
 
   useEffect(() => {
-    if (!user) {
-      navigate('/login');
+    if (!user && location.pathname !== '/login') {
+      navigate('/login', { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, location.pathname, navigate]);
 
   const handleLogout = () => {
-    logout();
+    dispatch(logoutAction());
     navigate('/login');
   };
 
@@ -49,7 +53,7 @@ const Dashboard = () => {
       const fullAddress = `${address.street}, ${address.city}, ${address.state}`;
       const encodedAddress = encodeURIComponent(fullAddress);
       const response = await axios.get(
-        `https://us1.locationiq.com/v1/search?key=${process.env.REACT_APP_LOCATIONIQ_API_KEY}&q=${encodedAddress}&format=json`
+        `https://us1.locationiq.com/v1/search?key=${LOCATIONIQ_API_KEY}&q=${encodedAddress}&format=json`
       );
 
       if (response.data && response.data[0]) {
@@ -127,21 +131,21 @@ const Dashboard = () => {
         dropoff_latitude: dropoff.lat,
         dropoff_longitude: dropoff.lng,
         passenger_count: 1,
-        pickup_datetime: formattedDateTime
+        ride_requests: 10, // <-- Add this (example value)
+        drivers: 5         // <-- Add this (example value)
       }, {
         headers: {
           'Content-Type': 'application/json'
         }
       });
 
-      const basePrice = response.data.predicted_fare;
-      setPredictedPrice({
+      const basePrice = response.data.fare;
+      dispatch(setPredictedPrice({
         uberx: basePrice,
         share: basePrice * 0.85,
         comfort_electric: basePrice * 1.2,
         uberxl: basePrice * 1.4
-      });
-      
+      }));
       setShowRideSelection(true);
     } catch (err) {
       console.error('API Error:', err);

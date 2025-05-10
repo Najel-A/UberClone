@@ -54,6 +54,33 @@ const driverSchema = new mongoose.Schema({
       max: new Date().getFullYear() + 1
     }
   },
+  currentLocation: {
+    latitude: { 
+      type: Number, 
+      required: false, 
+      min: -90, 
+      max: 90, 
+      validate: {
+        validator: (v) => !isNaN(v),
+        message: 'Latitude must be a valid number between -90 and 90'
+      }
+    },
+    longitude: { 
+      type: Number, 
+      required: false, 
+      min: -180, 
+      max: 180, 
+      validate: {
+        validator: (v) => !isNaN(v),
+        message: 'Longitude must be a valid number between -180 and 180'
+      }
+    }
+  },
+  status: {
+    type: String,
+    enum: ['available', 'unavailable'],
+    default: 'available'
+  },
   rating: {
     type: Number,
     default: 5.0,
@@ -92,6 +119,6 @@ const driverSchema = new mongoose.Schema({
 });
 
 // Indexes for faster queries
-driverSchema.index({ 'address.city': 1, 'address.state': 1 });
+driverSchema.index({ 'currentLocation.latitude': 1, 'currentLocation.longitude': 1 });
 
 module.exports = mongoose.model('Driver', driverSchema);

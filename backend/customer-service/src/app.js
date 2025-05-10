@@ -7,13 +7,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-
-// Enable CORS
-app.use(cors({
-  origin: 'http://localhost:3001',
-  credentials: true
-}));
-
+app.use(cors({ origin: '*', credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ limit: '20mb', extended: true }));
 app.use(session({
@@ -27,6 +21,7 @@ app.use(session({
   }));
 
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+
 
 app.use('/api', customerRoutes);
 
