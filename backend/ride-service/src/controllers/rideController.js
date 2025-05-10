@@ -98,50 +98,18 @@ exports.rideCompleted = async (req, res) => {
 };
 
 
-// exports.assignRide = async (req, res, next) => {
-//   try {
-//     const { id } = req.params;
-//     const driverId = req.body;
-
-//     RideService.assignRide(id, driverId);
-//     res.status(200).json({message: "Ride Accepted Confirmed"})
-//   } catch (error){
-//     next(error);
-//   }
-// }
 
 // // Starts ride for WS
-// exports.handleRideStart = async (req, res) => {
-//   const { rideId, start, end } = req.body;
+exports.handleRideStart = async (req, res) => {
+  const { rideId, start, end } = req.body;
 
-//   simulateRide(rideId, start, end); // Don't await — let it stream in background
+  simulateRide(rideId, start, end); // Don't await — let it stream in background
 
-//   res.status(200).json({ message: "Ride simulation started" });
-// };
+  res.status(200).json({ message: "Ride simulation started" });
+};
 
 
-// // ToDO: Send updates to the ride via method or WS?
-// exports.updateRide = async (req, res, next) => {
-//   try {
-//     const { id } = req.params;
-//     const updateData = req.body;
 
-//     if (!id) {
-//       return res.status(400).json({ message: "Ride ID is required" });
-//     }
-
-//     const updatedRide = await RideService.updateRide(id, updateData);
-
-//     if (!updatedRide) {
-//       return res.status(404).json({ message: "Ride not found" });
-//     }
-
-//     await emitRideEvent("ride.updated", updatedRide);
-//     res.json(updatedRide);
-//   } catch (error) {
-//     next(error);
-//   }
-// };
 
 // exports.deleteRide = async (req, res, next) => {
 //   try {
