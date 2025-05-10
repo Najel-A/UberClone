@@ -3,15 +3,18 @@ import { useSelector, useDispatch } from 'react-redux';
 import { setUser } from '../slices/userSlice';
 import axios from 'axios';
 import '../styles/dashboard.css';
-import { FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt, FaCreditCard } from 'react-icons/fa';
+import { FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt, FaCreditCard, FaTrash } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
   const user = useSelector((state) => state.user.user);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -104,6 +107,21 @@ const Profile = () => {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      setLoading(true);
+      await axios.delete(`http://localhost:3000/api/customers/${user.id}`);
+      dispatch(setUser(null)); // Clear user from Redux store
+      navigate('/login'); // Redirect to login page
+    } catch (err) {
+      setError('Failed to delete account');
+      console.error(err);
+    } finally {
+      setLoading(false);
+      setShowDeleteModal(false);
     }
   };
 
@@ -202,13 +220,47 @@ const Profile = () => {
     <div className="dashboard-card profile-card">
       <div className="card-header">
         <h3>Profile Information</h3>
-        <button
-          className="btn btn-primary"
-          onClick={() => setIsEditing(!isEditing)}
-        >
-          {isEditing ? 'Cancel' : 'Edit Profile'}
-        </button>
+        <div className="header-buttons">
+          <button
+            className="btn btn-primary"
+            onClick={() => setIsEditing(!isEditing)}
+          >
+            {isEditing ? 'Cancel' : 'Edit Profile'}
+          </button>
+          <button
+            className="btn btn-danger"
+            onClick={() => setShowDeleteModal(true)}
+          >
+            <FaTrash /> Delete Account
+          </button>
+        </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h4>Delete Account</h4>
+            <p>Are you sure you want to delete your account? This action cannot be undone.</p>
+            <div className="modal-buttons">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-danger"
+                onClick={handleDeleteAccount}
+                disabled={loading}
+              >
+                {loading ? 'Deleting...' : 'Delete Account'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {!isEditing ? (
         <div className="profile-content">

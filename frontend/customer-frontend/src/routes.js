@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
+import Trips from './pages/Trips';
 
 // Redux-based Protected Route component
 const ProtectedRoute = ({ children }) => {
@@ -46,6 +47,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/trips"
+        element={
+          <ProtectedRoute>
+            <Trips />
           </ProtectedRoute>
         }
       />

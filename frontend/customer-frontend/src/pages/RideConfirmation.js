@@ -52,11 +52,13 @@ const RideConfirmation = ({ ride, pickupLocation, dropoffLocation, distance, onC
         customerId: user.id,
         pickupLocation: {
           latitude: pickupCoords.lat,
-          longitude: pickupCoords.lng
+          longitude: pickupCoords.lng,
+          address: pickupLocation
         },
         dropoffLocation: {
           latitude: dropoffCoords.lat,
-          longitude: dropoffCoords.lng
+          longitude: dropoffCoords.lng,
+          address: dropoffLocation
         },
         dateTime: new Date().toISOString(),
         price: rideToShow.price,
@@ -80,17 +82,14 @@ const RideConfirmation = ({ ride, pickupLocation, dropoffLocation, distance, onC
       dispatch(setSelectedRide({
         ...rideToShow,
         ...bookedRide,
-        status: 'confirmed'
+        status: 'waiting_for_driver'
       }));
 
       setSuccess('Ride booked successfully!');
       
       // Wait a moment to show success message before navigating
       setTimeout(() => {
-        // Clear the selected ride from Redux
-        dispatch(clearSelectedRide());
-        // Navigate to dashboard
-        navigate('/dashboard');
+        navigate('/trips');
       }, 1500);
 
     } catch (err) {
