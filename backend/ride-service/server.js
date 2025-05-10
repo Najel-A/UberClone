@@ -4,7 +4,7 @@ const socketIo = require("socket.io");
 const { redisSubscriber } = require("./src/config/redis");
 const http = require("http");
 const { initializeKafka } = require("./src/config/kafka");
-const startConsumer = require("./src/events/rideRequest/rideRequestConsumer"); // ✅ Update path if needed
+const rideRequestConsumer = require("./src/events/rideRequest/rideRequestConsumer"); // ✅ Update path if needed
 const rideRequestProducer = require("./src/events/rideRequest/rideRequestProducer");
 const rideCompletedProducer = require("./src/events/rideCompleted/rideCompletedProducer");
 
@@ -22,7 +22,7 @@ const startServer = async () => {
     await rideCompletedProducer.connectProducer();
 
     // Start Kafka consumer
-    await startConsumer.startRideRequestConsumer(); // ✅ This runs your consumer on server start
+    await rideRequestConsumer.startRideRequestConsumer(); // ✅ This runs your consumer on server start
 
     const server = http.createServer(app);
 
