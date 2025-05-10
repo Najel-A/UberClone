@@ -22,7 +22,7 @@ const createConsumer = (groupId) => {
   return consumer;
 };
 const consumerGroups = {
-  RIDE_EVENTS: 'billing-service-ride-completed',
+  BILLING_EVENTS: 'billing-service-ride-completed',
 };
 // Topics
 const topics = {

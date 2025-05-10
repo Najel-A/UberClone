@@ -4,7 +4,7 @@ const app = require('./src/app');
 const CustomerWallet = require('./src/models/CustomerWallet');
 const DriverWallet = require('./src/models/DriverWallet');
 const PORT = process.env.PORT || 3004;
-
+const billingConsumer = require('./src/events/billing/billingConsumer');
 (async () => {
   try {
     await sequelize.authenticate();
@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 3004;
     // Sync the database (optional: use { alter: true } or { force: true } for development)
     await sequelize.sync();
     console.log('Database synchronized.');
-
+    await billingConsumer.startBillingConsumer();
     app.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);
     });
