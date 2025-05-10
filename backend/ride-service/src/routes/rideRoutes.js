@@ -6,7 +6,7 @@ const RideController = require("../controllers/rideController");
 router.post("/", RideController.createRideRequest);
 router.get("/getRides", RideController.getNearbyRideRequests);
 router.post("/acceptRide/:id", RideController.acceptRideRequest);
-router.post("/rideCompleted/:id", RideController.rideCompleted);
+router.post("/rideCompleted", RideController.rideCompleted);
 
 
 module.exports = router;

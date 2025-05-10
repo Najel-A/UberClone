@@ -92,7 +92,7 @@ updateRide = async (rideId, updateData) => {
 };
 
 exports.rideCompleted = async (req, res) => {
-  emitCompletedRideEvent(req.params.id);
+  emitCompletedRideEvent(req.body);
 
   return res.status(202).json({ message: "Ride completed" });
 };
