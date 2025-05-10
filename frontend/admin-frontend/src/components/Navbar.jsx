@@ -1,13 +1,17 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../store/slices/authSlice";
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const isLoggedIn = !!localStorage.getItem("admin_token");
+  const dispatch = useDispatch();
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
 
   const handleLogout = () => {
     localStorage.removeItem("admin_token");
-    navigate("/admin/login");
+    dispatch(logout());
+    navigate("/login");
   };
 
   return (
@@ -18,7 +22,7 @@ const Navbar = () => {
         </Link>
         <div className="collapse navbar-collapse">
           <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-            {isLoggedIn && (
+            {isAuthenticated && (
               <>
                 <li className="nav-item">
                   <Link className="nav-link" to="/add-driver">
@@ -54,7 +58,7 @@ const Navbar = () => {
             )}
           </ul>
           <ul className="navbar-nav ms-auto">
-            {!isLoggedIn ? (
+            {!isAuthenticated ? (
               <>
                 <li className="nav-item">
                   <Link className="nav-link" to="/login">
@@ -68,14 +72,21 @@ const Navbar = () => {
                 </li>
               </>
             ) : (
-              <li className="nav-item">
-                <button
-                  onClick={handleLogout}
-                  className="btn btn-sm btn-outline-light"
-                >
-                  Logout
-                </button>
-              </li>
+              <>
+                <li className="nav-item">
+                  <span className="nav-link text-light">
+                    Welcome, {user?.name || "Admin"}
+                  </span>
+                </li>
+                <li className="nav-item">
+                  <button
+                    onClick={handleLogout}
+                    className="btn btn-sm btn-outline-light"
+                  >
+                    Logout
+                  </button>
+                </li>
+              </>
             )}
           </ul>
         </div>
