@@ -1,7 +1,8 @@
 require('dotenv').config();
 const sequelize = require('./src/config/db');
 const app = require('./src/app');
-
+const CustomerWallet = require('./src/models/CustomerWallet');
+const DriverWallet = require('./src/models/DriverWallet');
 const PORT = process.env.PORT || 3004;
 
 (async () => {

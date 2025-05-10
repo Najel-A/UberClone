@@ -4,7 +4,7 @@ const { emitRideEvent } = require("../events/rideRequest/rideRequestProducer");
 const redisClient = require("../config/redis");
 const Ride = require('../models/Ride');
 const { simulateRide } = require("../utils/simulateRide");
-
+const {emitCompletedRideEvent} = require('../events/rideCompleted/rideCompletedProducer');
 
 exports.createRideRequest = async (req, res, next) => {
   try {
@@ -89,6 +89,12 @@ exports.acceptRideRequest = async (req, res, next) => {
 };
 updateRide = async (rideId, updateData) => {
   return await Ride.findByIdAndUpdate(rideId, updateData, { new: true });
+};
+
+exports.rideCompleted = async (req, res) => {
+  emitCompletedRideEvent(req.params.id);
+
+  return res.status(202).json({ message: "Ride completed" });
 };
 
 

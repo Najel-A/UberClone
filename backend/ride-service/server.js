@@ -5,7 +5,9 @@ const { redisSubscriber } = require("./src/config/redis");
 const http = require("http");
 const { initializeKafka } = require("./src/config/kafka");
 const startConsumer = require("./src/events/rideRequest/rideRequestConsumer"); // ✅ Update path if needed
-const { connectProducer } = require("./src/events/rideRequest/rideRequestProducer");
+const rideRequestProducer = require("./src/events/rideRequest/rideRequestProducer");
+const rideCompletedProducer = require("./src/events/rideCompleted/rideCompletedProducer");
+
 
 require("dotenv").config();
 
@@ -16,7 +18,8 @@ const startServer = async () => {
     console.log("MongoDB connected");
 
     // Connect Kafka producer
-    await connectProducer(); // ✅ Connect Kafka producer here
+    await rideRequestProducer.connectProducer(); // ✅ Connect Kafka producer here
+    await rideCompletedProducer.connectProducer();
 
     // Start Kafka consumer
     await startConsumer.startRideRequestConsumer(); // ✅ This runs your consumer on server start
