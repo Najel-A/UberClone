@@ -62,7 +62,8 @@ const RideConfirmation = ({ ride, pickupLocation, dropoffLocation, distance, onC
         },
         dateTime: new Date().toISOString(),
         price: rideToShow.price,
-        passenger_count: rideToShow.capacity || 1
+        passenger_count: rideToShow.capacity || 1,
+        distanceCovered: distance
       };
 
       const response = await fetch('http://localhost:3005/api/rides', {

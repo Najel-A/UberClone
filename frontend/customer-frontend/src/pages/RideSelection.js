@@ -8,31 +8,72 @@ import RideConfirmation from './RideConfirmation';
 
 const LOCATIONIQ_API_KEY = process.env.REACT_APP_LOCATIONIQ_API_KEY;
 
+// Cache for storing distance calculations
+const distanceCache = new Map();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+
 const RideSelection = ({ pickupLocation, dropoffLocation, onSelectRide, pickupCoords, dropoffCoords }) => {
   const predictedPrices = useSelector((state) => state.ride.predictedPrice);
   const dispatch = useDispatch();
   const [drivingDistance, setDrivingDistance] = React.useState(null);
   const [distanceError, setDistanceError] = React.useState('');
+  const [isCalculating, setIsCalculating] = React.useState(false);
 
   React.useEffect(() => {
     const getDrivingDistance = async () => {
       if (!pickupCoords || !dropoffCoords) return;
+      
+      // Create a cache key from the coordinates
+      const cacheKey = `${pickupCoords.lat},${pickupCoords.lng}-${dropoffCoords.lat},${dropoffCoords.lng}`;
+      
+      // Check cache first
+      const cachedData = distanceCache.get(cacheKey);
+      if (cachedData && Date.now() - cachedData.timestamp < CACHE_DURATION) {
+        setDrivingDistance(cachedData.distance);
+        return;
+      }
+
+      // If already calculating, don't start another calculation
+      if (isCalculating) return;
+      
       try {
+        setIsCalculating(true);
         setDistanceError('');
         setDrivingDistance(null);
+
+        // Add a small delay to prevent rapid consecutive requests
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
         const url = `https://us1.locationiq.com/v1/directions/driving/${pickupCoords.lng},${pickupCoords.lat};${dropoffCoords.lng},${dropoffCoords.lat}?key=${LOCATIONIQ_API_KEY}&overview=false`;
         const response = await fetch(url);
+        
+        if (!response.ok) {
+          if (response.status === 429) {
+            throw new Error('Rate limit exceeded. Please try again in a moment.');
+          }
+          throw new Error('Failed to fetch driving distance.');
+        }
+
         const data = await response.json();
         if (data.routes && data.routes[0] && data.routes[0].distance) {
           const distanceMiles = data.routes[0].distance / 1609.34;
           setDrivingDistance(distanceMiles);
+          
+          // Cache the result
+          distanceCache.set(cacheKey, {
+            distance: distanceMiles,
+            timestamp: Date.now()
+          });
         } else {
           setDistanceError('Could not fetch driving distance.');
         }
       } catch (err) {
-        setDistanceError('Error fetching driving distance.');
+        setDistanceError(err.message || 'Error fetching driving distance.');
+      } finally {
+        setIsCalculating(false);
       }
     };
+
     getDrivingDistance();
   }, [pickupCoords, dropoffCoords]);
 
