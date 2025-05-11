@@ -6,6 +6,7 @@
 */
 
 const { redisPublisher } = require("../config/redis");
+const axios = require('axios');
 
 exports.simulateRide = async (rideId, start, end, steps = 20, delay = 500) => {
   console.log('Start:', start);
@@ -23,6 +24,7 @@ exports.simulateRide = async (rideId, start, end, steps = 20, delay = 500) => {
       rideId,
       location: { latitude: latitude, longitude: longitude },
       timestamp: Date.now(),
+      last: i === steps // Mark the last event
     };
 
     // Publish location to Redis, and emit ride
@@ -30,6 +32,15 @@ exports.simulateRide = async (rideId, start, end, steps = 20, delay = 500) => {
 
     // Wait before sending next update
     await new Promise((resolve) => setTimeout(resolve, delay));
+  }
+
+  // After simulation, trigger ride completion for wallet update
+  try {
+    const rideServiceUrl = process.env.RIDE_SERVICE_URL || 'http://localhost:3005';
+    await axios.post(`${rideServiceUrl}/api/rides/rideCompleted`, { id: rideId });
+    console.log(`🚦 Triggered ride completion for rideId: ${rideId}`);
+  } catch (err) {
+    console.error(`❌ Failed to trigger ride completion for rideId: ${rideId}`, err.message);
   }
 
   return { success: true };

@@ -1,17 +1,20 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = "http://localhost:3002/api";
 
 const authService = {
   async login(credentials) {
     try {
-      const response = await axios.post(`${API_URL}/customers/login`, credentials);
+      const response = await axios.post(
+        `${API_URL}/customers/login`,
+        credentials
+      );
       if (response.data.token) {
-        localStorage.setItem('user', JSON.stringify(response.data));
+        localStorage.setItem("user", JSON.stringify(response.data));
       }
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: 'Login failed' };
+      throw error.response?.data || { message: "Login failed" };
     }
   },
 
@@ -26,25 +29,25 @@ const authService = {
         phoneNumber: userData.phoneNumber,
         address: userData.address,
         creditCardDetails: userData.creditCardDetails,
-        _id: generateSSN() // Generate a random SSN format ID
+        _id: generateSSN(), // Generate a random SSN format ID
       };
-      
+
       const response = await axios.post(`${API_URL}/customers`, signupData);
       return response.data;
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Signup failed';
+      const errorMessage = error.response?.data?.message || "Signup failed";
       throw { message: errorMessage };
     }
   },
 
   logout() {
-    localStorage.removeItem('user');
+    localStorage.removeItem("user");
   },
 
   getCurrentUser() {
-    const user = localStorage.getItem('user');
+    const user = localStorage.getItem("user");
     return user ? JSON.parse(user) : null;
-  }
+  },
 };
 
 // Helper function to generate a random SSN format ID
@@ -55,4 +58,4 @@ function generateSSN() {
   return `${part1}-${part2}-${part3}`;
 }
 
-export default authService; 
+export default authService;

@@ -5,20 +5,30 @@ const rideSchema = new mongoose.Schema({
   pickupLocation: {
     latitude: { type: Number, required: true },
     longitude: { type: Number, required: true },
+    address: { type: String, required: true }
   },
   // Needed for MongoDB querying
   pickupPoint: {
     type: { type: String, enum: ['Point'], required: true, default: 'Point' },
     coordinates: { type: [Number], required: true }, // [longitude, latitude]
+    
   },
   dropoffLocation: {
     latitude: { type: Number, required: true },
     longitude: { type: Number, required: true },
+    address: { type: String, required: true }
   },
+  distanceCovered: { type: Number, required: false },
   dateTime: { type: Date, required: true },
   customerId: { type: String, required: true },
   driverId: { type: String, required: false },
-  price: {type: Number, required: true}
+  price: {type: Number, required: true},
+  status: {
+    type: String,
+    enum: ['pending', 'accepted', 'completed'],
+    default: 'pending',
+    required: true
+  }
 }, { timestamps: true });
 
 rideSchema.index({ pickupPoint: '2dsphere' }); // For MongoDB 

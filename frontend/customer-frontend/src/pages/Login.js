@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useDispatch } from 'react-redux';
+import { setUser } from '../slices/userSlice';
+import authService from '../services/authService';
 import '../styles/auth.css';
 
 const Login = () => {
@@ -8,7 +10,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -17,7 +19,8 @@ const Login = () => {
     setLoading(true);
     
     try {
-      await login({ email, password });
+      const userData = await authService.login({ email, password });
+      dispatch(setUser(userData));
       navigate('/dashboard');
     } catch (err) {
       setError(err.message || 'Failed to login. Please check your credentials.');
