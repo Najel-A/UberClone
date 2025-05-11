@@ -2,8 +2,7 @@ const express = require('express');
 const router = express.Router();
 const billController = require('../controllers/billController');
 
-// router.post('/', billController.createBill);
-// router.delete('/:id', billController.deleteBill);
-// router.get('/:id', billController.searchBill);
-
+router.post('/addToCustomerWallet', billController.addToCustomerWallet);
+router.post('/addToDriverWallet', billController.withdrawFromDriverWallet);
+router.post('/customerWalletCheck', billController.checkCustomerWallet);
 module.exports = router;
