@@ -2,6 +2,7 @@ const Driver = require('../models/driverModel');
 const { NotFoundError, ConflictError } = require('../utils/errors');
 const { hashPassword, comparePassword } = require('../utils/passwordHash');
 const jwt = require("jsonwebtoken");
+const axios = require('axios');
 
 // Create Driver
 exports.createDriver = async (req, res) => {
@@ -23,6 +24,11 @@ exports.createDriver = async (req, res) => {
     driverData.password = await hashPassword(driverData.password);
 
     const driver = await Driver.create(driverData);
+
+    // Call the billing-service to create a wallet
+    const billingServiceUrl = process.env.BILLING_SERVICE_URL || 'http://billing-service:3003';
+    await axios.post(`${billingServiceUrl}/api/billing/createDriverWallet`, { ssn: driver._id });
+
     res.status(201).json(driver);
   } catch (err) {
     if (err.name === 'ValidationError') {
@@ -129,10 +135,18 @@ exports.updateDriver = async (req, res) => {
 // Delete Driver
 exports.deleteDriver = async (req, res) => {
   try {
-    const driver = await Driver.findByIdAndDelete(req.params.id);
+    const driver = await Driver.findById(req.params.id);
     if (!driver) {
-      throw new NotFoundError('Driver not found');
+      return res.status(404).json({ message: 'Driver not found' });
     }
+
+    const billingServiceUrl = process.env.BILLING_SERVICE_URL || 'http://billing-service:3003';
+    await axios.delete(`${billingServiceUrl}/api/billing/deleteDriverWallet`, {
+      data: { ssn: driver._id } 
+    });
+
+    await Driver.findByIdAndDelete(req.params.id);
+
     res.status(200).json({ message: 'Driver deleted successfully' });
   } catch (err) {
     if (err instanceof NotFoundError) {

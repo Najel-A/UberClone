@@ -21,6 +21,10 @@ exports.createCustomer = async (req, res) => {
     const customer = new Customer({ _id, email, password: hashedPassword, ...rest });
     await customer.save();
 
+    // Call the billing-service to create a wallet
+    const billingServiceUrl = process.env.BILLING_SERVICE_URL || 'http://billing-service:3003';
+    await axios.post(`${billingServiceUrl}/api/billing/createCustomerWallet`, { ssn: customer._id });
+
     res.status(201).json(customer);
   } catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message });
@@ -104,8 +108,15 @@ exports.loginCustomer = async (req, res) => {
 // Delete Customer Account  
 exports.deleteCustomer = async (req, res) => {
   try {
-    const customer = await Customer.findByIdAndDelete(req.params.id);
+    const customer = await Customer.findById(req.params.id);
     if (!customer) return res.status(404).json({ message: 'Customer not found' });
+
+    const billingServiceUrl = process.env.BILLING_SERVICE_URL || 'http://billing-service:3003';
+    await axios.delete(`${billingServiceUrl}/api/billing/deleteCustomerWallet`, {
+      data: { ssn: customer._id }
+    });
+
+    await Customer.findByIdAndDelete(req.params.id);
 
     res.status(200).json({ message: 'Customer deleted successfully' });
   } catch (err) {
