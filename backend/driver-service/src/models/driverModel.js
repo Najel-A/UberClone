@@ -92,6 +92,10 @@ const driverSchema = new mongoose.Schema({
     type: String,
     maxlength: 500
   }],
+  _ratings: {
+    type: [Number],
+    default: []
+  },
   introductionMedia: {
     images: [{
       type: String,

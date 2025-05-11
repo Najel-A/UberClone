@@ -276,3 +276,37 @@ exports.updateDriverStatusAndLocation = async (req, res) => {
     res.status(500).json({ message: "Internal server error", error: err.message });
   }
 };
+
+// Add Review and Rating
+exports.addReviewAndRating = async (req, res) => {
+  try {
+    const { id } = req.params; // driverId
+    let { rating, review } = req.body;
+
+    // Ensure rating is a number
+    const numericRating = Number(rating);
+    if (!numericRating || numericRating < 1 || numericRating > 5) {
+      return res.status(400).json({ message: "Rating must be between 1 and 5" });
+    }
+
+    const driver = await Driver.findById(id);
+    if (!driver) {
+      return res.status(404).json({ message: "Driver not found" });
+    }
+
+    // Add review if provided
+    if (review && review.trim()) {
+      driver.reviews.push(review.trim());
+    }
+
+    // Store all ratings for average calculation
+    if (!driver._ratings) driver._ratings = [];
+    driver._ratings.push(numericRating);
+    driver.rating = driver._ratings.reduce((sum, r) => sum + r, 0) / driver._ratings.length;
+
+    await driver.save();
+    res.status(200).json({ message: "Review and rating added", driver });
+  } catch (err) {
+    res.status(500).json({ message: "Internal server error", error: err.message });
+  }
+};

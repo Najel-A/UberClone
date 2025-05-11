@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import jsPDF from 'jspdf';
+import { submitDriverReview } from '../customer/customerAPI';
 
 const RideInProgress = () => {
   const user = useSelector((state) => state.user.user);
@@ -15,6 +16,13 @@ const RideInProgress = () => {
   const [error, setError] = useState('');
   const [completeMsg, setCompleteMsg] = useState('');
   const [latestRide, setLatestRide] = useState(null);
+  const [showReview, setShowReview] = useState(true);
+  const [reviewText, setReviewText] = useState('');
+  const [rating, setRating] = useState(5);
+  const [reviewSuccess, setReviewSuccess] = useState('');
+  const [reviewError, setReviewError] = useState('');
+
+  console.log('DRIVER SERVICE URL:', process.env.REACT_APP_DRIVER_SERVICE_URL);
 
   useEffect(() => {
     if (!user || !selectedRide || !selectedRide._id) {
@@ -152,6 +160,20 @@ const RideInProgress = () => {
     doc.save('Uber_Ride_Receipt.pdf');
   };
 
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    setReviewError('');
+    setReviewSuccess('');
+    try {
+      const ride = latestRide || selectedRide;
+      await submitDriverReview(ride.driverId, rating, reviewText);
+      setReviewSuccess('Thank you for your feedback!');
+      setShowReview(false);
+    } catch (err) {
+      setReviewError('Failed to submit review. Please try again.');
+    }
+  };
+
   if (!user || !selectedRide) {
     return <div className="dashboard-card">No ride in progress.</div>;
   }
@@ -188,13 +210,45 @@ const RideInProgress = () => {
               <p>Loading ride progress...</p>
             </div>
           ) : status === 'completed' ? (
-            <div className="confirmation-section">
-              <h3>Ride Completed!</h3>
-              <p>Thank you for riding with us.</p>
-              <button onClick={handleDownloadBill} style={{marginTop: 16}}>
-                Download Bill (PDF)
-              </button>
-            </div>
+            <>
+              <div className="confirmation-section">
+                <h3>Ride Completed!</h3>
+                <p>Thank you for riding with us.</p>
+                <button onClick={handleDownloadBill} style={{marginTop: 16}}>
+                  Download Bill (PDF)
+                </button>
+              </div>
+              {showReview && (
+                <div className="review-section" style={{ marginTop: 24, padding: 16, background: '#f8f9fa', borderRadius: 8 }}>
+                  <h3>Rate Your Driver</h3>
+                  <form onSubmit={handleSubmitReview}>
+                    <div style={{ marginBottom: 12 }}>
+                      <label>Rating: </label>
+                      <select value={rating} onChange={e => setRating(Number(e.target.value))} style={{ marginLeft: 8 }}>
+                        {[5,4,3,2,1].map(val => (
+                          <option key={val} value={val}>{val}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div style={{ marginBottom: 12 }}>
+                      <label>Review: </label>
+                      <textarea
+                        value={reviewText}
+                        onChange={e => setReviewText(e.target.value)}
+                        rows={3}
+                        style={{ width: '100%', borderRadius: 4, border: '1px solid #ccc', padding: 8 }}
+                        placeholder="Share your experience..."
+                      />
+                    </div>
+                    <button type="submit" style={{ background: '#000', color: '#fff', border: 'none', borderRadius: 4, padding: '8px 20px', cursor: 'pointer', fontWeight: 'bold' }}>
+                      Submit Review
+                    </button>
+                    {reviewSuccess && <div style={{ color: 'green', marginTop: 8 }}>{reviewSuccess}</div>}
+                    {reviewError && <div style={{ color: 'red', marginTop: 8 }}>{reviewError}</div>}
+                  </form>
+                </div>
+              )}
+            </>
           ) : (
             <>
               <div style={{ margin: '30px 0' }}>

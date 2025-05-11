@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { FaCar, FaSpinner } from 'react-icons/fa';
 import '../styles/trips.css';
-import { getRideStatus } from '../customer/customerAPI';
+import { getRideStatus, submitDriverReview } from '../customer/customerAPI';
 
 console.log('Ride Service URL:', process.env.REACT_APP_RIDE_SERVICE_URL);
 
@@ -14,6 +14,12 @@ const Trips = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [rideAccepted, setRideAccepted] = useState(false);
+  const [rideCompleted, setRideCompleted] = useState(false);
+  const [showReview, setShowReview] = useState(false);
+  const [reviewText, setReviewText] = useState('');
+  const [rating, setRating] = useState(5);
+  const [reviewSuccess, setReviewSuccess] = useState('');
+  const [reviewError, setReviewError] = useState('');
 
   useEffect(() => {
     if (!user) {
@@ -39,7 +45,11 @@ const Trips = () => {
         console.log('Polled ride status:', res.data.status, res.data);
         if (res.data.status === 'accepted') {
           setRideAccepted(true);
-        setLoading(false);
+          setLoading(false);
+        } else if (res.data.status === 'completed') {
+          setRideCompleted(true);
+          setShowReview(true);
+          setLoading(false);
           clearInterval(interval);
         } else {
           setLoading(true);
@@ -64,6 +74,19 @@ const Trips = () => {
     }
   }, [rideAccepted, navigate]);
 
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    setReviewError('');
+    setReviewSuccess('');
+    try {
+      await submitDriverReview(selectedRide.driverId, rating, reviewText);
+      setReviewSuccess('Thank you for your feedback!');
+      setShowReview(false);
+    } catch (err) {
+      setReviewError('Failed to submit review. Please try again.');
+    }
+  };
+
   if (!user) {
     return (
       <div className="dashboard-card">
@@ -78,8 +101,37 @@ const Trips = () => {
         <div className="trips-header">
           <h2>{rideAccepted ? 'Driver Found!' : 'Finding a Driver'}</h2>
         </div>
-        
         <div className="trips-content">
+          {rideCompleted && showReview && (
+            <div className="review-section" style={{ marginBottom: 24, padding: 16, background: '#f8f9fa', borderRadius: 8 }}>
+              <h3>Rate Your Driver</h3>
+              <form onSubmit={handleSubmitReview}>
+                <div style={{ marginBottom: 12 }}>
+                  <label>Rating: </label>
+                  <select value={rating} onChange={e => setRating(Number(e.target.value))} style={{ marginLeft: 8 }}>
+                    {[5,4,3,2,1].map(val => (
+                      <option key={val} value={val}>{val}</option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <label>Review: </label>
+                  <textarea
+                    value={reviewText}
+                    onChange={e => setReviewText(e.target.value)}
+                    rows={3}
+                    style={{ width: '100%', borderRadius: 4, border: '1px solid #ccc', padding: 8 }}
+                    placeholder="Share your experience..."
+                  />
+                </div>
+                <button type="submit" style={{ background: '#000', color: '#fff', border: 'none', borderRadius: 4, padding: '8px 20px', cursor: 'pointer', fontWeight: 'bold' }}>
+                  Submit Review
+                </button>
+                {reviewSuccess && <div style={{ color: 'green', marginTop: 8 }}>{reviewSuccess}</div>}
+                {reviewError && <div style={{ color: 'red', marginTop: 8 }}>{reviewError}</div>}
+              </form>
+            </div>
+          )}
           {rideAccepted ? (
             <div className="confirmation-section">
               <FaCar className="icon" />
@@ -93,7 +145,6 @@ const Trips = () => {
             <p>We're searching for the best driver for your ride</p>
           </div>
           )}
-
           <div className="ride-details">
             <div className="detail-item">
               <span className="label">Pickup:</span>
@@ -108,7 +159,6 @@ const Trips = () => {
               <span className="value">{selectedRide?.name || 'Loading...'}</span>
             </div>
           </div>
-
           {error && (
             <div className="alert alert-danger">
               {error}

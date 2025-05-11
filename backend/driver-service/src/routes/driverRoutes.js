@@ -14,6 +14,9 @@ router.post('/signup',
   validateDriverData, 
   driverController.createDriver);
 
+// Add Review and Rating
+router.post('/:id/review', driverController.addReviewAndRating);
+
 // Get Driver by ID
 router.get('/:id', driverController.getDriver);
 

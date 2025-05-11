@@ -120,6 +120,19 @@ const Dashboard = () => {
     fetchWallet();
   }, [currentDriver]);
 
+  useEffect(() => {
+    const fetchLatestDriver = async () => {
+      if (!currentDriver || !currentDriver._id) return;
+      try {
+        const res = await driverService.getDriver(currentDriver._id);
+        dispatch({ type: 'auth/setCurrentDriver', payload: res.data });
+      } catch (err) {
+        // Optionally handle error
+      }
+    };
+    fetchLatestDriver();
+  }, []);
+
   const handleAcceptRide = async (rideId) => {
     setAcceptingRideId(rideId);
     setAcceptError(null);
@@ -193,7 +206,44 @@ const Dashboard = () => {
             </Card.Body>
           </Card>
         </Col>
+        <Col lg={6} className="mb-4">
+          <Card className="shadow-sm h-100">
+            <Card.Body>
+              <Card.Title>Driver Rating</Card.Title>
+              <div className="d-flex align-items-center mt-3">
+                <h2 className="mb-0 me-2">
+                  {currentDriver.rating?.toFixed(1) || "N/A"}
+                </h2>
+                <div
+                  className="rating-stars"
+                  title={`Average: ${currentDriver.rating?.toFixed(2) || 'N/A'} (${currentDriver._ratings?.length || 0} ratings)`}
+                  style={{ fontSize: '1.5rem', cursor: 'pointer' }}
+                >
+                  {"★".repeat(Math.round(currentDriver.rating || 0))}
+                  {"☆".repeat(5 - Math.round(currentDriver.rating || 0))}
+                </div>
+                <span className="ms-2 text-muted" style={{ fontSize: '1.1rem' }}>
+                  ({currentDriver._ratings?.length || 0})
+                </span>
+              </div>
+              {currentDriver.reviews && currentDriver.reviews.length > 0 && (
+                <div className="mt-3">
+                  <h6>Recent Reviews:</h6>
+                  <ul className="list-unstyled">
+                    {currentDriver.reviews.slice(0, 3).map((review, index) => (
+                      <li key={index} className="mb-2 text-muted">
+                        {review}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
 
+      <Row className="mt-4">
         <Col lg={6} className="mb-4">
           <Card className="shadow-sm h-100">
             <Card.Body>
@@ -216,9 +266,7 @@ const Dashboard = () => {
             </Card.Body>
           </Card>
         </Col>
-      </Row>
 
-      <Row>
         <Col lg={6} className="mb-4">
           <Card className="shadow-sm h-100">
             <Card.Body>
@@ -242,36 +290,6 @@ const Dashboard = () => {
                   </p>
                 )}
               </div>
-            </Card.Body>
-          </Card>
-        </Col>
-
-        <Col lg={6} className="mb-4">
-          <Card className="shadow-sm h-100">
-            <Card.Body>
-              <Card.Title>Driver Rating</Card.Title>
-              <div className="d-flex align-items-center mt-3">
-                <h2 className="mb-0 me-2">
-                  {currentDriver.rating?.toFixed(1) || "N/A"}
-                </h2>
-                <div className="rating-stars">
-                  {"★".repeat(Math.round(currentDriver.rating || 0))}
-                  {"☆".repeat(5 - Math.round(currentDriver.rating || 0))}
-                </div>
-              </div>
-
-              {currentDriver.reviews && currentDriver.reviews.length > 0 && (
-                <div className="mt-3">
-                  <h6>Recent Reviews:</h6>
-                  <ul className="list-unstyled">
-                    {currentDriver.reviews.slice(0, 3).map((review, index) => (
-                      <li key={index} className="mb-2 text-muted">
-                        {review}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </Card.Body>
           </Card>
         </Col>
