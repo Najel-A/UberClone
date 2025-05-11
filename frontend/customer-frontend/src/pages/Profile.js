@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { setUser } from '../slices/userSlice';
 import axios from 'axios';
 import '../styles/dashboard.css';
-import { FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt, FaCreditCard, FaTrash } from 'react-icons/fa';
+import { FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt, FaCreditCard, FaTrash, FaWallet } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
@@ -15,6 +15,9 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showAddMoneyModal, setShowAddMoneyModal] = useState(false);
+  const [amount, setAmount] = useState('');
+  const [walletLoading, setWalletLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -125,6 +128,35 @@ const Profile = () => {
     }
   };
 
+  const handleAddMoney = async () => {
+    if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+      setError('Please enter a valid amount');
+      return;
+    }
+
+    try {
+      setWalletLoading(true);
+      const response = await axios.post(`http://localhost:3000/api/customers/${user.id}/wallet/add`, {
+        amount: parseFloat(amount)
+      });
+      
+      // Update profile with new wallet balance
+      setProfile(prev => ({
+        ...prev,
+        walletBalance: response.data.walletBalance
+      }));
+      
+      setShowAddMoneyModal(false);
+      setAmount('');
+      setError('');
+    } catch (err) {
+      setError('Failed to add money to wallet');
+      console.error(err);
+    } finally {
+      setWalletLoading(false);
+    }
+  };
+
   if (!user) {
     return (
       <div className="dashboard-card">
@@ -216,6 +248,29 @@ const Profile = () => {
     </div>
   );
 
+  const renderWallet = () => (
+    <div className="profile-section">
+      <div className="section-header">
+        <h4>Wallet</h4>
+      </div>
+      <div className="info-content">
+        <div className="info-row">
+          <FaWallet className="info-icon" />
+          <div className="info-details">
+            <label>Balance</label>
+            <p>${profile.walletBalance?.toFixed(2) || '0.00'}</p>
+          </div>
+        </div>
+        <button
+          className="btn btn-primary"
+          onClick={() => setShowAddMoneyModal(true)}
+        >
+          Add Money
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="dashboard-card profile-card">
       <div className="card-header">
@@ -262,11 +317,52 @@ const Profile = () => {
         </div>
       )}
 
+      {/* Add Money Modal */}
+      {showAddMoneyModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h4>Add Money to Wallet</h4>
+            <div className="form-group">
+              <label>Amount ($)</label>
+              <input
+                type="number"
+                className="form-control"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                min="0"
+                step="0.01"
+                placeholder="Enter amount"
+              />
+            </div>
+            <div className="modal-buttons">
+              <button
+                className="btn btn-secondary"
+                onClick={() => {
+                  setShowAddMoneyModal(false);
+                  setAmount('');
+                }}
+                disabled={walletLoading}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={handleAddMoney}
+                disabled={walletLoading}
+              >
+                {walletLoading ? 'Adding...' : 'Add Money'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {!isEditing ? (
         <div className="profile-content">
           {renderPersonalInfo()}
           {renderAddress()}
           {renderPayment()}
+          {renderWallet()}
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="profile-form">
