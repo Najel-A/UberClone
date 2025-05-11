@@ -1,3 +1,4 @@
+
 const express = require("express");
 const mongoose = require("mongoose");
 const driverRoutes = require("./routes/driverRoutes");
@@ -8,7 +9,9 @@ const cors = require("cors");
 
 require("dotenv").config();
 
+
 const app = express();
+
 app.use(
   cors({
     origin: "*",

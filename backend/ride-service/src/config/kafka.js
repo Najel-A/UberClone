@@ -29,6 +29,7 @@ const consumerGroups = {
 // Topics
 const topics = {
   RIDE_REQUESTS: 'ride.requested',
+  RIDE_COMPLETED: 'ride.completed',
 };
 
 // Ensure topics exist

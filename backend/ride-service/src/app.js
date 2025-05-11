@@ -2,11 +2,12 @@ const express = require('express');
 const mongoose = require('mongoose');
 const rideRoutes = require('./routes/rideRoutes');
 const redisClient = require('./config/redis');
-
+const cors = require('cors');
 
 require('dotenv').config();
 
 const app = express();
+app.use(cors({ origin: '*' }));
 app.use((req, res, next) => {
     req.redisClient = redisClient; // Pass the Redis client to your routes
     next();

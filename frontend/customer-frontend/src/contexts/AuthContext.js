@@ -16,7 +16,12 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       const userData = await authService.login(credentials);
-      setUser(userData);
+      setUser({
+        id: userData.id,
+        name: userData.name,
+        email: userData.email,
+        token: userData.token
+      });
       return userData;
     } catch (error) {
       throw error;
@@ -37,11 +42,27 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const value = {
+    user,
+    login,
+    signup,
+    logout,
+    loading
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, loading }}>
-      {children}
+    <AuthContext.Provider value={value}>
+      {!loading && children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext); 
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+export default AuthContext; 

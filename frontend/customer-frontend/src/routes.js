@@ -1,36 +1,25 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './contexts/AuthContext';
+import { useSelector } from 'react-redux';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
+import Trips from './pages/Trips';
 
-// Protected Route component
+// Redux-based Protected Route component
 const ProtectedRoute = ({ children }) => {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
+  const user = useSelector((state) => state.user.user);
   if (!user) {
     return <Navigate to="/login" />;
   }
-
   return children;
 };
 
-// Public Route component (for login/signup when already authenticated)
+// Redux-based Public Route component
 const PublicRoute = ({ children }) => {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
+  const user = useSelector((state) => state.user.user);
   if (user) {
     return <Navigate to="/dashboard" />;
   }
-
   return children;
 };
 
@@ -58,6 +47,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/trips"
+        element={
+          <ProtectedRoute>
+            <Trips />
           </ProtectedRoute>
         }
       />
