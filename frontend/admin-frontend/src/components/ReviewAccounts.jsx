@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Container,
   Row,
@@ -11,13 +12,30 @@ import {
   Alert,
   Modal,
   Badge,
+  Accordion,
 } from "react-bootstrap";
+import {
+  setDrivers,
+  setCustomers,
+  setLoading,
+  setError,
+  updateDriverSearchParams,
+  updateCustomerSearchParams,
+  resetDriverSearch,
+  resetCustomerSearch,
+  updateDriver,
+  updateCustomer,
+  deleteDriver,
+  deleteCustomer,
+  selectFilteredDrivers,
+  selectFilteredCustomers,
+} from "../store/slices/accountsSlice";
 
 const ReviewAccounts = () => {
-  const [drivers, setDrivers] = useState([]);
-  const [customers, setCustomers] = useState([]);
-  const [driverEmail, setDriverEmail] = useState("");
-  const [customerEmail, setCustomerEmail] = useState("");
+  const dispatch = useDispatch();
+  const { loading, error: reduxError } = useSelector((state) => state.accounts);
+  const filteredDrivers = useSelector(selectFilteredDrivers);
+  const filteredCustomers = useSelector(selectFilteredCustomers);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -33,6 +51,10 @@ const ReviewAccounts = () => {
   const [deletingDriverId, setDeletingDriverId] = useState(null);
   const [deletingCustomerId, setDeletingCustomerId] = useState(null);
 
+  // Search visibility states
+  const [showDriverSearch, setShowDriverSearch] = useState(false);
+  const [showCustomerSearch, setShowCustomerSearch] = useState(false);
+
   // Fetch all drivers and customers on component mount
   useEffect(() => {
     fetchAllDrivers();
@@ -41,80 +63,63 @@ const ReviewAccounts = () => {
 
   const fetchAllDrivers = async () => {
     try {
-      console.log(
-        "process.env.REACT_APP_ADMIN_BACKEND_PORT_URL",
-        process.env.REACT_APP_ADMIN_BACKEND_PORT_URL
-      );
+      dispatch(setLoading(true));
       const response = await axios.get(
         `${process.env.REACT_APP_ADMIN_BACKEND_PORT_URL}/api/admin/drivers`
       );
-      console.log("Drivers:", response.data);
-      setDrivers(response.data);
+      dispatch(setDrivers(response.data));
       setError("");
     } catch (err) {
-      setError("Failed to fetch drivers");
-      console.error("Error fetching drivers:", err);
+      const errorMessage =
+        err.response?.data?.message || "Failed to fetch drivers";
+      dispatch(setError(errorMessage));
+      setError(errorMessage);
     }
   };
 
   const fetchAllCustomers = async () => {
     try {
+      dispatch(setLoading(true));
       const response = await axios.get(
         `${process.env.REACT_APP_ADMIN_BACKEND_PORT_URL}/api/admin/customers`
       );
-      setCustomers(response.data);
+      dispatch(setCustomers(response.data));
       setError("");
     } catch (err) {
-      setError("Failed to fetch customers");
-      console.error("Error fetching customers:", err);
+      const errorMessage =
+        err.response?.data?.message || "Failed to fetch customers";
+      dispatch(setError(errorMessage));
+      setError(errorMessage);
     }
   };
 
-  const searchDriverByEmail = async (e) => {
+  const handleDriverSearch = (e) => {
     e.preventDefault();
-    if (!driverEmail) {
-      setError("Please enter a driver email");
-      return;
-    }
-    try {
-      const response = await axios.get(
-        `${process.env.REACT_APP_ADMIN_BACKEND_PORT_URL}/api/admin/drivers/email/${driverEmail}`
-      );
-      setDrivers([response.data]);
-      setError("");
-      setSuccess("Driver found");
-    } catch (err) {
-      setError("Driver not found");
-      console.error("Error searching driver:", err);
-    }
+    // Search is now handled by Redux selectors
+    setSuccess("Search completed");
   };
 
-  const searchCustomerByEmail = async (e) => {
+  const handleCustomerSearch = (e) => {
     e.preventDefault();
-    if (!customerEmail) {
-      setError("Please enter a customer email");
-      return;
-    }
-    try {
-      const response = await axios.get(
-        `${process.env.REACT_APP_ADMIN_BACKEND_PORT_URL}/api/admin/customers/email/${customerEmail}`
-      );
-      setCustomers([response.data]);
-      setError("");
-      setSuccess("Customer found");
-    } catch (err) {
-      setError("Customer not found");
-      console.error("Error searching customer:", err);
-    }
+    // Search is now handled by Redux selectors
+    setSuccess("Search completed");
   };
 
-  const resetDriverSearch = () => {
-    setDriverEmail("");
+  const handleDriverSearchParamChange = (field, value) => {
+    dispatch(updateDriverSearchParams({ [field]: value }));
+  };
+
+  const handleCustomerSearchParamChange = (field, value) => {
+    dispatch(updateCustomerSearchParams({ [field]: value }));
+  };
+
+  const handleResetDriverSearch = () => {
+    dispatch(resetDriverSearch());
     fetchAllDrivers();
   };
 
-  const resetCustomerSearch = () => {
-    setCustomerEmail("");
+  const handleResetCustomerSearch = () => {
+    dispatch(resetCustomerSearch());
     fetchAllCustomers();
   };
 
@@ -139,11 +144,8 @@ const ReviewAccounts = () => {
   };
 
   const validatePhoneNumber = (phone) => {
-    // Remove any non-digit characters
     const digits = phone.replace(/\D/g, "");
-    // If it starts with 1, remove it
     const number = digits.startsWith("1") ? digits.slice(1) : digits;
-    // Format as +1XXXXXXXXXX
     return number.length === 10 ? `+1${number}` : null;
   };
 
@@ -152,13 +154,11 @@ const ReviewAccounts = () => {
     return emailRegex.test(email);
   };
 
-  const updateDriver = async (e) => {
+  const updateDriverHandler = async (e) => {
     e.preventDefault();
     try {
-      // Validate and format the data
       const formattedDriver = { ...editingDriver };
 
-      // Validate and format phone number
       const formattedPhone = validatePhoneNumber(formattedDriver.phoneNumber);
       if (!formattedPhone) {
         setError("Phone number must be 10 digits");
@@ -166,13 +166,11 @@ const ReviewAccounts = () => {
       }
       formattedDriver.phoneNumber = formattedPhone;
 
-      // Validate email
       if (!validateEmail(formattedDriver.email)) {
         setError("Invalid email format");
         return;
       }
 
-      // Ensure car year is within valid range if provided
       if (formattedDriver.carDetails?.year) {
         const currentYear = new Date().getFullYear();
         if (
@@ -186,84 +184,78 @@ const ReviewAccounts = () => {
 
       const response = await axios.put(
         `${process.env.REACT_APP_ADMIN_BACKEND_PORT_URL}/api/admin/drivers/${editingDriver._id}`,
-        formattedDriver,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+        formattedDriver
       );
 
-      setDrivers(
-        drivers.map((d) => (d._id === editingDriver._id ? response.data : d))
-      );
+      dispatch(updateDriver(response.data));
       setShowEditDriverModal(false);
       setSuccess("Driver updated successfully");
       setError("");
     } catch (err) {
-      if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else if (err.response?.data?.errors) {
-        setError(err.response.data.errors.map((e) => e.msg).join(", "));
-      } else {
-        setError("Failed to update driver");
-      }
-      console.error("Error updating driver:", err);
+      const errorMessage =
+        err.response?.data?.message || "Failed to update driver";
+      setError(errorMessage);
     }
   };
 
-  const updateCustomer = async (e) => {
+  const updateCustomerHandler = async (e) => {
     e.preventDefault();
     try {
       const response = await axios.put(
         `${process.env.REACT_APP_ADMIN_BACKEND_PORT_URL}/api/admin/customers/${editingCustomer._id}`,
         editingCustomer
       );
-      setCustomers(
-        customers.map((c) =>
-          c._id === editingCustomer._id ? response.data : c
-        )
-      );
+
+      dispatch(updateCustomer(response.data));
       setShowEditCustomerModal(false);
       setSuccess("Customer updated successfully");
+      setError("");
     } catch (err) {
-      setError("Failed to update customer");
-      console.error("Error updating customer:", err);
+      const errorMessage =
+        err.response?.data?.message || "Failed to update customer";
+      setError(errorMessage);
     }
   };
 
-  const confirmDeleteDriver = async () => {
+  const confirmDeleteDriverHandler = async () => {
     try {
       await axios.delete(
         `${process.env.REACT_APP_ADMIN_BACKEND_PORT_URL}/api/admin/drivers/${deletingDriverId}`
       );
-      setDrivers(drivers.filter((d) => d._id !== deletingDriverId));
+      dispatch(deleteDriver(deletingDriverId));
       setShowDeleteDriverModal(false);
       setSuccess("Driver deleted successfully");
+      setError("");
     } catch (err) {
-      setError("Failed to delete driver");
-      console.error("Error deleting driver:", err);
+      const errorMessage =
+        err.response?.data?.message || "Failed to delete driver";
+      setError(errorMessage);
     }
   };
 
-  const confirmDeleteCustomer = async () => {
+  const confirmDeleteCustomerHandler = async () => {
     try {
       await axios.delete(
         `${process.env.REACT_APP_ADMIN_BACKEND_PORT_URL}/api/admin/customers/${deletingCustomerId}`
       );
-      setCustomers(customers.filter((c) => c._id !== deletingCustomerId));
+      dispatch(deleteCustomer(deletingCustomerId));
       setShowDeleteCustomerModal(false);
       setSuccess("Customer deleted successfully");
+      setError("");
     } catch (err) {
-      setError("Failed to delete customer");
-      console.error("Error deleting customer:", err);
+      const errorMessage =
+        err.response?.data?.message || "Failed to delete customer";
+      setError(errorMessage);
     }
   };
 
   return (
     <Container className="py-4">
-      {error && <Alert variant="danger">{error}</Alert>}
+      {(error || reduxError) && (
+        <Alert variant="danger">{error || reduxError}</Alert>
+      )}
       {success && <Alert variant="success">{success}</Alert>}
+      {loading && <Alert variant="info">Loading...</Alert>}
 
       {/* Edit Driver Modal */}
       <Modal
@@ -275,7 +267,7 @@ const ReviewAccounts = () => {
         </Modal.Header>
         <Modal.Body>
           {editingDriver && (
-            <Form onSubmit={updateDriver}>
+            <Form onSubmit={updateDriverHandler}>
               <Form.Group className="mb-3">
                 <Form.Label>First Name</Form.Label>
                 <Form.Control
@@ -439,7 +431,7 @@ const ReviewAccounts = () => {
         </Modal.Header>
         <Modal.Body>
           {editingCustomer && (
-            <Form onSubmit={updateCustomer}>
+            <Form onSubmit={updateCustomerHandler}>
               <Form.Group className="mb-3">
                 <Form.Label>First Name</Form.Label>
                 <Form.Control
@@ -519,7 +511,7 @@ const ReviewAccounts = () => {
           undone.
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="danger" onClick={confirmDeleteDriver}>
+          <Button variant="danger" onClick={confirmDeleteDriverHandler}>
             Delete
           </Button>
           <Button
@@ -544,7 +536,7 @@ const ReviewAccounts = () => {
           undone.
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="danger" onClick={confirmDeleteCustomer}>
+          <Button variant="danger" onClick={confirmDeleteCustomerHandler}>
             Delete
           </Button>
           <Button
@@ -561,30 +553,227 @@ const ReviewAccounts = () => {
           <Card>
             <Card.Header className="d-flex justify-content-between align-items-center">
               <h3 className="mb-0">Drivers</h3>
-              <Button
-                variant="outline-primary"
-                size="sm"
-                onClick={resetDriverSearch}
-              >
-                Show All
-              </Button>
+              <div>
+                <Button
+                  variant="outline-primary"
+                  size="sm"
+                  className="me-2"
+                  onClick={() => setShowDriverSearch(!showDriverSearch)}
+                >
+                  {showDriverSearch ? "Hide Search" : "Advanced Search"}
+                </Button>
+                <Button
+                  variant="outline-primary"
+                  size="sm"
+                  onClick={handleResetDriverSearch}
+                >
+                  Show All
+                </Button>
+              </div>
             </Card.Header>
             <Card.Body>
-              <Form onSubmit={searchDriverByEmail} className="mb-3">
-                <Form.Group className="d-flex">
-                  <Form.Control
-                    type="email"
-                    placeholder="Search driver by email"
-                    value={driverEmail}
-                    onChange={(e) => setDriverEmail(e.target.value)}
-                  />
-                  <Button type="submit" variant="primary" className="ms-2">
-                    Search
-                  </Button>
-                </Form.Group>
-              </Form>
+              {showDriverSearch && (
+                <Form onSubmit={handleDriverSearch} className="mb-3">
+                  <Accordion defaultActiveKey="0">
+                    <Accordion.Item eventKey="0">
+                      <Accordion.Header>Basic Information</Accordion.Header>
+                      <Accordion.Body>
+                        <Row>
+                          <Col md={6}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>First Name</Form.Label>
+                              <Form.Control
+                                type="text"
+                                onChange={(e) =>
+                                  handleDriverSearchParamChange(
+                                    "firstName",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </Form.Group>
+                          </Col>
+                          <Col md={6}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>Last Name</Form.Label>
+                              <Form.Control
+                                type="text"
+                                onChange={(e) =>
+                                  handleDriverSearchParamChange(
+                                    "lastName",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </Form.Group>
+                          </Col>
+                        </Row>
+                        <Row>
+                          <Col md={6}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>Email</Form.Label>
+                              <Form.Control
+                                type="email"
+                                onChange={(e) =>
+                                  handleDriverSearchParamChange(
+                                    "email",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </Form.Group>
+                          </Col>
+                          <Col md={6}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>Phone Number</Form.Label>
+                              <Form.Control
+                                type="tel"
+                                onChange={(e) =>
+                                  handleDriverSearchParamChange(
+                                    "phoneNumber",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </Form.Group>
+                          </Col>
+                        </Row>
+                      </Accordion.Body>
+                    </Accordion.Item>
+
+                    <Accordion.Item eventKey="1">
+                      <Accordion.Header>Location</Accordion.Header>
+                      <Accordion.Body>
+                        <Row>
+                          <Col md={6}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>City</Form.Label>
+                              <Form.Control
+                                type="text"
+                                onChange={(e) =>
+                                  handleDriverSearchParamChange(
+                                    "city",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </Form.Group>
+                          </Col>
+                          <Col md={3}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>State</Form.Label>
+                              <Form.Control
+                                type="text"
+                                maxLength={2}
+                                onChange={(e) =>
+                                  handleDriverSearchParamChange(
+                                    "state",
+                                    e.target.value.toUpperCase()
+                                  )
+                                }
+                              />
+                            </Form.Group>
+                          </Col>
+                          <Col md={3}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>Zip Code</Form.Label>
+                              <Form.Control
+                                type="text"
+                                onChange={(e) =>
+                                  handleDriverSearchParamChange(
+                                    "zipCode",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </Form.Group>
+                          </Col>
+                        </Row>
+                      </Accordion.Body>
+                    </Accordion.Item>
+
+                    <Accordion.Item eventKey="2">
+                      <Accordion.Header>Car Details</Accordion.Header>
+                      <Accordion.Body>
+                        <Row>
+                          <Col md={4}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>Car Make</Form.Label>
+                              <Form.Control
+                                type="text"
+                                onChange={(e) =>
+                                  handleDriverSearchParamChange(
+                                    "carMake",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </Form.Group>
+                          </Col>
+                          <Col md={4}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>Car Model</Form.Label>
+                              <Form.Control
+                                type="text"
+                                onChange={(e) =>
+                                  handleDriverSearchParamChange(
+                                    "carModel",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </Form.Group>
+                          </Col>
+                          <Col md={4}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>Car Year</Form.Label>
+                              <Form.Control
+                                type="number"
+                                onChange={(e) =>
+                                  handleDriverSearchParamChange(
+                                    "carYear",
+                                    e.target.value
+                                  )
+                                }
+                                min="2000"
+                                max={new Date().getFullYear() + 1}
+                              />
+                            </Form.Group>
+                          </Col>
+                        </Row>
+                        <Form.Group className="mb-3">
+                          <Form.Label>Minimum Rating</Form.Label>
+                          <Form.Control
+                            type="number"
+                            onChange={(e) =>
+                              handleDriverSearchParamChange(
+                                "minRating",
+                                e.target.value
+                              )
+                            }
+                            min="1"
+                            max="5"
+                            step="0.1"
+                          />
+                        </Form.Group>
+                      </Accordion.Body>
+                    </Accordion.Item>
+                  </Accordion>
+                  <div className="d-flex justify-content-end mt-3">
+                    <Button variant="primary" type="submit" className="me-2">
+                      Search
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={handleResetDriverSearch}
+                    >
+                      Reset
+                    </Button>
+                  </div>
+                </Form>
+              )}
               <ListGroup>
-                {drivers.map((driver) => (
+                {filteredDrivers.map((driver) => (
                   <ListGroup.Item key={driver._id}>
                     <div className="d-flex justify-content-between align-items-center">
                       <div>
@@ -647,30 +836,160 @@ const ReviewAccounts = () => {
           <Card>
             <Card.Header className="d-flex justify-content-between align-items-center">
               <h3 className="mb-0">Customers</h3>
-              <Button
-                variant="outline-primary"
-                size="sm"
-                onClick={resetCustomerSearch}
-              >
-                Show All
-              </Button>
+              <div>
+                <Button
+                  variant="outline-primary"
+                  size="sm"
+                  className="me-2"
+                  onClick={() => setShowCustomerSearch(!showCustomerSearch)}
+                >
+                  {showCustomerSearch ? "Hide Search" : "Advanced Search"}
+                </Button>
+                <Button
+                  variant="outline-primary"
+                  size="sm"
+                  onClick={handleResetCustomerSearch}
+                >
+                  Show All
+                </Button>
+              </div>
             </Card.Header>
             <Card.Body>
-              <Form onSubmit={searchCustomerByEmail} className="mb-3">
-                <Form.Group className="d-flex">
-                  <Form.Control
-                    type="email"
-                    placeholder="Search customer by email"
-                    value={customerEmail}
-                    onChange={(e) => setCustomerEmail(e.target.value)}
-                  />
-                  <Button type="submit" variant="primary" className="ms-2">
-                    Search
-                  </Button>
-                </Form.Group>
-              </Form>
+              {showCustomerSearch && (
+                <Form onSubmit={handleCustomerSearch} className="mb-3">
+                  <Accordion defaultActiveKey="0">
+                    <Accordion.Item eventKey="0">
+                      <Accordion.Header>Basic Information</Accordion.Header>
+                      <Accordion.Body>
+                        <Row>
+                          <Col md={6}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>First Name</Form.Label>
+                              <Form.Control
+                                type="text"
+                                onChange={(e) =>
+                                  handleCustomerSearchParamChange(
+                                    "firstName",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </Form.Group>
+                          </Col>
+                          <Col md={6}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>Last Name</Form.Label>
+                              <Form.Control
+                                type="text"
+                                onChange={(e) =>
+                                  handleCustomerSearchParamChange(
+                                    "lastName",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </Form.Group>
+                          </Col>
+                        </Row>
+                        <Row>
+                          <Col md={6}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>Email</Form.Label>
+                              <Form.Control
+                                type="email"
+                                onChange={(e) =>
+                                  handleCustomerSearchParamChange(
+                                    "email",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </Form.Group>
+                          </Col>
+                          <Col md={6}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>Phone Number</Form.Label>
+                              <Form.Control
+                                type="tel"
+                                onChange={(e) =>
+                                  handleCustomerSearchParamChange(
+                                    "phoneNumber",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </Form.Group>
+                          </Col>
+                        </Row>
+                      </Accordion.Body>
+                    </Accordion.Item>
+
+                    <Accordion.Item eventKey="1">
+                      <Accordion.Header>Location</Accordion.Header>
+                      <Accordion.Body>
+                        <Row>
+                          <Col md={6}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>City</Form.Label>
+                              <Form.Control
+                                type="text"
+                                onChange={(e) =>
+                                  handleCustomerSearchParamChange(
+                                    "city",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </Form.Group>
+                          </Col>
+                          <Col md={3}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>State</Form.Label>
+                              <Form.Control
+                                type="text"
+                                maxLength={2}
+                                onChange={(e) =>
+                                  handleCustomerSearchParamChange(
+                                    "state",
+                                    e.target.value.toUpperCase()
+                                  )
+                                }
+                              />
+                            </Form.Group>
+                          </Col>
+                          <Col md={3}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>Zip Code</Form.Label>
+                              <Form.Control
+                                type="text"
+                                onChange={(e) =>
+                                  handleCustomerSearchParamChange(
+                                    "zipCode",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </Form.Group>
+                          </Col>
+                        </Row>
+                      </Accordion.Body>
+                    </Accordion.Item>
+                  </Accordion>
+                  <div className="d-flex justify-content-end mt-3">
+                    <Button variant="primary" type="submit" className="me-2">
+                      Search
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={handleResetCustomerSearch}
+                    >
+                      Reset
+                    </Button>
+                  </div>
+                </Form>
+              )}
               <ListGroup>
-                {customers.map((customer) => (
+                {filteredCustomers.map((customer) => (
                   <ListGroup.Item key={customer._id}>
                     <div className="d-flex justify-content-between align-items-center">
                       <div>
