@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Card, Container, Row, Col, ListGroup, Button } from "react-bootstrap";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import driverService from "../services/api";
 
@@ -9,6 +9,10 @@ const DriverInfo = () => {
   const [driverData, setDriverData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
 
   useEffect(() => {
     const fetchDriverData = async () => {
@@ -32,6 +36,21 @@ const DriverInfo = () => {
 
     fetchDriverData();
   }, [currentDriver]);
+
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await driverService.deleteDriver(currentDriver._id);
+      await logout();
+      navigate("/signup");
+    } catch (err) {
+      setDeleteError("Failed to delete account. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -160,7 +179,11 @@ const DriverInfo = () => {
             <Button as={Link} to="/update-profile" variant="primary">
               Edit Profile
             </Button>
+            <Button variant="danger" onClick={handleDelete} disabled={deleting}>
+              {deleting ? "Deleting..." : "Delete Account"}
+            </Button>
           </div>
+          {deleteError && <div className="text-danger mt-2">{deleteError}</div>}
         </Col>
       </Row>
     </Container>

@@ -4,6 +4,8 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import Trips from './pages/Trips';
+import RideInProgress from './pages/RideInProgress';
+import RideHistory from './pages/RideHistory';
 
 // Redux-based Protected Route component
 const ProtectedRoute = ({ children }) => {
@@ -55,6 +57,22 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Trips />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ride-in-progress"
+        element={
+          <ProtectedRoute>
+            <RideInProgress />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ride-history"
+        element={
+          <ProtectedRoute>
+            <RideHistory />
           </ProtectedRoute>
         }
       />
