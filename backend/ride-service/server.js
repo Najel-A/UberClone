@@ -1,32 +1,28 @@
-require("dotenv").config();
 const app = require("./src/app");
 const mongoose = require("mongoose");
 const socketIo = require("socket.io");
 const { redisSubscriber } = require("./src/config/redis");
 const http = require("http");
-const { initializeKafka, shutdownKafka } = require("./src/config/kafka");
-const startConsumer = require("./src/events/rideRequest/rideRequestConsumer"); // ✅ Update path if needed
-const { connectProducer } = require("./src/events/rideRequest/rideRequestProducer");
+const { initializeKafka } = require("./src/config/kafka");
+const rideRequestConsumer = require("./src/events/rideRequest/rideRequestConsumer"); // ✅ Update path if needed
+const rideRequestProducer = require("./src/events/rideRequest/rideRequestProducer");
+const rideCompletedProducer = require("./src/events/rideCompleted/rideCompletedProducer");
 
-let server; // To store the Express server instance
+
+require("dotenv").config();
 
 const startServer = async () => {
   try {
     // Connect to MongoDB
-    await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log("✅ MongoDB connected");
-
-    // Initialize Kafka (creates topics, connects producer)
-    await initializeKafka();
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("MongoDB connected");
 
     // Connect Kafka producer
-    await connectProducer();
+    await rideRequestProducer.connectProducer(); // ✅ Connect Kafka producer here
+    await rideCompletedProducer.connectProducer();
 
     // Start Kafka consumer
-    await startConsumer.startRideRequestConsumer(); // ✅ This runs your consumer on server start
+    await rideRequestConsumer.startRideRequestConsumer(); // ✅ This runs your consumer on server start
 
     const server = http.createServer(app);
 
@@ -67,45 +63,9 @@ const startServer = async () => {
       console.log("Ride service running on port", process.env.PORT)
     );
   } catch (err) {
-    console.error("❌ Error starting server:", err.message);
-    process.exit(1); // Exit with failure
+    console.error("Error starting server:", err);
   }
 };
-
-// Graceful shutdown
-const shutdown = async () => {
-  console.log("\n🛑 Shutting down gracefully...");
-
-  try {
-    // Close the Express server
-    if (server) {
-      await new Promise((resolve, reject) => {
-        server.close((err) => {
-          if (err) return reject(err);
-          console.log("🛑 Express server closed");
-          resolve();
-        });
-      });
-    }
-
-    // Shutdown Kafka
-    await shutdownKafka();
-    console.log("🛑 Kafka disconnected");
-
-    // Disconnect MongoDB
-    await mongoose.disconnect();
-    console.log("🛑 MongoDB disconnected");
-
-    process.exit(0); // Exit successfully
-  } catch (err) {
-    console.error("❌ Error during shutdown:", err.message);
-    process.exit(1); // Exit with failure
-  }
-};
-
-// Handle termination signals
-process.on("SIGINT", shutdown); // Handle Ctrl+C
-process.on("SIGTERM", shutdown); // Handle termination signals from cloud providers
 
 // Start the server
 startServer();

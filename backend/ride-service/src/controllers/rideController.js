@@ -5,6 +5,7 @@ const { emitRideEvent } = require("../events/rideRequest/rideRequestProducer");
 const redisClient = require("../config/redis");
 const Ride = require('../models/Ride');
 const { simulateRide } = require("../utils/simulateRide");
+const {emitCompletedRideEvent} = require('../events/rideCompleted/rideCompletedProducer');
 
 exports.createRideRequest = async (req, res, next) => {
   try {
@@ -38,16 +39,15 @@ exports.createRideRequest = async (req, res, next) => {
     rideData.price = predictedPrice;
 
     await emitRideEvent(rideData);
-    RideService.createRide(rideData);
-
     res.status(202).json({ message: "Ride request received and being processed" });
   } catch (error) {
     next(error);
   }
 };
 
+
 // Match Driver function
-exports.getNearbyRides = async (req, res) => {
+exports.getNearbyRideRequests = async (req, res) => {
   const { latitude, longitude } = req.query;
 
   if (!latitude || !longitude) {
@@ -75,19 +75,39 @@ exports.getNearbyRides = async (req, res) => {
   }
 };
 
-exports.assignRide = async (req, res, next) => {
+exports.acceptRideRequest = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { driverId } = req.body;
 
-    RideService.assignRide(id, driverId);
-    res.status(200).json({message: "Ride Accepted Confirmed"})
-  } catch (error){
+    if (!driverId) {
+      return res.status(400).json({ message: "Driver ID is required" });
+    }
+
+    const updatedRide = await RideService.updateRide(id, { driverId });
+
+    if (!updatedRide) {
+      return res.status(404).json({ message: "Ride not found" });
+    }
+
+    res.status(200).json({ message: "Ride accepted", ride: updatedRide });
+  } catch (error) {
     next(error);
   }
-}
+};
+updateRide = async (rideId, updateData) => {
+  return await Ride.findByIdAndUpdate(rideId, updateData, { new: true });
+};
 
-// Starts ride for WS
+exports.rideCompleted = async (req, res) => {
+  emitCompletedRideEvent(req.body);
+
+  return res.status(202).json({ message: "Ride completed" });
+};
+
+
+
+// // Starts ride for WS
 exports.handleRideStart = async (req, res) => {
   const { rideId, start, end } = req.body;
 
@@ -97,48 +117,32 @@ exports.handleRideStart = async (req, res) => {
 };
 
 // ToDO: Send updates to the ride via method or WS?
-exports.updateRide = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const updateData = req.body;
+// exports.updateRide = async (req, res, next) => {
+//   try {
+//     const { id } = req.params;
+//     const updateData = req.body;
 
-    if (!id) {
-      return res.status(400).json({ message: "Ride ID is required" });
-    }
 
-    const updatedRide = await RideService.updateRide(id, updateData);
+// exports.deleteRide = async (req, res, next) => {
+//   try {
+//     const { id } = req.params;
 
-    if (!updatedRide) {
-      return res.status(404).json({ message: "Ride not found" });
-    }
+//     if (!id) {
+//       return res.status(400).json({ message: "Ride ID is required" });
+//     }
 
-    await emitRideEvent("ride.updated", updatedRide);
-    res.json(updatedRide);
-  } catch (error) {
-    next(error);
-  }
-};
+//     const deletedRide = await RideService.deleteRide(id);
 
-exports.deleteRide = async (req, res, next) => {
-  try {
-    const { id } = req.params;
+//     if (!deletedRide) {
+//       return res.status(404).json({ message: "Ride not found" });
+//     }
 
-    if (!id) {
-      return res.status(400).json({ message: "Ride ID is required" });
-    }
-
-    const deletedRide = await RideService.deleteRide(id);
-
-    if (!deletedRide) {
-      return res.status(404).json({ message: "Ride not found" });
-    }
-
-    // await emitRideEvent('ride.cancelled', deletedRide);
-    res.json({ message: "Ride deleted successfully" });
-  } catch (error) {
-    next(error);
-  }
-};
+//     // await emitRideEvent('ride.cancelled', deletedRide);
+//     res.json({ message: "Ride deleted successfully" });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
 exports.getCustomerRides = async (req, res, next) => {
   try {

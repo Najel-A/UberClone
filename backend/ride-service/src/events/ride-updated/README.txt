@@ -1,1 +1,0 @@
-Either implement kafka or websocker for event updates
