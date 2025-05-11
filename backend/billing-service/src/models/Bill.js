@@ -2,14 +2,11 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db'); // Import your Sequelize instance
 
 const Bill = sequelize.define('Bill', {
-  _id: {
-    type: DataTypes.STRING,
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
     primaryKey: true,
-    allowNull: false, // Equivalent to `required: true`
-    comment: 'Unique identifier for the bill',
-    validate: {
-      is: /^\d{3}-\d{2}-\d{4}$/, // SSN format: 123-45-6789
-    },
+    comment: 'Auto-incremented primary key for the bill',
   },
   date: {
     type: DataTypes.DATE,
@@ -28,7 +25,7 @@ const Bill = sequelize.define('Bill', {
   },
   distanceCovered: {
     type: DataTypes.FLOAT,
-    allowNull: false,
+    allowNull: true,
     comment: 'Distance covered in the ride',
   },
   totalAmount: {
@@ -56,6 +53,12 @@ const Bill = sequelize.define('Bill', {
     allowNull: false,
     comment: 'ID of the customer',
   },
+  status: {
+  type: DataTypes.ENUM('completed', 'pending', 'cancelled'),
+  allowNull: false,
+  defaultValue: 'pending',
+  comment: 'Status of the transaction',
+},
 }, {
   timestamps: true, // Automatically adds `createdAt` and `updatedAt` fields
   tableName: 'bills', // Name of the table in the database

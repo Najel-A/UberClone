@@ -1,66 +1,75 @@
 const Bill = require('../models/Bill'); // Import the Bill model
-
-// Create a new Bill for each ride
-exports.createBill = async (req, res) => {
+const CustomerWallet = require('../models/CustomerWallet'); 
+const DriverWallet = require('../models/DriverWallet');
+exports.addToCustomerWallet = async (req, res, next) => {
   try {
-    const billData = req.body;
+    const { ssn, amount } = req.body;
 
-    // Create a new Bill
-    const newBill = await Bill.create(billData);
-
-    res.status(201).json({
-      message: 'Bill created successfully',
-      bill: newBill,
-    });
-  } catch (err) {
-    console.error('Error creating bill:', err.message);
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message,
-    });
-  }
-};
-
-// Delete an existing Bill
-exports.deleteBill = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    // Find and delete the Bill
-    const deletedBill = await Bill.destroy({ where: { _id: id } });
-
-    if (!deletedBill) {
-      return res.status(404).json({ message: 'Bill not found' });
+    if (!ssn || typeof amount !== 'number' || amount <= 0) {
+      return res.status(400).json({ message: 'Invalid ssn or amount' });
     }
 
-    res.status(200).json({ message: 'Bill deleted successfully' });
-  } catch (err) {
-    console.error('Error deleting bill:', err.message);
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message,
-    });
-  }
-};
-
-// Search an existing Bill
-exports.searchBill = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    // Find the Bill by ID
-    const bill = await Bill.findByPk(id);
-
-    if (!bill) {
-      return res.status(404).json({ message: 'Bill not found' });
+    const wallet = await CustomerWallet.findOne({ where: { ssn } });
+    if (!wallet) {
+      return res.status(404).json({ message: 'Customer not found' });
     }
 
-    res.status(200).json(bill);
+    wallet.wallet += amount;
+    await wallet.save();
+
+    res.status(200).json({ message: 'Wallet topped up', balance: wallet.wallet });
   } catch (err) {
-    console.error('Error searching bill:', err.message);
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message,
-    });
+    next(err);
   }
 };
+exports.withdrawFromDriverWallet = async (req, res, next) => {
+  try {
+    const { ssn, amount } = req.body;
+
+    if (!ssn || typeof amount !== 'number' || amount <= 0) {
+      return res.status(400).json({ message: 'Invalid ssn or amount' });
+    }
+
+    const wallet = await DriverWallet.findOne({ where: { ssn } });
+    if (!wallet) {
+      return res.status(404).json({ message: 'Driver not found' });
+    }
+
+    if (wallet.wallet < amount) {
+      return res.status(400).json({ message: 'Insufficient balance' });
+    }
+
+    wallet.wallet -= amount;
+    await wallet.save();
+
+    res.status(200).json({ message: 'Amount withdrawn', balance: wallet.wallet });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.checkCustomerWallet = async (req, res, next) => {
+  try {
+    const { ssn, amount } = req.body;
+
+    if (!ssn || typeof amount !== 'number' || amount <= 0) {
+      return res.status(400).json({ message: 'Invalid ssn or amount' });
+    }
+
+    const wallet = await CustomerWallet.findOne({ where: { ssn } });
+    if (!wallet) {
+      return res.status(404).json({ message: 'Customer not found' });
+    }
+
+    const canAfford = wallet.wallet >= amount;
+
+    res.status(200).json({
+      canAfford,
+      balance: wallet.wallet,
+      message: canAfford ? 'Sufficient balance' : 'Insufficient balance'
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
