@@ -77,6 +77,7 @@ const initialState = {
   error: null,
   profileUpdateSuccess: false,
   registrationSuccess: false,
+  acceptedRideId: null,
 };
 
 const driverSlice = createSlice({
@@ -92,6 +93,9 @@ const driverSlice = createSlice({
     resetSuccessFlags: (state) => {
       state.profileUpdateSuccess = false;
       state.registrationSuccess = false;
+    },
+    setAcceptedRideId: (state, action) => {
+      state.acceptedRideId = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -161,7 +165,7 @@ const driverSlice = createSlice({
   },
 });
 
-export const { clearDriverError, setLocation, resetSuccessFlags } =
+export const { clearDriverError, setLocation, resetSuccessFlags, setAcceptedRideId } =
   driverSlice.actions;
 
 export default driverSlice.reducer;

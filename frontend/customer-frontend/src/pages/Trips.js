@@ -55,6 +55,15 @@ const Trips = () => {
     return () => clearInterval(interval);
   }, [user, selectedRide, navigate]);
 
+  useEffect(() => {
+    if (rideAccepted) {
+      const timeout = setTimeout(() => {
+        navigate('/ride-in-progress');
+      }, 5000);
+      return () => clearTimeout(timeout);
+    }
+  }, [rideAccepted, navigate]);
+
   if (!user) {
     return (
       <div className="dashboard-card">

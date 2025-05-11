@@ -23,6 +23,7 @@ exports.simulateRide = async (rideId, start, end, steps = 20, delay = 500) => {
       rideId,
       location: { latitude: latitude, longitude: longitude },
       timestamp: Date.now(),
+      last: i === steps // Mark the last event
     };
 
     // Publish location to Redis, and emit ride

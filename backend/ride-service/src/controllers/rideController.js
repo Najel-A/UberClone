@@ -117,6 +117,13 @@ exports.acceptRideRequest = async (req, res, next) => {
     ride.status = 'accepted';
     await ride.save();
 
+    // Start simulating the ride in the background
+    simulateRide(
+      ride._id,
+      ride.pickupLocation,
+      ride.dropoffLocation
+    );
+
     res.status(200).json({ message: "Ride accepted", ride });
   } catch (error) {
     next(error);

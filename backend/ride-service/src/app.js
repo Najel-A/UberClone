@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const rideRoutes = require('./routes/rideRoutes');
 const redisClient = require('./config/redis');
 const cors = require('cors');
+const { startRideProgressConsumer } = require('./events/ride-updated/rideProgressConsumer');
 
 require('dotenv').config();
 
@@ -17,7 +18,6 @@ app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
 app.use('/api/rides', rideRoutes);
 
-
-
+startRideProgressConsumer();
 
 module.exports = app;

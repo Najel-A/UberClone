@@ -4,9 +4,11 @@ import { useSelector, useDispatch } from "react-redux";
 import {
   updateDriverStatusAndLocation,
   setLocation,
+  setAcceptedRideId,
 } from "../redux/slices/driverSlice";
 import { fetchCurrentDriver } from "../redux/slices/authSlice";
 import { rideService } from "../services/api";
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
   const dispatch = useDispatch();
@@ -18,6 +20,7 @@ const Dashboard = () => {
   const [ridesLoading, setRidesLoading] = useState(false);
   const [acceptingRideId, setAcceptingRideId] = useState(null);
   const [acceptError, setAcceptError] = useState(null);
+  const navigate = useNavigate();
 
   // Fetch current driver status on component mount
   // useEffect(() => {
@@ -102,8 +105,9 @@ const Dashboard = () => {
     setAcceptError(null);
     try {
       await rideService.acceptRide(rideId, currentDriver._id);
-      // Optionally, refresh rides immediately
+      dispatch(setAcceptedRideId(rideId));
       setAvailableRides((rides) => rides.filter((r) => r._id !== rideId));
+      navigate('/simulation');
     } catch (err) {
       setAcceptError(err.response?.data?.message || "Failed to accept ride");
     } finally {
