@@ -12,6 +12,7 @@ const RideInProgress = () => {
   const [status, setStatus] = useState('in_progress');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [completeMsg, setCompleteMsg] = useState('');
 
   useEffect(() => {
     if (!user || !selectedRide || !selectedRide._id) {
@@ -39,6 +40,16 @@ const RideInProgress = () => {
     interval = setInterval(pollRide, 2000);
     return () => clearInterval(interval);
   }, [user, selectedRide, navigate]);
+
+  const handleCompleteRide = async () => {
+    setCompleteMsg('');
+    try {
+      await axios.post(`${process.env.REACT_APP_RIDE_SERVICE_URL}/api/rides/rideCompleted`, selectedRide);
+      setCompleteMsg('Ride completion event sent!');
+    } catch (err) {
+      setCompleteMsg('Failed to complete ride');
+    }
+  };
 
   if (!user || !selectedRide) {
     return <div className="dashboard-card">No ride in progress.</div>;
@@ -121,6 +132,24 @@ const RideInProgress = () => {
                   <span className="value">{distanceCovered.toFixed(2)} / {totalDistance.toFixed(2)} miles</span>
                 </div>
               </div>
+              <button
+                style={{
+                  marginTop: 24,
+                  background: '#007bff',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '5px',
+                  padding: '10px 24px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                }}
+                onClick={handleCompleteRide}
+              >
+                Complete Ride
+              </button>
+              {completeMsg && <div style={{ marginTop: 12, color: completeMsg.includes('Failed') ? 'red' : 'green' }}>{completeMsg}</div>}
             </>
           )}
           {error && <div className="alert alert-danger">{error}</div>}

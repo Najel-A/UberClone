@@ -38,6 +38,10 @@ export const driverService = {
   // Video and Status
   getDriverVideo: (id) => api.get(`/${id}/video`),
   updateDriverStatusAndLocation: (id, data) => api.put(`/${id}/status`, data),
+
+  // Wallet
+  getDriverWallet: (ssn) =>
+    axios.get(`${process.env.REACT_APP_BILLING_SERVICE_URL}/api/billing/getDriverWallet/${ssn}`),
 };
 
 // Ride Matching APIs

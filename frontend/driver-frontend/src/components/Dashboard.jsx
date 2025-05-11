@@ -7,7 +7,7 @@ import {
   setAcceptedRideId,
 } from "../redux/slices/driverSlice";
 import { fetchCurrentDriver } from "../redux/slices/authSlice";
-import { rideService } from "../services/api";
+import { rideService, driverService } from "../services/api";
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
@@ -20,6 +20,9 @@ const Dashboard = () => {
   const [ridesLoading, setRidesLoading] = useState(false);
   const [acceptingRideId, setAcceptingRideId] = useState(null);
   const [acceptError, setAcceptError] = useState(null);
+  const [walletBalance, setWalletBalance] = useState(null);
+  const [walletLoading, setWalletLoading] = useState(false);
+  const [walletError, setWalletError] = useState(null);
   const navigate = useNavigate();
 
   // Fetch current driver status on component mount
@@ -99,6 +102,23 @@ const Dashboard = () => {
     interval = setInterval(fetchRides, 5000);
     return () => clearInterval(interval);
   }, [driverStatus, location.latitude, location.longitude]);
+
+  useEffect(() => {
+    const fetchWallet = async () => {
+      if (!currentDriver || !currentDriver._id) return;
+      setWalletLoading(true);
+      setWalletError(null);
+      try {
+        const res = await driverService.getDriverWallet(currentDriver._id);
+        setWalletBalance(res.data.balance);
+      } catch (err) {
+        setWalletError('Failed to fetch wallet balance');
+      } finally {
+        setWalletLoading(false);
+      }
+    };
+    fetchWallet();
+  }, [currentDriver]);
 
   const handleAcceptRide = async (rideId) => {
     setAcceptingRideId(rideId);
@@ -251,6 +271,23 @@ const Dashboard = () => {
                     ))}
                   </ul>
                 </div>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      <Row>
+        <Col lg={6} className="mb-4">
+          <Card className="shadow-sm h-100">
+            <Card.Body>
+              <Card.Title>Wallet</Card.Title>
+              {walletLoading ? (
+                <p>Loading wallet balance...</p>
+              ) : walletError ? (
+                <p className="text-danger">{walletError}</p>
+              ) : (
+                <h4>Balance: ${walletBalance?.toFixed(2) ?? '0.00'}</h4>
               )}
             </Card.Body>
           </Card>

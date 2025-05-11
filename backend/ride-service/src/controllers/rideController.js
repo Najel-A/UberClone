@@ -30,6 +30,17 @@ exports.createRideRequest = async (req, res, next) => {
     ) {
       return res.status(400).json({ message: "Missing required ride information" });
     }
+
+    // Fetch customer SSN from customer-service if not already SSN
+    let customerId = rideData.customerId;
+    if (!/^\d{3}-\d{2}-\d{4}$/.test(customerId)) {
+      // Not in SSN format, fetch from customer-service
+      const customerServiceUrl = process.env.CUSTOMER_SERVICE_URL || 'http://localhost:3000/api/customers';
+      const customerRes = await axios.get(`${customerServiceUrl}/${customerId}`);
+      customerId = customerRes.data._id;
+    }
+    rideData.customerId = customerId;
+
     // Save to DB immediately and return ride object
     const ride = await Ride.create(rideData);
     // Optionally emit Kafka event after saving
@@ -88,9 +99,17 @@ exports.acceptRideRequest = async (req, res, next) => {
       return res.status(400).json({ message: "Ride already accepted or not pending" });
     }
 
+    // Fetch driver SSN from driver-service if not already SSN
+    let driverSsn = driverId;
+    if (!/^\d{3}-\d{2}-\d{4}$/.test(driverId)) {
+      const driverServiceUrl = process.env.DRIVER_SERVICE_URL || 'http://localhost:3001/api/drivers';
+      const driverRes = await axios.get(`${driverServiceUrl}/${driverId}`);
+      driverSsn = driverRes.data._id;
+    }
+
     // Fetch driver location from driver-service
     const driverServiceUrl = process.env.DRIVER_SERVICE_URL || 'http://localhost:3001/api/drivers';
-    const driverRes = await axios.get(`${driverServiceUrl}/${driverId}`);
+    const driverRes = await axios.get(`${driverServiceUrl}/${driverSsn}`);
     const driver = driverRes.data;
     if (!driver.currentLocation || driver.currentLocation.latitude == null || driver.currentLocation.longitude == null) {
       return res.status(400).json({ message: "Driver location not available" });
@@ -112,8 +131,8 @@ exports.acceptRideRequest = async (req, res, next) => {
       return res.status(400).json({ message: "Driver is not within 10 miles of pickup location" });
     }
 
-    // Assign driver and update status
-    ride.driverId = driverId;
+    // Assign driver SSN and update status
+    ride.driverId = driverSsn;
     ride.status = 'accepted';
     await ride.save();
 
@@ -135,9 +154,55 @@ updateRide = async (rideId, updateData) => {
 };
 
 exports.rideCompleted = async (req, res) => {
-  emitCompletedRideEvent(req.body);
+  try {
+    // Fetch the latest ride from DB to ensure we have the correct SSN-based IDs
+    const rideId = req.body._id || req.body.rideId || req.body.id;
+    const ride = await Ride.findById(rideId);
+    if (!ride) {
+      return res.status(404).json({ message: "Ride not found" });
+    }
 
-  return res.status(202).json({ message: "Ride completed" });
+    // Ensure all required fields are present
+    if (!ride.customerId || !ride.driverId || !ride.price || !ride.pickupLocation || !ride.dropoffLocation || !ride.dateTime) {
+      return res.status(400).json({ 
+        message: "Missing required ride data for billing",
+        missing: {
+          customerId: !ride.customerId,
+          driverId: !ride.driverId,
+          price: !ride.price,
+          pickupLocation: !ride.pickupLocation,
+          dropoffLocation: !ride.dropoffLocation,
+          dateTime: !ride.dateTime
+        }
+      });
+    }
+
+    // Update ride status to completed
+    ride.status = 'completed';
+    await ride.save();
+
+    // Prepare ride data for billing
+    const rideData = {
+      ...ride.toObject(),
+      createdAt: ride.createdAt,
+      updatedAt: new Date(), // Set completion time
+      distanceCovered: ride.distanceCovered || 0
+    };
+
+    // Emit the event with complete ride data
+    await emitCompletedRideEvent({ ride: rideData });
+    
+    return res.status(202).json({ 
+      message: "Ride completed",
+      ride: rideData
+    });
+  } catch (err) {
+    console.error("Error completing ride:", err);
+    return res.status(500).json({ 
+      message: "Failed to complete ride", 
+      error: err.message 
+    });
+  }
 };
 
 
