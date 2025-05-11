@@ -18,6 +18,7 @@ const Profile = () => {
   const [showAddMoneyModal, setShowAddMoneyModal] = useState(false);
   const [amount, setAmount] = useState('');
   const [walletLoading, setWalletLoading] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(0);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -38,6 +39,7 @@ const Profile = () => {
   useEffect(() => {
     if (user) {
       fetchProfile();
+      fetchWalletBalance();
     }
   }, [user]);
 
@@ -73,6 +75,16 @@ const Profile = () => {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchWalletBalance = async () => {
+    try {
+      const response = await axios.get(`http://localhost:3004/api/billing/getCustomerWallet/${user.id}`);
+      setWalletBalance(response.data.balance);
+    } catch (err) {
+      console.error('Failed to fetch wallet balance:', err);
+      setError('Failed to fetch wallet balance');
     }
   };
 
@@ -136,16 +148,13 @@ const Profile = () => {
 
     try {
       setWalletLoading(true);
-      const response = await axios.post(`http://localhost:3000/api/customers/${user.id}/wallet/add`, {
+      const response = await axios.post('http://localhost:3004/api/billing/addToCustomerWallet', {
+        ssn: user.id,
         amount: parseFloat(amount)
       });
       
-      // Update profile with new wallet balance
-      setProfile(prev => ({
-        ...prev,
-        walletBalance: response.data.walletBalance
-      }));
-      
+      // Update wallet balance
+      setWalletBalance(response.data.balance);
       setShowAddMoneyModal(false);
       setAmount('');
       setError('');
@@ -258,7 +267,7 @@ const Profile = () => {
           <FaWallet className="info-icon" />
           <div className="info-details">
             <label>Balance</label>
-            <p>${profile.walletBalance?.toFixed(2) || '0.00'}</p>
+            <p>${walletBalance.toFixed(2)}</p>
           </div>
         </div>
         <button
