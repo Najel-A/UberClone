@@ -7,6 +7,21 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
+app.use(
+  cors({
+    origin: "*",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "Cookie",
+      "Origin",
+      "Accept",
+    ],
+    exposedHeaders: ["set-cookie"],
+  })
+);
 app.use(express.json());
 app.use(cors({ origin: '*' }));
 app.use(session({

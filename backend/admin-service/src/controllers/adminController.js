@@ -94,7 +94,9 @@ exports.updateAdmin = async (req, res) => {
     res.json(admin);
   } catch (err) {
     console.error("Error updating admin:", err.message);
-    res.status(500).json({ message: "Internal server error", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: err.message });
   }
 };
 
