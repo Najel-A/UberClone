@@ -75,6 +75,10 @@ exports.getDriver = async (req, res) => {
     if (!driver) {
       throw new NotFoundError('Driver not found');
     }
+    console.log('Driver document returned:', driver);
+    if (!driver.currentLocation) {
+      driver.currentLocation = { latitude: null, longitude: null };
+    }
     res.status(200).json(driver);
   } catch (err) {
     if (err instanceof NotFoundError) {
