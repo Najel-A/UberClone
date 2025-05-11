@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { FaCar, FaSpinner } from 'react-icons/fa';
 import '../styles/trips.css';
+import { getRideStatus } from '../customer/customerAPI';
 
 const Trips = () => {
   const user = useSelector((state) => state.user.user);
@@ -10,6 +11,7 @@ const Trips = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [rideAccepted, setRideAccepted] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -22,20 +24,32 @@ const Trips = () => {
       return;
     }
 
-    // Simulate checking for driver acceptance
-    const checkDriverStatus = async () => {
+    if (!selectedRide._id) {
+      setError('No ride ID found. Please try booking again.');
+      setLoading(false);
+      return;
+    }
+
+    let interval;
+    const pollRideStatus = async () => {
       try {
-        // Here you would typically make an API call to check driver status
-        // For now, we'll just simulate a delay
-        await new Promise(resolve => setTimeout(resolve, 5000));
-        setLoading(false);
+        const res = await getRideStatus(selectedRide._id);
+        if (res.data.status === 'accepted') {
+          setRideAccepted(true);
+          setLoading(false);
+          clearInterval(interval);
+        } else {
+          setLoading(true);
+        }
       } catch (err) {
-        setError('Failed to check driver status');
+        setError('Failed to check ride status');
         setLoading(false);
+        clearInterval(interval);
       }
     };
-
-    checkDriverStatus();
+    pollRideStatus();
+    interval = setInterval(pollRideStatus, 4000);
+    return () => clearInterval(interval);
   }, [user, selectedRide, navigate]);
 
   if (!user) {
@@ -50,15 +64,23 @@ const Trips = () => {
     <div className="trips-container">
       <div className="trips-card">
         <div className="trips-header">
-          <h2>Finding a Driver</h2>
+          <h2>{rideAccepted ? 'Driver Found!' : 'Finding a Driver'}</h2>
         </div>
         
         <div className="trips-content">
-          <div className="loading-section">
-            <FaSpinner className="spinner" />
-            <h3>Waiting for nearby drivers...</h3>
-            <p>We're searching for the best driver for your ride</p>
-          </div>
+          {rideAccepted ? (
+            <div className="confirmation-section">
+              <FaCar className="icon" />
+              <h3>Your ride has been accepted by a driver!</h3>
+              <p>Driver is on the way. Please be ready at your pickup location.</p>
+            </div>
+          ) : (
+            <div className="loading-section">
+              <FaSpinner className="spinner" />
+              <h3>Waiting for nearby drivers...</h3>
+              <p>We're searching for the best driver for your ride</p>
+            </div>
+          )}
 
           <div className="ride-details">
             <div className="detail-item">

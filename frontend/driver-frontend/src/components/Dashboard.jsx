@@ -6,6 +6,7 @@ import {
   setLocation,
 } from "../redux/slices/driverSlice";
 import { fetchCurrentDriver } from "../redux/slices/authSlice";
+import { rideService } from "../services/api";
 
 const Dashboard = () => {
   const dispatch = useDispatch();
@@ -13,6 +14,10 @@ const Dashboard = () => {
   const { driverStatus, location, loading, error } = useSelector(
     (state) => state.driver
   );
+  const [availableRides, setAvailableRides] = useState([]);
+  const [ridesLoading, setRidesLoading] = useState(false);
+  const [acceptingRideId, setAcceptingRideId] = useState(null);
+  const [acceptError, setAcceptError] = useState(null);
 
   // Fetch current driver status on component mount
   // useEffect(() => {
@@ -70,6 +75,40 @@ const Dashboard = () => {
         reject(new Error("Geolocation not supported"));
       }
     });
+  };
+
+  // Poll for available rides every 5 seconds
+  useEffect(() => {
+    let interval;
+    const fetchRides = async () => {
+      if (driverStatus !== "available" || !location.latitude || !location.longitude) return;
+      setRidesLoading(true);
+      try {
+        const res = await rideService.getAvailableRides(location.latitude, location.longitude);
+        setAvailableRides(res.data);
+      } catch (err) {
+        setAvailableRides([]);
+      } finally {
+        setRidesLoading(false);
+      }
+    };
+    fetchRides();
+    interval = setInterval(fetchRides, 5000);
+    return () => clearInterval(interval);
+  }, [driverStatus, location.latitude, location.longitude]);
+
+  const handleAcceptRide = async (rideId) => {
+    setAcceptingRideId(rideId);
+    setAcceptError(null);
+    try {
+      await rideService.acceptRide(rideId, currentDriver._id);
+      // Optionally, refresh rides immediately
+      setAvailableRides((rides) => rides.filter((r) => r._id !== rideId));
+    } catch (err) {
+      setAcceptError(err.response?.data?.message || "Failed to accept ride");
+    } finally {
+      setAcceptingRideId(null);
+    }
   };
 
   if (!currentDriver) {
@@ -209,6 +248,40 @@ const Dashboard = () => {
                   </ul>
                 </div>
               )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      <Row>
+        <Col lg={12} className="mb-4">
+          <Card className="shadow-sm h-100">
+            <Card.Body>
+              <Card.Title>Available Ride Requests (within 10 miles)</Card.Title>
+              {ridesLoading ? (
+                <p>Loading rides...</p>
+              ) : availableRides.length === 0 ? (
+                <p>No available rides nearby.</p>
+              ) : (
+                <ul className="list-group">
+                  {availableRides.map((ride) => (
+                    <li key={ride._id} className="list-group-item d-flex justify-content-between align-items-center">
+                      <span>
+                        <strong>Pickup:</strong> {ride.pickupLocation.address} | <strong>Dropoff:</strong> {ride.dropoffLocation.address} | <strong>Price:</strong> ${ride.price}
+                      </span>
+                      <Button
+                        variant="success"
+                        size="sm"
+                        disabled={acceptingRideId === ride._id}
+                        onClick={() => handleAcceptRide(ride._id)}
+                      >
+                        {acceptingRideId === ride._id ? "Accepting..." : "Accept Ride"}
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {acceptError && <div className="text-danger mt-2">{acceptError}</div>}
             </Card.Body>
           </Card>
         </Col>

@@ -79,12 +79,8 @@ const RideConfirmation = ({ ride, pickupLocation, dropoffLocation, distance, onC
 
       const bookedRide = await response.json();
       
-      // Update Redux state with the booked ride
-      dispatch(setSelectedRide({
-        ...rideToShow,
-        ...bookedRide,
-        status: 'waiting_for_driver'
-      }));
+      // Update Redux state with the booked ride (use backend response only)
+      dispatch(setSelectedRide(bookedRide));
 
       setSuccess('Ride booked successfully!');
       

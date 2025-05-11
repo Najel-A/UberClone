@@ -40,4 +40,14 @@ export const driverService = {
   updateDriverStatusAndLocation: (id, data) => api.put(`/${id}/status`, data),
 };
 
+// Ride Matching APIs
+export const rideService = {
+  getAvailableRides: (latitude, longitude) =>
+    axios.get(`${process.env.REACT_APP_RIDE_SERVICE_URL}/api/rides/getRides`, {
+      params: { latitude, longitude },
+    }),
+  acceptRide: (rideId, driverId) =>
+    axios.post(`${process.env.REACT_APP_RIDE_SERVICE_URL}/api/rides/acceptRide/${rideId}`, { driverId }),
+};
+
 export default driverService;

@@ -7,6 +7,6 @@ router.post("/", RideController.createRideRequest);
 router.get("/getRides", RideController.getNearbyRideRequests);
 router.post("/acceptRide/:id", RideController.acceptRideRequest);
 router.post("/rideCompleted", RideController.rideCompleted);
-
+router.get('/:rideId', RideController.getRideById);
 
 module.exports = router;

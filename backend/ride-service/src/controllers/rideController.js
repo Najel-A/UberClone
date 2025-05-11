@@ -5,6 +5,7 @@ const redisClient = require("../config/redis");
 const Ride = require('../models/Ride');
 const { simulateRide } = require("../utils/simulateRide");
 const {emitCompletedRideEvent} = require('../events/rideCompleted/rideCompletedProducer');
+const axios = require('axios');
 
 exports.createRideRequest = async (req, res, next) => {
   try {
@@ -29,9 +30,11 @@ exports.createRideRequest = async (req, res, next) => {
     ) {
       return res.status(400).json({ message: "Missing required ride information" });
     }
-    // save to db 
-    await emitRideEvent(rideData);
-    res.status(202).json({ message: "Ride request received and being processed" });
+    // Save to DB immediately and return ride object
+    const ride = await Ride.create(rideData);
+    // Optionally emit Kafka event after saving
+    await emitRideEvent(ride.toObject());
+    res.status(201).json(ride);
   } catch (error) {
     next(error);
   }
@@ -76,17 +79,50 @@ exports.acceptRideRequest = async (req, res, next) => {
       return res.status(400).json({ message: "Driver ID is required" });
     }
 
-    const updatedRide = await RideService.updateRide(id, { driverId });
-
-    if (!updatedRide) {
+    // Fetch the ride
+    const ride = await Ride.findById(id);
+    if (!ride) {
       return res.status(404).json({ message: "Ride not found" });
     }
+    if (ride.status !== 'pending' || ride.driverId) {
+      return res.status(400).json({ message: "Ride already accepted or not pending" });
+    }
 
-    res.status(200).json({ message: "Ride accepted", ride: updatedRide });
+    // Fetch driver location from driver-service
+    const driverServiceUrl = process.env.DRIVER_SERVICE_URL || 'http://localhost:3001/api/drivers';
+    const driverRes = await axios.get(`${driverServiceUrl}/${driverId}`);
+    const driver = driverRes.data;
+    if (!driver.currentLocation || driver.currentLocation.latitude == null || driver.currentLocation.longitude == null) {
+      return res.status(400).json({ message: "Driver location not available" });
+    }
+
+    // Calculate distance (Haversine formula)
+    function toRad(x) { return x * Math.PI / 180; }
+    const lat1 = ride.pickupLocation.latitude;
+    const lon1 = ride.pickupLocation.longitude;
+    const lat2 = driver.currentLocation.latitude;
+    const lon2 = driver.currentLocation.longitude;
+    const R = 3958.8; // Radius of Earth in miles
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const distance = R * c;
+    if (distance > 10) {
+      return res.status(400).json({ message: "Driver is not within 10 miles of pickup location" });
+    }
+
+    // Assign driver and update status
+    ride.driverId = driverId;
+    ride.status = 'accepted';
+    await ride.save();
+
+    res.status(200).json({ message: "Ride accepted", ride });
   } catch (error) {
     next(error);
   }
 };
+
 updateRide = async (rideId, updateData) => {
   return await Ride.findByIdAndUpdate(rideId, updateData, { new: true });
 };
@@ -218,5 +254,19 @@ exports.testRedisCaching = async (req, res, next) => {
     res.json(result);
   } catch (error) {
     next(error);
+  }
+};
+
+// Add GET /api/rides/:rideId endpoint for polling ride status
+exports.getRideById = async (req, res) => {
+  try {
+    const { rideId } = req.params;
+    const ride = await Ride.findById(rideId);
+    if (!ride) {
+      return res.status(404).json({ message: "Ride not found" });
+    }
+    res.json(ride);
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
   }
 };
