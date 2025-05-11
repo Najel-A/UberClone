@@ -5,6 +5,8 @@ import { FaCar, FaSpinner } from 'react-icons/fa';
 import '../styles/trips.css';
 import { getRideStatus } from '../customer/customerAPI';
 
+console.log('Ride Service URL:', process.env.REACT_APP_RIDE_SERVICE_URL);
+
 const Trips = () => {
   const user = useSelector((state) => state.user.user);
   const selectedRide = useSelector((state) => state.ride.selectedRide);
@@ -34,6 +36,7 @@ const Trips = () => {
     const pollRideStatus = async () => {
       try {
         const res = await getRideStatus(selectedRide._id);
+        console.log('Polled ride status:', res.data.status, res.data);
         if (res.data.status === 'accepted') {
           setRideAccepted(true);
           setLoading(false);
