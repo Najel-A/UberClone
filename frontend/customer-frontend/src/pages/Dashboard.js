@@ -320,7 +320,7 @@ const Dashboard = () => {
           </button>
           <button
             className={`nav-tab ${activeTab === 'ride-history' ? 'active' : ''}`}
-            onClick={() => setActiveTab('ride-history')}
+            onClick={() => navigate('/ride-history')}
           >
             Ride History
           </button>

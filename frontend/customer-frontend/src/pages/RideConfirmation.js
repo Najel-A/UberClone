@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { FaCar, FaUsers, FaBolt, FaMapMarkerAlt, FaCreditCard } from 'react-icons/fa';
 import { setSelectedRide, clearSelectedRide } from '../slices/rideSlice';
 import '../styles/rideConfirmation.css';
+import axios from 'axios';
 
 const RideConfirmation = ({ ride, pickupLocation, dropoffLocation, distance, onConfirm, onBack }) => {
   const dispatch = useDispatch();
@@ -14,6 +15,22 @@ const RideConfirmation = ({ ride, pickupLocation, dropoffLocation, distance, onC
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [walletBalance, setWalletBalance] = useState(null);
+  const [walletError, setWalletError] = useState('');
+
+  useEffect(() => {
+    const fetchWallet = async () => {
+      try {
+        const res = await axios.get(`${process.env.REACT_APP_BILLING_SERVICE_URL}/api/billing/getCustomerWallet/${user.id}`);
+        setWalletBalance(res.data.balance);
+      } catch (err) {
+        setWalletError('Failed to fetch wallet balance');
+      }
+    };
+    fetchWallet();
+  }, [user.id]);
+
+  const canBook = walletBalance !== null && walletBalance >= rideToShow.price;
 
   if (!user) {
     return (
@@ -132,7 +149,16 @@ const RideConfirmation = ({ ride, pickupLocation, dropoffLocation, distance, onC
       </div>
       {error && <div className="alert alert-danger" style={{ marginBottom: 12 }}>{error}</div>}
       {success && <div className="alert alert-success" style={{ marginBottom: 12 }}>{success}</div>}
-      <button className="confirm-button" onClick={handleConfirm} disabled={loading}>
+      {walletError && <div className="alert alert-danger" style={{ marginBottom: 12 }}>{walletError}</div>}
+      <div style={{ marginBottom: 12 }}>
+        <strong>Wallet Balance:</strong> ${walletBalance?.toFixed(2) ?? '...'}
+      </div>
+      {!canBook && (
+        <div style={{ color: 'red', marginBottom: 12 }}>
+          Insufficient wallet balance to book this ride.
+        </div>
+      )}
+      <button className="confirm-button" onClick={handleConfirm} disabled={!canBook || loading}>
         {loading ? 'Booking...' : 'Confirm Ride'}
       </button>
     </div>

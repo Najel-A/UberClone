@@ -39,7 +39,7 @@ const Trips = () => {
         console.log('Polled ride status:', res.data.status, res.data);
         if (res.data.status === 'accepted') {
           setRideAccepted(true);
-          setLoading(false);
+        setLoading(false);
           clearInterval(interval);
         } else {
           setLoading(true);
@@ -87,11 +87,11 @@ const Trips = () => {
               <p>Driver is on the way. Please be ready at your pickup location.</p>
             </div>
           ) : (
-            <div className="loading-section">
-              <FaSpinner className="spinner" />
-              <h3>Waiting for nearby drivers...</h3>
-              <p>We're searching for the best driver for your ride</p>
-            </div>
+          <div className="loading-section">
+            <FaSpinner className="spinner" />
+            <h3>Waiting for nearby drivers...</h3>
+            <p>We're searching for the best driver for your ride</p>
+          </div>
           )}
 
           <div className="ride-details">

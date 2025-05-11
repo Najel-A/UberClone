@@ -41,6 +41,18 @@ exports.createRideRequest = async (req, res, next) => {
     }
     rideData.customerId = customerId;
 
+    // Check customer wallet balance before booking
+    try {
+      const billingServiceUrl = process.env.BILLING_SERVICE_URL || 'http://localhost:3004';
+      const walletRes = await axios.get(`${billingServiceUrl}/api/billing/getCustomerWallet/${customerId}`);
+      const balance = walletRes.data.balance;
+      if (balance < rideData.price) {
+        return res.status(400).json({ message: 'Insufficient wallet balance to book this ride.' });
+      }
+    } catch (err) {
+      return res.status(500).json({ message: 'Failed to check wallet balance', error: err.message });
+    }
+
     // Save to DB immediately and return ride object
     const ride = await Ride.create(rideData);
     // Optionally emit Kafka event after saving
@@ -250,11 +262,25 @@ exports.getCustomerRides = async (req, res, next) => {
 
     const rides = await RideService.getRidesByCustomer(customerId);
 
-    if (!rides || rides.length === 0) {
-      return res.status(404).json({ message: "No rides found for this customer" });
-    }
+    // Fetch driver names for each ride
+    const driverServiceUrl = process.env.DRIVER_SERVICE_URL || 'http://localhost:3001/api/drivers';
+    const ridesWithDriverNames = await Promise.all(rides.map(async (ride) => {
+      let driverName = 'N/A';
+      if (ride.driverId) {
+        try {
+          const driverRes = await axios.get(`${driverServiceUrl}/${ride.driverId}`);
+          driverName = driverRes.data.name || driverName;
+        } catch (e) {
+          // keep driverName as 'N/A'
+        }
+      }
+      return {
+        ...ride.toObject(),
+        driverName,
+      };
+    }));
 
-    res.json(rides);
+    res.json(ridesWithDriverNames);
   } catch (error) {
     next(error);
   }
