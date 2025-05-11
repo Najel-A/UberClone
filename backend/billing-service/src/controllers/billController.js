@@ -73,3 +73,52 @@ exports.checkCustomerWallet = async (req, res, next) => {
   }
 };
 
+exports.getCustomerWallet = async (req, res, next) => {
+  try {
+    const { ssn } = req.params;
+
+    if (!ssn) {
+      return res.status(400).json({ message: 'SSN is required' });
+    }
+
+    const wallet = await CustomerWallet.findOne({ where: { ssn } });
+
+    if (!wallet) {
+      return res.status(404).json({ message: 'Customer wallet not found' });
+    }
+
+    res.status(200).json({
+      ssn: wallet.ssn,
+      balance: wallet.wallet,
+      message: 'Wallet fetched successfully'
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getDriverWallet = async (req, res, next) => {
+  try {
+    const { ssn } = req.params;
+
+    if (!ssn) {
+      return res.status(400).json({ message: 'SSN is required' });
+    }
+
+    const wallet = await DriverWallet.findOne({ where: { ssn } });
+
+    if (!wallet) {
+      return res.status(404).json({ message: 'Customer wallet not found' });
+    }
+
+    res.status(200).json({
+      ssn: wallet.ssn,
+      balance: wallet.wallet,
+      message: 'Wallet fetched successfully'
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
