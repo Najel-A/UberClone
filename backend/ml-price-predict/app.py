@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import pandas as pd
 from haversine import haversine, Unit
@@ -13,6 +14,14 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 model = joblib.load("model.pkl")
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Replace with your React app's domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class PredictionInput(BaseModel):
     pickup_latitude: float

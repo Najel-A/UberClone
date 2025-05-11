@@ -23,21 +23,18 @@ const mongoClient = new MongoClient(mongoUri);
 class PricingService {
   static async calculateRidePrice(rideDetails) {
     const fastApiUrl = process.env.FASTAPI_PRICE_URL || "http://localhost:8000/predict";
-
-    const formattedDateTime = dayjs(rideDetails.dateTime)
+  
+    let formattedDateTime = dayjs(rideDetails.dateTime)
       .utc()
       .format("YYYY-MM-DD HH:mm:ss.SSSSSS");
-
+  
     try {
-      // Retrieve the number of ride requests from MongoDB
-      const rideRequests = await this.getRideRequestCount();
-      rideRequests += 1; // Include the current ride request
+      const rideRequests = (await this.getRideRequestCount()) + 1;
       console.log("Number of ride requests:", rideRequests);
-
-      // Retrieve the number of drivers from MongoDB
+  
       const drivers = await this.getDriverCount();
       console.log("Number of drivers:", drivers);
-
+  
       const requestData = {
         pickup_latitude: rideDetails.pickupLocation.latitude,
         pickup_longitude: rideDetails.pickupLocation.longitude,
@@ -47,7 +44,7 @@ class PricingService {
         ride_requests: rideRequests,
         drivers: drivers,
       };
-
+  
       const response = await mlServiceCircuitBreaker.call(() =>
         axios.post(fastApiUrl, requestData, {
           timeout: 2000,
@@ -56,14 +53,14 @@ class PricingService {
           },
         })
       );
-
+  
       return response.data.fare;
     } catch (error) {
       console.error("FastAPI price calculation failed:", {
         message: error.message,
         rideDetails,
       });
-
+  
       throw new Error("Price calculation service unavailable");
     }
   }
