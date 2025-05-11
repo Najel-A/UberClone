@@ -4,10 +4,12 @@ const driverRoutes = require('./routes/driverRoutes');
 const multer = require('multer');
 const path = require('path');
 const session = require('express-session');
-
+const cors =  require('cors');
 require('dotenv').config();
 
+
 const app = express();
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 app.use(session({
     secret: process.env.SESSION_SECRET || 'your-secret-key',
