@@ -3,11 +3,12 @@ const mongoose = require('mongoose');
 const adminRoutes = require('./routes/adminRoutes');
 const path = require('path');
 const session = require('express-session');
-
+const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
 app.use(express.json());
+app.use(cors({ origin: '*' }));
 app.use(session({
     secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
