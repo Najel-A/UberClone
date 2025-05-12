@@ -100,14 +100,14 @@ const driverSchema = new mongoose.Schema({
     images: [{
       type: String,
       validate: {
-        validator: (v) => v.startsWith('https://'),
+        validator: (v) => v.startsWith('http://') || v.startsWith('https://'),
         message: 'Image must be a valid URL'
       }
     }],
     video: {
       type: String,
       validate: {
-        validator: (v) => v.startsWith('https://'),
+        validator: (v) => v.startsWith('http://') || v.startsWith('https://'),
         message: 'Video must be a valid URL'
       }
     }

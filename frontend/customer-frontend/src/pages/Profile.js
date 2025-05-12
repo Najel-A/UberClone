@@ -60,7 +60,7 @@ const Profile = () => {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:3002/api/customers");
+      const response = await axios.get("http://localhost:3000/api/customers");
       const customer = response.data.find((c) => c._id === user.id);
       if (!customer) {
         setError("Profile not found");
@@ -95,7 +95,7 @@ const Profile = () => {
   const fetchWalletBalance = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:3001/api/billing/getCustomerWallet/${user.id}`
+        `http://localhost:3004/api/billing/getCustomerWallet/${user.id}`
       );
       setWalletBalance(response.data.balance);
     } catch (err) {

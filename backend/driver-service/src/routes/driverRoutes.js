@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const driverController = require("../controllers/driverController");
-const upload = require("../utils/multer");
+const { uploadVideo, uploadImage } = require("../utils/multer");
 const {
   validateDriverData,
   validateDriverUpdate,
@@ -23,7 +23,7 @@ router.get("/", driverController.listDrivers);
 router.get("/email/:email", driverController.getDriverByEmail);
 
 // Upload driver profile picture
-router.post('/:id/profile-picture', upload.single('profilePicture'), driverController.uploadProfilePicture);
+router.post('/:id/profile-picture', uploadImage.single('profilePicture'), driverController.uploadProfilePicture);
 
 // Add Review and Rating
 router.post('/:id/review', driverController.addReviewAndRating);
@@ -39,6 +39,9 @@ router.delete("/:id", driverController.deleteDriver);
 
 // Get Driver Video
 router.get("/:id/video", driverController.getDriverVideo);
+
+// Upload Driver Video
+router.post("/:id/video", uploadVideo.single('video'), driverController.uploadDriverVideo);
 
 // Update Driver Status and Location
 router.put("/:id/status", driverController.updateDriverStatusAndLocation);

@@ -120,7 +120,14 @@ const DriverInfo = () => {
       <div style={{ display: 'flex', alignItems: 'center', flexDirection: 'column', marginBottom: 24 }}>
         <div style={{ position: 'relative', width: 120, height: 120 }}>
           <img
-            src={profilePicPreview || (driverData && driverData.profilePicture ? `http://localhost:3001${driverData.profilePicture}` : undefined) || "https://ui-avatars.com/api/?name=Driver&background=random"}
+            src={
+              profilePicPreview ||
+              (driverData && driverData.profilePicture
+                ? (driverData.profilePicture.startsWith('http')
+                    ? driverData.profilePicture
+                    : `http://localhost:3001${driverData.profilePicture}`)
+                : "https://ui-avatars.com/api/?name=Driver&background=random")
+            }
             alt="Profile"
             style={{ width: 120, height: 120, borderRadius: '50%', objectFit: 'cover', border: '2px solid #eee' }}
           />
