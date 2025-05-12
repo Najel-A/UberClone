@@ -4,3 +4,4 @@ pandas
 haversine
 joblib
 xgboost
+python-dotenv

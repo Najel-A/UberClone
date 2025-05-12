@@ -1,12 +1,12 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:3002/api";
+const API_URL = process.env.REACT_APP_CUSTOMER_SERVICE_URL;
 
 const authService = {
   async login(credentials) {
     try {
       const response = await axios.post(
-        `${API_URL}/customers/login`,
+        `${API_URL}/api/customers/login`,
         credentials
       );
       if (response.data.token) {
@@ -32,7 +32,7 @@ const authService = {
         _id: generateSSN(), // Generate a random SSN format ID
       };
 
-      const response = await axios.post(`${API_URL}/customers`, signupData);
+      const response = await axios.post(`${API_URL}/api/customers`, signupData);
       return response.data;
     } catch (error) {
       const errorMessage = error.response?.data?.message || "Signup failed";

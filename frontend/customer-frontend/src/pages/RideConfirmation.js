@@ -111,7 +111,7 @@ const RideConfirmation = ({
 
       console.log("Sending payload:", payload);
       const response = await axios.post(
-        "http://localhost:3005/api/rides",
+        `${process.env.REACT_APP_RIDE_SERVICE_URL}/api/rides`,
         payload,
         {
           headers: {

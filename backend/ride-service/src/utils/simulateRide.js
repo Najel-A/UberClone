@@ -1,19 +1,18 @@
 /*
-*   Simulate Ride
-* @start is a object pickupLocation { long, lat }
-* @end is a object dropoffLocation { long, lat }
-* @steps is the amount of updates for the ride (Default 20 should be good)
-*/
+ *   Simulate Ride
+ * @start is a object pickupLocation { long, lat }
+ * @end is a object dropoffLocation { long, lat }
+ * @steps is the amount of updates for the ride (Default 20 should be good)
+ */
 
 const { redisPublisher } = require("../config/redis");
-const axios = require('axios');
+const axios = require("axios");
 
 exports.simulateRide = async (rideId, start, end, steps = 20, delay = 500) => {
-  console.log('Start:', start);
-  console.log('END:', end)
+  console.log("Start:", start);
+  console.log("END:", end);
   const latStep = (end.latitude - start.latitude) / steps;
   const lngStep = (end.longitude - start.longitude) / steps;
-
 
   for (let i = 0; i <= steps; i++) {
     const latitude = start.latitude + latStep * i;
@@ -24,7 +23,7 @@ exports.simulateRide = async (rideId, start, end, steps = 20, delay = 500) => {
       rideId,
       location: { latitude: latitude, longitude: longitude },
       timestamp: Date.now(),
-      last: i === steps // Mark the last event
+      last: i === steps, // Mark the last event
     };
 
     // Publish location to Redis, and emit ride
@@ -36,11 +35,17 @@ exports.simulateRide = async (rideId, start, end, steps = 20, delay = 500) => {
 
   // After simulation, trigger ride completion for wallet update
   try {
-    const rideServiceUrl = process.env.RIDE_SERVICE_URL || 'http://localhost:3005';
-    await axios.post(`${rideServiceUrl}/api/rides/rideCompleted`, { id: rideId });
+    const rideServiceUrl =
+      process.env.RIDE_SERVICE_URL || "http://localhost:5003";
+    await axios.post(`${rideServiceUrl}/api/rides/rideCompleted`, {
+      id: rideId,
+    });
     console.log(`🚦 Triggered ride completion for rideId: ${rideId}`);
   } catch (err) {
-    console.error(`❌ Failed to trigger ride completion for rideId: ${rideId}`, err.message);
+    console.error(
+      `❌ Failed to trigger ride completion for rideId: ${rideId}`,
+      err.message
+    );
   }
 
   return { success: true };

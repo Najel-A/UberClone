@@ -9,6 +9,10 @@ const axios = require("axios");
 exports.createDriver = async (req, res) => {
   try {
     const driverData = req.body;
+    console.log("Received driver data:", {
+      ...driverData,
+      password: "[REDACTED]",
+    });
 
     // Check for existing driver
     const existingDriver = await Driver.findOne({
@@ -18,10 +22,22 @@ exports.createDriver = async (req, res) => {
     if (existingDriver) {
       throw new ConflictError("Driver ID or email already exists");
     }
-    // Hash password
-    driverData.password = await hashPassword(driverData.password);
 
+    if (!driverData.password) {
+      throw new Error("Password is required");
+    }
+
+    // Hash password
+    console.log("Hashing password...");
+    driverData.password = await hashPassword(driverData.password);
+    console.log("Password hashed successfully");
+
+    console.log("Creating driver document...");
     const driver = await Driver.create(driverData);
+    console.log("Driver created successfully:", {
+      _id: driver._id,
+      email: driver.email,
+    });
 
     // Create wallet for the driver
     try {
@@ -360,7 +376,9 @@ exports.addReviewAndRating = async (req, res) => {
     // Ensure rating is a number
     const numericRating = Number(rating);
     if (!numericRating || numericRating < 1 || numericRating > 5) {
-      return res.status(400).json({ message: "Rating must be between 1 and 5" });
+      return res
+        .status(400)
+        .json({ message: "Rating must be between 1 and 5" });
     }
 
     const driver = await Driver.findById(id);
@@ -376,12 +394,15 @@ exports.addReviewAndRating = async (req, res) => {
     // Store all ratings for average calculation
     if (!driver._ratings) driver._ratings = [];
     driver._ratings.push(numericRating);
-    driver.rating = driver._ratings.reduce((sum, r) => sum + r, 0) / driver._ratings.length;
+    driver.rating =
+      driver._ratings.reduce((sum, r) => sum + r, 0) / driver._ratings.length;
 
     await driver.save();
     res.status(200).json({ message: "Review and rating added", driver });
   } catch (err) {
-    res.status(500).json({ message: "Internal server error", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: err.message });
   }
 };
 
@@ -389,12 +410,23 @@ exports.addReviewAndRating = async (req, res) => {
 exports.uploadProfilePicture = async (req, res) => {
   try {
     const { id } = req.params;
-    if (!req.file) return res.status(400).json({ message: 'No image provided' });
+    if (!req.file)
+      return res.status(400).json({ message: "No image provided" });
     const imagePath = `/uploads/${req.file.filename}`;
-    const driver = await Driver.findByIdAndUpdate(id, { profilePicture: imagePath }, { new: true });
-    if (!driver) return res.status(404).json({ message: 'Driver not found' });
-    res.status(200).json({ message: 'Profile picture uploaded successfully', profilePicture: imagePath, driver });
+    const driver = await Driver.findByIdAndUpdate(
+      id,
+      { profilePicture: imagePath },
+      { new: true }
+    );
+    if (!driver) return res.status(404).json({ message: "Driver not found" });
+    res.status(200).json({
+      message: "Profile picture uploaded successfully",
+      profilePicture: imagePath,
+      driver,
+    });
   } catch (err) {
-    res.status(500).json({ message: 'Internal server error', error: err.message });
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: err.message });
   }
 };

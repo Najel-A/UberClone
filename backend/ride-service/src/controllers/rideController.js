@@ -62,7 +62,7 @@ exports.createRideRequest = async (req, res, next) => {
     // Check customer wallet balance before booking
     try {
       const billingServiceUrl =
-        process.env.BILLING_SERVICE_URL || "http://localhost:3004";
+        process.env.BILLING_SERVICE_URL || "http://localhost:5004";
       const walletRes = await axios.get(
         `${billingServiceUrl}/api/billing/getCustomerWallet/${customerId}`
       );
@@ -144,14 +144,14 @@ exports.acceptRideRequest = async (req, res, next) => {
     let driverSsn = driverId;
     if (!/^\d{3}-\d{2}-\d{4}$/.test(driverId)) {
       const driverServiceUrl =
-        process.env.DRIVER_SERVICE_URL || "http://localhost:3001/api/drivers";
+        process.env.DRIVER_SERVICE_URL || "http://localhost:5001/api/drivers";
       const driverRes = await axios.get(`${driverServiceUrl}/${driverId}`);
       driverSsn = driverRes.data._id;
     }
 
     // Fetch driver location from driver-service
     const driverServiceUrl =
-      process.env.DRIVER_SERVICE_URL || "http://localhost:3001/api/drivers";
+      process.env.DRIVER_SERVICE_URL || "http://localhost:5001/api/drivers";
     const driverRes = await axios.get(`${driverServiceUrl}/${driverSsn}`);
     const driver = driverRes.data;
     if (
@@ -306,7 +306,7 @@ exports.getCustomerRides = async (req, res, next) => {
 
     // Fetch driver names for each ride
     const driverServiceUrl =
-      process.env.DRIVER_SERVICE_URL || "http://localhost:3001/api/drivers";
+      process.env.DRIVER_SERVICE_URL || "http://localhost:5001/api/drivers";
     const ridesWithDriverNames = await Promise.all(
       rides.map(async (ride) => {
         let driverName = "N/A";
