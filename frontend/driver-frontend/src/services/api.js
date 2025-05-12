@@ -37,6 +37,10 @@ export const driverService = {
 
   // Video and Status
   getDriverVideo: (id) => api.get(`/${id}/video`),
+  uploadDriverVideo: (id, formData) => 
+    axios.post(`${process.env.REACT_APP_DRIVER_SERVICE_URL}/api/drivers/${id}/video`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
   updateDriverStatusAndLocation: (id, data) => api.put(`/${id}/status`, data),
 
   // Wallet

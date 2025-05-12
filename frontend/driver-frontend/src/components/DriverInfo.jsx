@@ -141,9 +141,10 @@ const DriverInfo = () => {
             src={
               profilePicPreview ||
               (driverData && driverData.profilePicture
-                ? `${process.env.REACT_APP_DRIVER_SERVICE_URL}${driverData.profilePicture}`
-                : undefined) ||
-              "https://ui-avatars.com/api/?name=Driver&background=random"
+                ? (driverData.profilePicture.startsWith('http')
+                    ? driverData.profilePicture
+                    : `${process.env.REACT_APP_DRIVER_SERVICE_URL}${driverData.profilePicture}`)
+                : "https://ui-avatars.com/api/?name=Driver&background=random")
             }
             alt="Profile"
             style={{
