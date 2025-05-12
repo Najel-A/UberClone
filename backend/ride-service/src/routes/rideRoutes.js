@@ -9,7 +9,6 @@ router.post("/", RideController.createRideRequest);
 router.get("/getRides", RideController.getNearbyRideRequests);
 router.patch("/acceptRide/:id", RideController.acceptRideRequest);
 router.post("/rideCompleted", RideController.rideCompleted);
-<<<<<<< HEAD
 router.get("/driver/:driverId", RideController.getDriverRides);
 router.get("/customer/:customerId", RideController.getCustomerRides);
 router.get("/:rideId", RideController.getRideById);
@@ -20,13 +19,6 @@ router.post(
 );
 router.get("/:rideId/images", RideController.getRideImages);
 router.get("/completed/all", RideController.getAllCompletedRides);
-=======
-router.get('/driver/:driverId', RideController.getDriverRides);
-router.get('/customer/:customerId', RideController.getCustomerRides);
-router.get('/:rideId', RideController.getRideById);
-router.post('/:rideId/upload-images', upload.array('images'), RideController.uploadRideImages);
-router.get('/:rideId/images', RideController.getRideImages);
-router.post('/:rideId/cancel', RideController.cancelRideRequest);
->>>>>>> main
+router.post("/:rideId/cancel", RideController.cancelRideRequest);
 
 module.exports = router;
