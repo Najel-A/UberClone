@@ -126,20 +126,22 @@ const Dashboard = () => {
       const formattedDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.000000`;
 
       const response = await axios.post('http://localhost:8000/predict', {
+        pickup_datetime: formattedDateTime,
         pickup_latitude: pickup.lat,
         pickup_longitude: pickup.lng,
         dropoff_latitude: dropoff.lat,
         dropoff_longitude: dropoff.lng,
         passenger_count: 1,
-        ride_requests: 10, // <-- Add this (example value)
-        drivers: 5         // <-- Add this (example value)
+        // ride_requests: 10, // <-- Add this (example value)
+        // drivers: 5         // <-- Add this (example value)
       }, {
         headers: {
           'Content-Type': 'application/json'
         }
       });
+      console.log(response);
 
-      const basePrice = response.data.fare;
+      const basePrice = response.data.fare_amount;
       dispatch(setPredictedPrice({
         uberx: basePrice,
         share: basePrice * 0.85,
