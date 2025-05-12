@@ -1,3 +1,4 @@
+require("dotenv").config();
 const path = require("path");
 const axios = require("axios");
 const jwt = require("jsonwebtoken");
@@ -27,8 +28,39 @@ exports.createCustomer = async (req, res) => {
     });
     await customer.save();
 
-    res.status(201).json(customer);
+    // Create wallet for the customer
+    try {
+      console.log("Creating wallet for customer:", customer._id);
+      // Use the Docker container name for inter-service communication
+      const billingServiceUrl =
+        process.env.BILLING_SERVICE_URL || "http://billing-service:3001";
+      console.log("Billing service URL:", billingServiceUrl);
+
+      const response = await axios.post(
+        `${billingServiceUrl}/api/billing/createCustomerWallet`,
+        {
+          ssn: customer._id.toString(), // Ensure _id is converted to string
+        }
+      );
+
+      console.log("Wallet creation response:", response.data);
+    } catch (walletError) {
+      console.error("Error creating customer wallet:", {
+        message: walletError.message,
+        response: walletError.response?.data,
+        status: walletError.response?.status,
+        url: `${billingServiceUrl}/api/billing/createCustomerWallet`,
+      });
+      // Continue with customer creation even if wallet creation fails
+      // The wallet can be created later if needed
+    }
+
+    res.status(201).json({
+      ...customer.toObject(),
+      message: "Customer created successfully",
+    });
   } catch (err) {
+    console.error("Error in createCustomer:", err);
     res
       .status(500)
       .json({ message: "Internal server error", error: err.message });
@@ -180,7 +212,7 @@ exports.findNearbyDrivers = async (req, res) => {
     // Going to need to make a call to the driver-service to fetch nearby drivers
     const driverServiceUrl =
       process.env.DRIVER_SERVICE_URL ||
-      "http://localhost:3001/api/drivers/?minRating=3";
+      "http://localhost:5001/api/drivers/?minRating=3";
     // // Make a request to the driver-service to fetch nearby drivers
     const response = await axios.get(driverServiceUrl, {
       //params: { latitude, longitude },
@@ -247,20 +279,28 @@ exports.getCustomerByEmail = async (req, res) => {
 exports.uploadProfilePicture = async (req, res) => {
   try {
     const { id } = req.params;
-    if (!req.file) return res.status(400).json({ message: 'No image provided' });
+    if (!req.file)
+      return res.status(400).json({ message: "No image provided" });
 
     const imagePath = `/uploads/${req.file.filename}`;
-    const customer = await Customer.findByIdAndUpdate(id, { profilePicture: imagePath }, { new: true });
+    const customer = await Customer.findByIdAndUpdate(
+      id,
+      { profilePicture: imagePath },
+      { new: true }
+    );
 
-    if (!customer) return res.status(404).json({ message: 'Customer not found' });
+    if (!customer)
+      return res.status(404).json({ message: "Customer not found" });
 
     res.status(200).json({
-      message: 'Profile picture uploaded successfully',
+      message: "Profile picture uploaded successfully",
       profilePicture: imagePath,
-      customer
+      customer,
     });
   } catch (err) {
-    res.status(500).json({ message: 'Internal server error', error: err.message });
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: err.message });
   }
 };
 
@@ -268,10 +308,13 @@ exports.uploadProfilePicture = async (req, res) => {
 exports.getCustomerById = async (req, res) => {
   try {
     const customer = await Customer.findById(req.params.id);
-    if (!customer) return res.status(404).json({ message: 'Customer not found' });
+    if (!customer)
+      return res.status(404).json({ message: "Customer not found" });
 
     res.json(customer);
   } catch (err) {
-    res.status(500).json({ message: 'Internal server error', error: err.message });
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: err.message });
   }
 };

@@ -1225,57 +1225,59 @@ const ReviewAccounts = () => {
               <ListGroup>
                 {filteredDrivers.map((driver) => (
                   <ListGroup.Item key={driver._id}>
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <div>
+                        <strong>{driver.email}</strong>
+                        <Badge
+                          bg={
+                            driver.status === "available"
+                              ? "success"
+                              : "secondary"
+                          }
+                          className="ms-2"
+                        >
+                          {driver.status || "N/A"}
+                        </Badge>
+                        <Badge bg="info" className="ms-2">
+                          Rating: {driver.rating?.toFixed(1) || "N/A"}
+                        </Badge>
+                      </div>
+                      <div>
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
+                          className="me-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditDriver(driver);
+                          }}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline-danger"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteDriver(driver._id);
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
                     <Accordion>
                       <Accordion.Item eventKey="0">
                         <Accordion.Header>
-                          <div className="d-flex justify-content-between align-items-center w-100 pe-3">
-                            <div>
-                              <strong>{driver.email}</strong>
-                              <Badge
-                                bg={
-                                  driver.status === "available"
-                                    ? "success"
-                                    : "secondary"
-                                }
-                                className="ms-2"
-                              >
-                                {driver.status || "N/A"}
-                              </Badge>
-                              <Badge bg="info" className="ms-2">
-                                Rating: {driver.rating?.toFixed(1) || "N/A"}
-                              </Badge>
-                            </div>
-                            <div>
-                              <Button
-                                variant="outline-primary"
-                                size="sm"
-                                className="me-2"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEditDriver(driver);
-                                }}
-                              >
-                                Edit
-                              </Button>
-                              <Button
-                                variant="outline-danger"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteDriver(driver._id);
-                                }}
-                              >
-                                Delete
-                              </Button>
-                            </div>
+                          <div className="w-100">
+                            <h4 className="mb-0">
+                              {driver.firstName} {driver.lastName}
+                            </h4>
                           </div>
                         </Accordion.Header>
                         <Accordion.Body>
                           <Row>
                             <Col md={6}>
-                              <h4>
-                                {driver.firstName} {driver.lastName}
-                              </h4>
                               <h6>Contact Information</h6>
                               <p className="mb-1">
                                 <strong>Email:</strong> {driver.email}
@@ -1545,52 +1547,54 @@ const ReviewAccounts = () => {
               <ListGroup>
                 {filteredCustomers.map((customer) => (
                   <ListGroup.Item key={customer._id}>
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <div>
+                        <strong>{customer.email}</strong>
+                        <Badge bg="info" className="ms-2">
+                          Rating: {customer.rating?.toFixed(1) || "N/A"}
+                        </Badge>
+                        {customer.creditCardDetails && (
+                          <Badge bg="success" className="ms-2">
+                            Has Credit Card
+                          </Badge>
+                        )}
+                      </div>
+                      <div>
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
+                          className="me-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditCustomer(customer);
+                          }}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline-danger"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteCustomer(customer._id);
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
                     <Accordion>
                       <Accordion.Item eventKey="0">
                         <Accordion.Header>
-                          <div className="d-flex justify-content-between align-items-center w-100 pe-3">
-                            <div>
-                              <strong>{customer.email}</strong>
-                              <Badge bg="info" className="ms-2">
-                                Rating: {customer.rating?.toFixed(1) || "N/A"}
-                              </Badge>
-                              {customer.creditCardDetails && (
-                                <Badge bg="success" className="ms-2">
-                                  Has Credit Card
-                                </Badge>
-                              )}
-                            </div>
-                            <div>
-                              <Button
-                                variant="outline-primary"
-                                size="sm"
-                                className="me-2"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEditCustomer(customer);
-                                }}
-                              >
-                                Edit
-                              </Button>
-                              <Button
-                                variant="outline-danger"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteCustomer(customer._id);
-                                }}
-                              >
-                                Delete
-                              </Button>
-                            </div>
+                          <div className="w-100">
+                            <h4 className="mb-0">
+                              {customer.firstName} {customer.lastName}
+                            </h4>
                           </div>
                         </Accordion.Header>
                         <Accordion.Body>
                           <Row>
                             <Col md={6}>
-                              <h4>
-                                {customer.firstName} {customer.lastName}
-                              </h4>
                               <h6>Contact Information</h6>
                               <p className="mb-1">
                                 <strong>Email:</strong> {customer.email}
