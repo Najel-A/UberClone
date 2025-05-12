@@ -41,21 +41,80 @@ const Statistics = () => {
   const fetchRides = async () => {
     try {
       setLoading(true);
-      const queryParams = new URLSearchParams();
-      if (driverId) queryParams.append("driverId", driverId);
+      setError(null);
 
+      // Call ride service directly
       const response = await axios.get(
-        `${process.env.REACT_APP_ADMIN_BACKEND_PORT_URL}/api/admin/rides${
-          queryParams.toString() ? `?${queryParams.toString()}` : ""
-        }`
+        `${process.env.REACT_APP_RIDE_SERVICE_URL}/api/rides/completed/all`
       );
-      setRides(response.data);
-      setFilteredRides(response.data);
+
+      console.log("Response from ride service:", response.data);
+
+      // Ensure we have an array of rides
+      const completedRides = Array.isArray(response.data)
+        ? response.data
+        : Array.isArray(response.data.rides)
+        ? response.data.rides
+        : [];
+
+      console.log("Processed rides:", completedRides);
+
+      setRides(completedRides);
+      setFilteredRides(completedRides);
+
+      // Calculate totals
+      const revenue = completedRides.reduce(
+        (sum, ride) => sum + (ride.price || 0),
+        0
+      );
+      const rides = completedRides.length;
+
+      // Calculate revenue per day
+      const dailyRevenue = completedRides.reduce((acc, ride) => {
+        const date = new Date(ride.dateTime).toLocaleDateString();
+        if (!acc[date]) {
+          acc[date] = { day: ride.dateTime, totalRevenue: 0 };
+        }
+        acc[date].totalRevenue += ride.price || 0;
+        return acc;
+      }, {});
+
+      setTotalRevenue(revenue);
+      setTotalRides(rides);
+      setRevenuePerDay(dailyRevenue);
+
+      // Calculate location stats if coordinates are provided
+      if (pickupLat && pickupLng) {
+        const pickupStats = calculateLocationStats(
+          completedRides,
+          pickupLat,
+          pickupLng,
+          "pickup"
+        );
+        setLocationStats((prev) => ({ ...prev, pickup: pickupStats }));
+      }
+
+      if (dropoffLat && dropoffLng) {
+        const dropoffStats = calculateLocationStats(
+          completedRides,
+          dropoffLat,
+          dropoffLng,
+          "dropoff"
+        );
+        setLocationStats((prev) => ({ ...prev, dropoff: dropoffStats }));
+      }
+
       setError("");
     } catch (err) {
       const errorMessage =
         err.response?.data?.message || "Failed to fetch rides";
       setError(errorMessage);
+      console.error("Error fetching rides:", err);
+      console.error("Error details:", {
+        response: err.response?.data,
+        status: err.response?.status,
+        headers: err.response?.headers,
+      });
     } finally {
       setLoading(false);
     }
@@ -164,20 +223,6 @@ const Statistics = () => {
       currency: "USD",
     }).format(amount);
   };
-
-  // Calculate total revenue and rides for filtered rides
-  const totalRevenue = filteredRides.reduce((sum, ride) => sum + ride.price, 0);
-  const totalRides = filteredRides.length;
-
-  // Group rides by date for revenue per day
-  const revenuePerDay = filteredRides.reduce((acc, ride) => {
-    const date = new Date(ride.dateTime).toLocaleDateString();
-    if (!acc[date]) {
-      acc[date] = { day: ride.dateTime, totalRevenue: 0 };
-    }
-    acc[date].totalRevenue += ride.price;
-    return acc;
-  }, {});
 
   const fetchBills = async () => {
     try {
