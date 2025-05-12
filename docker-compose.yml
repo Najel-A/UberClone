@@ -1,12 +1,22 @@
+version: "3.8"
+
 services:
+
+  # Backend Microservices
   admin-service:
     build:
       context: ./backend/admin-service
     container_name: admin-service
     env_file:
       - ./backend/admin-service/.env.docker
+    volumes:
+      - ./uploads:/app/uploads
     ports:
-      - "${ADMIN_SERVICE_PORT}:${ADMIN_SERVICE_PORT}"
+      - "5002:5002"
+    depends_on:
+      - mongodb
+    environment:
+      MONGO_URI: "mongodb://admin:adminpassword@mongodb:27017/admin_db?authSource=admin"
 
   billing-service:
     build:
@@ -15,48 +25,92 @@ services:
     env_file:
       - ./backend/billing-service/.env.docker
     ports:
-      - "${BILLING_SERVICE_PORT}:${BILLING_SERVICE_PORT}"
-  
+      - "5004:5004"
+    depends_on:
+      - mysql
+    environment:
+      DB_TYPE: "mysql"
+      DB_HOST: "mysql"
+      DB_PORT: "3306"
+      DB_NAME: "uber_clone"
+      DB_USER: "user"
+      DB_PASSWORD: "userpassword"
+
   customer-service:
     build:
       context: ./backend/customer-service
     container_name: customer-service
     env_file:
       - ./backend/customer-service/.env.docker
+    volumes:
+      - ./uploads:/app/uploads
     ports:
-      - "${CUSTOMER_SERVICE_PORT}:${CUSTOMER_SERVICE_PORT}"
-  
+      - "5000:5000"
+    depends_on:
+      - mongodb
+    environment:
+      MONGO_URI: "mongodb://admin:adminpassword@mongodb:27017/customer_db?authSource=admin"
+    
+
   driver-service:
     build:
       context: ./backend/driver-service
     container_name: driver-service
     env_file:
       - ./backend/driver-service/.env.docker
+    volumes:
+      - ./uploads:/app/uploads
     ports:
-      - "${DRIVER_SERVICE_PORT}:${DRIVER_SERVICE_PORT}"
-  
+      - "5001:5001"
+    depends_on:
+      - mongodb
+    environment:
+      MONGO_URI: "mongodb://admin:adminpassword@mongodb:27017/driver_db?authSource=admin"
+
+  ride-service:
+    build:
+      context: ./backend/ride-service
+    container_name: ride-service
+    env_file:
+      - ./backend/ride-service/.env.docker
+    volumes:
+      - ./uploads:/app/uploads
+    ports:
+      - "5003:5003"
+    depends_on:
+      - mongodb
+    environment:
+      MONGO_URI: "mongodb://admin:adminpassword@mongodb:27017/ride_db?authSource=admin"
+
+  ml-price-predict:
+    build:
+      context: ./backend/ml-price-predict
+    container_name: ml-price-predict
+    ports:
+      - "8000:8000"
+
+    
+  # Infra
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
     ports:
       - "2181:2181"
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
-  
+
   kafka:
     image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
     ports:
-      - "9092:9092"    
-      - "29092:29092"    
+      - "9092:9092"
+      - "29092:29092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-
-      # Advertise correct addresses for inside (kafka) vs outside (localhost)
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://${KAFKA_HOST}:29092
-
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://kafka:29092
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     volumes:
@@ -73,12 +127,80 @@ services:
       - redis-data:/data
     command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
 
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: adminpassword
+    volumes:
+      - mongodb-data:/data/db
+
+  mysql:
+    image: mysql:8
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_HOST: '%'  # Allow root from any host
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: uber_clone
+      MYSQL_USER: user
+      MYSQL_PASSWORD: userpassword
+    volumes:
+      - mysql-data:/var/lib/mysql
+    # command: [--bind-address=0.0.0.0, --default-authentication-plugin=mysql_native_password]
+    
+
+    # Frontend services
+  customer-frontend:
+      build:
+        context: ./frontend/customer-frontend
+      container_name: customer-frontend
+      env_file:
+      - ./frontend/customer-frontend/.env.docker
+      ports:
+        - "3000:80" # Maps container port 80 (Nginx) to host port 3000
+      depends_on:
+        - ride-service
+        - customer-service
+        - driver-service
+        - billing-service
+  
+  driver-frontend:
+      build:
+        context: ./frontend/driver-frontend
+      container_name: driver-frontend
+      env_file:
+      - ./frontend/driver-frontend/.env.docker
+      ports:
+        - "3001:80" # Maps container port 80 (Nginx) to host port 3000
+      depends_on:
+        - ride-service
+        - customer-service
+        - driver-service
+        - billing-service
+  
+  admin-frontend:
+      build:
+        context: ./frontend/admin-frontend
+      container_name: admin-frontend
+      env_file:
+      - ./frontend/admin-frontend/.env.docker
+      ports:
+        - "3002:80" # Maps container port 80 (Nginx) to host port 3000
+      depends_on:
+        - admin-service
+        - ride-service
+        - customer-service
+        - driver-service
+        - billing-service
+
 
 volumes:
   kafka-data:
   redis-data:
-
-
-  
-
-  
+  mongodb-data:
+  mysql-data:
