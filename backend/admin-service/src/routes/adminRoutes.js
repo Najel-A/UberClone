@@ -41,6 +41,9 @@ router.get("/customers/email/:email", adminController.getCustomerByEmail);
 router.get("/billing", adminController.getAllBills);
 router.get("/billing/:id", adminController.getBillById);
 
+// Ride Management
+router.get("/rides/completed", adminController.getCompletedRides);
+
 // Account Review
 // router.get('/accounts/:id', adminController.getAccount);
 

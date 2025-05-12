@@ -491,3 +491,52 @@ exports.getRideImages = async (req, res) => {
       .json({ message: "Failed to fetch images", error: error.message });
   }
 };
+
+exports.getAllCompletedRides = async (req, res) => {
+  try {
+    const rides = await Ride.find({ status: "completed" })
+      .sort({ dateTime: -1 }) // Sort by date, most recent first
+      .select("-__v"); // Exclude version key
+
+    if (!rides || rides.length === 0) {
+      return res.status(200).json({
+        message: "No completed rides found",
+        rides: [],
+      });
+    }
+
+    // Fetch driver names for each ride
+    const driverServiceUrl =
+      process.env.DRIVER_SERVICE_URL || "http://localhost:5001/api/drivers";
+    const ridesWithDriverNames = await Promise.all(
+      rides.map(async (ride) => {
+        let driverName = "N/A";
+        if (ride.driverId) {
+          try {
+            const driverRes = await axios.get(
+              `${driverServiceUrl}/${ride.driverId}`
+            );
+            driverName = driverRes.data.name || driverName;
+          } catch (e) {
+            // keep driverName as 'N/A'
+          }
+        }
+        return {
+          ...ride.toObject(),
+          driverName,
+        };
+      })
+    );
+
+    res.json({
+      message: "Successfully retrieved completed rides",
+      rides: ridesWithDriverNames,
+    });
+  } catch (error) {
+    console.error("Error fetching completed rides:", error);
+    res.status(500).json({
+      message: "Failed to fetch completed rides",
+      error: error.message,
+    });
+  }
+};

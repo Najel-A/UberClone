@@ -31,11 +31,15 @@ const allowedOrigins = [
   process.env.DRIVER_FRONTEND_URL,
   process.env.CUSTOMER_FRONTEND_URL,
   process.env.RIDE_SERVICE_URL,
-  "http://localhost:3000", // Customer frontend
-  "http://localhost:3001", // Driver frontend
-  "http://localhost:3002", // Admin frontend
-  "http://localhost:3004", // Additional frontend
+  process.env.ADMIN_SERVICE_URL,
+  "http://localhost:3000", // Admin service
+  "http://localhost:3001", // Billing service
+  "http://localhost:3002", // Customer service
+  "http://localhost:3003", // Driver service
+  "http://localhost:3004", // Driver frontend
   "http://localhost:3005", // Ride service
+  "http://localhost:3006", // Admin frontend
+  "http://localhost:3007", // Customer frontend
 ].filter(Boolean);
 
 app.use(
@@ -72,21 +76,6 @@ app.use(
     optionsSuccessStatus: 204,
   })
 );
-
-// Add headers middleware
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", req.headers.origin);
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-  );
-  res.header(
-    "Access-Control-Allow-Methods",
-    "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-  );
-  next();
-});
 
 app.use(express.json());
 app.use(express.urlencoded({ limit: "20mb", extended: true }));
