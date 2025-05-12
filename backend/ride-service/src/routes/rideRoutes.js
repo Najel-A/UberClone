@@ -14,5 +14,6 @@ router.get('/customer/:customerId', RideController.getCustomerRides);
 router.get('/:rideId', RideController.getRideById);
 router.post('/:rideId/upload-images', upload.array('images'), RideController.uploadRideImages);
 router.get('/:rideId/images', RideController.getRideImages);
+router.post('/:rideId/cancel', RideController.cancelRideRequest);
 
 module.exports = router;

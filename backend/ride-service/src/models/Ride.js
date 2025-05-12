@@ -25,12 +25,13 @@ const rideSchema = new mongoose.Schema({
   price: {type: Number, required: true},
   status: {
     type: String,
-    enum: ['pending', 'accepted', 'completed'],
+    enum: ['pending', 'accepted', 'completed', 'cancelled'],
     default: 'pending',
     required: true
   },
   images: [{ type: String }],
-  issueDescription: { type: String }
+  issueDescription: { type: String },
+  cancelledBy: { type: String, enum: ['customer', 'driver', null], default: null },
 }, { timestamps: true });
 
 rideSchema.index({ pickupPoint: '2dsphere' }); // For MongoDB 

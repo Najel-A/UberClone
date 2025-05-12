@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { FaCar, FaSpinner } from 'react-icons/fa';
 import '../styles/trips.css';
-import { getRideStatus, submitDriverReview } from '../customer/customerAPI';
+import { getRideStatus, submitDriverReview, cancelRide } from '../customer/customerAPI';
+import { clearSelectedRide } from '../slices/rideSlice';
 
 console.log('Ride Service URL:', process.env.REACT_APP_RIDE_SERVICE_URL);
 
 const Trips = () => {
   const user = useSelector((state) => state.user.user);
   const selectedRide = useSelector((state) => state.ride.selectedRide);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -20,6 +22,10 @@ const Trips = () => {
   const [rating, setRating] = useState(5);
   const [reviewSuccess, setReviewSuccess] = useState('');
   const [reviewError, setReviewError] = useState('');
+  const [cancelError, setCancelError] = useState('');
+  const [cancelSuccess, setCancelSuccess] = useState('');
+  const [cancelledBy, setCancelledBy] = useState(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -50,6 +56,10 @@ const Trips = () => {
           setRideCompleted(true);
           setShowReview(true);
           setLoading(false);
+          clearInterval(interval);
+        } else if (res.data.status === 'cancelled') {
+          setLoading(false);
+          setCancelledBy(res.data.cancelledBy || null);
           clearInterval(interval);
         } else {
           setLoading(true);
@@ -87,6 +97,43 @@ const Trips = () => {
     }
   };
 
+  const handleCancelRide = async () => {
+    setCancelError('');
+    setCancelSuccess('');
+    setCancelLoading(true);
+    try {
+      await cancelRide(selectedRide._id);
+      setCancelledBy('customer');
+      dispatch(clearSelectedRide());
+      setCancelSuccess('Ride cancelled successfully.');
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1500);
+    } catch (err) {
+      setCancelError(err.response?.data?.message || 'Failed to cancel ride. Please try again.');
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
+  const handleBackToHome = () => {
+    dispatch(clearSelectedRide());
+    setLoading(true);
+    setError('');
+    setRideAccepted(false);
+    setRideCompleted(false);
+    setShowReview(false);
+    setReviewText('');
+    setRating(5);
+    setReviewSuccess('');
+    setReviewError('');
+    setCancelError('');
+    setCancelSuccess('');
+    setCancelledBy(null);
+    setCancelLoading(false);
+    navigate('/dashboard');
+  };
+
   if (!user) {
     return (
       <div className="dashboard-card">
@@ -99,9 +146,29 @@ const Trips = () => {
     <div className="trips-container">
       <div className="trips-card">
         <div className="trips-header">
+          <button 
+            onClick={handleBackToHome}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#666',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '16px',
+              padding: '8px 0',
+              marginBottom: '16px'
+            }}
+          >
+            ← Back to Home
+          </button>
           <h2>{rideAccepted ? 'Driver Found!' : 'Finding a Driver'}</h2>
         </div>
         <div className="trips-content">
+          {cancelledBy === 'driver' && (
+            <div className="alert alert-warning">Ride cancelled by driver.</div>
+          )}
           {rideCompleted && showReview && (
             <div className="review-section" style={{ marginBottom: 24, padding: 16, background: '#f8f9fa', borderRadius: 8 }}>
               <h3>Rate Your Driver</h3>
@@ -143,6 +210,27 @@ const Trips = () => {
             <FaSpinner className="spinner" />
             <h3>Waiting for nearby drivers...</h3>
             <p>We're searching for the best driver for your ride</p>
+            {!rideCompleted && !cancelledBy && (
+              <button
+                style={{
+                  background: 'red',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 4,
+                  padding: '8px 20px',
+                  cursor: cancelLoading ? 'not-allowed' : 'pointer',
+                  fontWeight: 'bold',
+                  marginTop: 16,
+                  opacity: cancelLoading ? 0.7 : 1
+                }}
+                onClick={handleCancelRide}
+                disabled={cancelLoading}
+              >
+                {cancelLoading ? 'Cancelling...' : 'Cancel Ride'}
+              </button>
+            )}
+            {cancelError && <div style={{ color: 'red', marginTop: 8 }}>{cancelError}</div>}
+            {cancelSuccess && <div style={{ color: 'green', marginTop: 8 }}>{cancelSuccess}</div>}
           </div>
           )}
           <div className="ride-details">
