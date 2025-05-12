@@ -125,11 +125,12 @@ exports.acceptRideRequest = async (req, res, next) => {
   try {
     const { id } = req.params; // ride ID
     const { driverId } = req.body;
-
+    console.log("driverId", driverId);
+    console.log("id", id);
     if (!driverId) {
       return res.status(400).json({ message: "Driver ID is required" });
     }
-
+    
     // Fetch the ride
     const ride = await Ride.findById(id);
     if (!ride) {
@@ -161,7 +162,7 @@ exports.acceptRideRequest = async (req, res, next) => {
 
     // Fetch driver location from driver-service
     const driverServiceUrl =
-      process.env.DRIVER_SERVICE_URL || "http://localhost:5001/api/drivers";
+      process.env.DRIVER_SERVICE_URL || "http://driver-service:5001/api/drivers";
     const driverRes = await axios.get(`${driverServiceUrl}/${driverSsn}`);
     const driver = driverRes.data;
     if (
@@ -316,7 +317,7 @@ exports.getCustomerRides = async (req, res, next) => {
 
     // Fetch driver names for each ride
     const driverServiceUrl =
-      process.env.DRIVER_SERVICE_URL || "http://localhost:5001/api/drivers";
+      process.env.DRIVER_SERVICE_URL || "http://driver-service:5001/api/drivers";
     const ridesWithDriverNames = await Promise.all(
       rides.map(async (ride) => {
         let driverName = "N/A";
@@ -354,7 +355,30 @@ exports.getDriverRides = async (req, res, next) => {
     // Only fetch rides that are not cancelled
     const rides = await Ride.find({ driverId, status: { $ne: 'cancelled' } });
 
-    res.json(rides || []);
+    // Fetch customer information for each ride
+    const customerServiceUrl = process.env.CUSTOMER_SERVICE_URL || "http://customer-service:5000/api/customers";
+    const ridesWithCustomerInfo = await Promise.all(
+      rides.map(async (ride) => {
+        let customerInfo = { firstName: "N/A", lastName: "N/A" };
+        if (ride.customerId) {
+          try {
+            const customerRes = await axios.get(`${customerServiceUrl}/${ride.customerId}`);
+            customerInfo = {
+              firstName: customerRes.data.firstName || "N/A",
+              lastName: customerRes.data.lastName || "N/A"
+            };
+          } catch (e) {
+            console.error("Error fetching customer info:", e);
+          }
+        }
+        return {
+          ...ride.toObject(),
+          customerName: `${customerInfo.firstName} ${customerInfo.lastName}`.trim()
+        };
+      })
+    );
+
+    res.json(ridesWithCustomerInfo || []);
   } catch (error) {
     next(error);
   }

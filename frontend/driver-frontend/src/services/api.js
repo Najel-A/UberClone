@@ -65,7 +65,7 @@ export const rideService = {
       params: { latitude, longitude },
     }),
   acceptRide: (rideId, driverId) =>
-    axios.post(`${process.env.REACT_APP_RIDE_SERVICE_URL}/api/rides/acceptRide/${rideId}`, { driverId }),
+    axios.patch(`${process.env.REACT_APP_RIDE_SERVICE_URL}/api/rides/acceptRide/${rideId}`, { driverId }),
   cancelRide: (rideId) =>
     axios.post(`${process.env.REACT_APP_RIDE_SERVICE_URL}/api/rides/${rideId}/cancel`, { cancelledBy: 'driver' }),
 };
