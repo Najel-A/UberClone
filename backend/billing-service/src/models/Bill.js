@@ -5,9 +5,10 @@ const Bill = sequelize.define(
   "Bill",
   {
     billId: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
       primaryKey: true,
-      comment: "Unique identifier for the bill",
+      allowNull: false,
     },
     date: {
       type: DataTypes.DATE,

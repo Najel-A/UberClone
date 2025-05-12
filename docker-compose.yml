@@ -1,6 +1,8 @@
 version: "3.8"
 
 services:
+
+  # Backend Microservices
   admin-service:
     build:
       context: ./backend/admin-service
@@ -71,8 +73,16 @@ services:
       - mongodb
     environment:
       MONGO_URI: "mongodb://admin:adminpassword@mongodb:27017/ride_db?authSource=admin"
-    
 
+  ml-price-predict:
+    build:
+      context: ./backend/ml-price-predict
+    container_name: ml-price-predict
+    ports:
+      - "8000:8000"
+
+    
+  # Infra
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
     container_name: zookeeper
@@ -141,6 +151,8 @@ services:
       build:
         context: ./frontend/customer-frontend
       container_name: customer-frontend
+      env_file:
+      - ./frontend/customer-frontend/.env.docker
       ports:
         - "3000:80" # Maps container port 80 (Nginx) to host port 3000
       depends_on:
@@ -153,6 +165,8 @@ services:
       build:
         context: ./frontend/driver-frontend
       container_name: driver-frontend
+      env_file:
+      - ./frontend/driver-frontend/.env.docker
       ports:
         - "3001:80" # Maps container port 80 (Nginx) to host port 3000
       depends_on:
@@ -165,6 +179,8 @@ services:
       build:
         context: ./frontend/admin-frontend
       container_name: admin-frontend
+      env_file:
+      - ./frontend/admin-frontend/.env.docker
       ports:
         - "3002:80" # Maps container port 80 (Nginx) to host port 3000
       depends_on:
@@ -180,4 +196,3 @@ volumes:
   redis-data:
   mongodb-data:
   mysql-data:
-

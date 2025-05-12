@@ -62,7 +62,7 @@ exports.createRideRequest = async (req, res, next) => {
     // Check customer wallet balance before booking
     try {
       const billingServiceUrl =
-        process.env.BILLING_SERVICE_URL || "http://localhost:5004";
+        process.env.BILLING_SERVICE_URL;
       const walletRes = await axios.get(
         `${billingServiceUrl}/api/billing/getCustomerWallet/${customerId}`
       );
@@ -144,7 +144,7 @@ exports.acceptRideRequest = async (req, res, next) => {
     let driverSsn = driverId;
     if (!/^\d{3}-\d{2}-\d{4}$/.test(driverId)) {
       const driverServiceUrl =
-        process.env.DRIVER_SERVICE_URL || "http://localhost:5001/api/drivers";
+        process.env.DRIVER_SERVICE_URL;
       const driverRes = await axios.get(`${driverServiceUrl}/${driverId}`);
       driverSsn = driverRes.data._id;
     }
