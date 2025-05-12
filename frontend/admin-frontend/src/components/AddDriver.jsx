@@ -16,6 +16,7 @@ const AddDriver = () => {
     },
     phoneNumber: "",
     email: "",
+    password: "",
     carDetails: {
       make: "",
       model: "",
@@ -23,7 +24,7 @@ const AddDriver = () => {
       color: "",
       licensePlate: "",
     },
-    rating: 0,
+    rating: 1,
     reviews: [],
     introVideo: "",
     introImages: [],
@@ -36,6 +37,7 @@ const AddDriver = () => {
     lastName: "",
     phoneNumber: "",
     email: "",
+    password: "",
     make: "",
     model: "",
     year: "",
@@ -66,7 +68,7 @@ const AddDriver = () => {
     // Remove all non-digits
     const digits = value.replace(/\D/g, "");
 
-    // Format as (###) ###-####
+    // Format as (###) ###-#### for display
     if (digits.length <= 3) return digits;
     if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
     return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(
@@ -91,6 +93,11 @@ const AddDriver = () => {
     const currentYear = new Date().getFullYear();
     const yearNum = parseInt(year);
     return !isNaN(yearNum) && yearNum >= 1980 && yearNum <= currentYear + 1;
+  };
+
+  const validatePhoneNumber = (phone) => {
+    const digits = phone.replace(/\D/g, "");
+    return digits.length === 10;
   };
 
   const handleChange = (e) => {
@@ -171,7 +178,7 @@ const AddDriver = () => {
       setErrors((prev) => ({
         ...prev,
         phoneNumber:
-          digits.length > 0 && digits.length !== 10
+          digits.length > 0 && !validatePhoneNumber(value)
             ? "Phone number must be 10 digits"
             : "",
       }));
@@ -234,6 +241,10 @@ const AddDriver = () => {
       return alert("Invalid email format.");
     }
 
+    if (!form.password || form.password.length < 6) {
+      return alert("Password must be at least 6 characters long.");
+    }
+
     if (
       !form.carDetails.make ||
       !form.carDetails.model ||
@@ -258,9 +269,16 @@ const AddDriver = () => {
         state: form.address.state,
         zipCode: form.address.zipCode,
       },
-      phoneNumber: form.phoneNumber.replace(/\D/g, ""), // Store only digits
+      phoneNumber: "+1" + form.phoneNumber.replace(/\D/g, ""), // Format as +1XXXXXXXXXX
       email: form.email,
-      carDetails: form.carDetails,
+      password: form.password,
+      carDetails: {
+        make: form.carDetails.make,
+        model: form.carDetails.model,
+        year: parseInt(form.carDetails.year),
+        color: form.carDetails.color,
+        licensePlate: form.carDetails.licensePlate,
+      },
       rating: form.rating,
       reviews: form.reviews,
       introVideo: form.introVideo,
@@ -270,8 +288,14 @@ const AddDriver = () => {
 
     try {
       await axios.post(
-        process.env.REACT_APP_ADMIN_BACKEND_PORT_URL + "/api/admin/drivers",
-        formattedData
+        `${process.env.REACT_APP_DRIVER_SERVICE_URL}/api/drivers/signup`,
+        formattedData,
+        {
+          withCredentials: true,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
       );
       alert("Driver added successfully!");
       // Reset form after successful submission
@@ -287,6 +311,7 @@ const AddDriver = () => {
         },
         phoneNumber: "",
         email: "",
+        password: "",
         carDetails: {
           make: "",
           model: "",
@@ -390,6 +415,24 @@ const AddDriver = () => {
               />
               {errors.phoneNumber && (
                 <div className="invalid-feedback">{errors.phoneNumber}</div>
+              )}
+            </div>
+
+            <div className="col-md-6 mb-3">
+              <label className="form-label">Password</label>
+              <input
+                type="password"
+                className={`form-control ${
+                  errors.password ? "is-invalid" : ""
+                }`}
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                required
+                minLength="6"
+              />
+              {errors.password && (
+                <div className="invalid-feedback">{errors.password}</div>
               )}
             </div>
 

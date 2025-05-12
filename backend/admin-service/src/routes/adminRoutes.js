@@ -37,6 +37,10 @@ router.delete("/customers/:id", adminController.deleteCustomer);
 router.get("/customers", adminController.getAllCustomers);
 router.get("/customers/email/:email", adminController.getCustomerByEmail);
 
+// Bill Management
+router.get("/billing", adminController.getAllBills);
+router.get("/billing/:id", adminController.getBillById);
+
 // Account Review
 // router.get('/accounts/:id', adminController.getAccount);
 

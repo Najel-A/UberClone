@@ -9,7 +9,10 @@ const BillDetails = () => {
 
   useEffect(() => {
     axios
-      .get(process.env.REACT_APP_ADMIN_BACKEND_PORT_URL + `/api/bills/${id}`)
+      .get(
+        process.env.REACT_APP_ADMIN_BACKEND_PORT_URL +
+          `/api/admin/billing/${id}`
+      )
       .then((res) => setBill(res.data));
   }, [id]);
 

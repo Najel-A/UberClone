@@ -11,10 +11,9 @@ import {
   FaCreditCard,
   FaTrash,
   FaWallet,
-  FaCamera
+  FaCamera,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-
 
 const Profile = () => {
   const user = useSelector((state) => state.user.user);
@@ -48,7 +47,7 @@ const Profile = () => {
   const [profilePicPreview, setProfilePicPreview] = useState(null);
   const [profilePicFile, setProfilePicFile] = useState(null);
   const [profilePicUploading, setProfilePicUploading] = useState(false);
-  const [profilePicError, setProfilePicError] = useState('');
+  const [profilePicError, setProfilePicError] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -60,7 +59,9 @@ const Profile = () => {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:3002/api/customers");
+      const response = await axios.get(
+        process.env.REACT_APP_CUSTOMER_SERVICE_URL + "/api/customers"
+      );
       const customer = response.data.find((c) => c._id === user.id);
       if (!customer) {
         setError("Profile not found");
@@ -95,7 +96,7 @@ const Profile = () => {
   const fetchWalletBalance = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:3001/api/billing/getCustomerWallet/${user.id}`
+        `${process.env.REACT_APP_BILLING_SERVICE_URL}/api/billing/getCustomerWallet/${user.id}`
       );
       setWalletBalance(response.data.balance);
     } catch (err) {
@@ -129,7 +130,7 @@ const Profile = () => {
       setLoading(true);
       const { _id, ...updateData } = formData;
       await axios.put(
-        `http://localhost:3000/api/customers/${user.id}`,
+        `${process.env.REACT_APP_CUSTOMER_SERVICE_URL}/api/customers/${user.id}`,
         updateData
       );
       setProfile({ ...profile, ...formData });
@@ -147,7 +148,9 @@ const Profile = () => {
   const handleDeleteAccount = async () => {
     try {
       setLoading(true);
-      await axios.delete(`http://localhost:3000/api/customers/${user.id}`);
+      await axios.delete(
+        `${process.env.REACT_APP_CUSTOMER_SERVICE_URL}/api/customers/${user.id}`
+      );
       dispatch(setUser(null)); // Clear user from Redux store
       navigate("/login"); // Redirect to login page
     } catch (err) {
@@ -168,7 +171,7 @@ const Profile = () => {
     try {
       setWalletLoading(true);
       const response = await axios.post(
-        "http://localhost:3004/api/billing/addToCustomerWallet",
+        `${process.env.REACT_APP_BILLING_SERVICE_URL}/api/billing/addToCustomerWallet`,
         {
           ssn: user.id,
           amount: parseFloat(amount),
@@ -200,18 +203,25 @@ const Profile = () => {
     e.preventDefault();
     if (!profilePicFile) return;
     setProfilePicUploading(true);
-    setProfilePicError('');
+    setProfilePicError("");
     try {
       const formData = new FormData();
-      formData.append('profilePicture', profilePicFile);
-      const res = await axios.post(`http://localhost:3000/api/customers/${user.id}/profile-picture`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      setProfile((prev) => ({ ...prev, profilePicture: res.data.profilePicture }));
+      formData.append("profilePicture", profilePicFile);
+      const res = await axios.post(
+        `${process.env.REACT_APP_CUSTOMER_SERVICE_URL}/api/customers/${user.id}/profile-picture`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+      setProfile((prev) => ({
+        ...prev,
+        profilePicture: res.data.profilePicture,
+      }));
       setProfilePicFile(null);
       setProfilePicPreview(null);
     } catch (err) {
-      setProfilePicError('Failed to upload profile picture');
+      setProfilePicError("Failed to upload profile picture");
     } finally {
       setProfilePicUploading(false);
     }
@@ -430,30 +440,75 @@ const Profile = () => {
       )}
 
       {/* Profile Picture Section */}
-      <div style={{ display: 'flex', alignItems: 'center', flexDirection: 'column', marginBottom: 24 }}>
-        <div style={{ position: 'relative', width: 120, height: 120 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          flexDirection: "column",
+          marginBottom: 24,
+        }}
+      >
+        <div style={{ position: "relative", width: 120, height: 120 }}>
           <img
-            src={profilePicPreview || (profile && profile.profilePicture ? `http://localhost:3000${profile.profilePicture}` : undefined) || "https://ui-avatars.com/api/?name=User&background=random"}
+            src={
+              profilePicPreview ||
+              (profile && profile.profilePicture
+                ? `${process.env.REACT_APP_CUSTOMER_SERVICE_URL}${profile.profilePicture}`
+                : undefined) ||
+              "https://ui-avatars.com/api/?name=User&background=random"
+            }
             alt="Profile"
-            style={{ width: 120, height: 120, borderRadius: '50%', objectFit: 'cover', border: '2px solid #eee' }}
+            style={{
+              width: 120,
+              height: 120,
+              borderRadius: "50%",
+              objectFit: "cover",
+              border: "2px solid #eee",
+            }}
           />
-          <label htmlFor="profile-pic-upload" style={{ position: 'absolute', bottom: 0, right: 0, background: '#fff', borderRadius: '50%', padding: 8, cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
+          <label
+            htmlFor="profile-pic-upload"
+            style={{
+              position: "absolute",
+              bottom: 0,
+              right: 0,
+              background: "#fff",
+              borderRadius: "50%",
+              padding: 8,
+              cursor: "pointer",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+            }}
+          >
             <FaCamera />
           </label>
           <input
             id="profile-pic-upload"
             type="file"
             accept="image/*"
-            style={{ display: 'none' }}
+            style={{ display: "none" }}
             onChange={handleProfilePicChange}
           />
         </div>
         {profilePicFile && (
-          <form onSubmit={handleProfilePicUpload} style={{ marginTop: 12, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <button type="submit" className="btn btn-primary" disabled={profilePicUploading}>
-              {profilePicUploading ? 'Uploading...' : 'Upload Photo'}
+          <form
+            onSubmit={handleProfilePicUpload}
+            style={{
+              marginTop: 12,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={profilePicUploading}
+            >
+              {profilePicUploading ? "Uploading..." : "Upload Photo"}
             </button>
-            {profilePicError && <div className="text-danger mt-2">{profilePicError}</div>}
+            {profilePicError && (
+              <div className="text-danger mt-2">{profilePicError}</div>
+            )}
           </form>
         )}
       </div>
