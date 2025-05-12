@@ -29,6 +29,8 @@ data = data[
     (data['dropoff_latitude'].between(*valid_latitude_range))
 ]
 
+data = data[(data['fare_amount'] <= 1000) & (data['fare_amount'] >= 0)]
+
 pickup_coords = data[['pickup_latitude', 'pickup_longitude']].to_numpy()
 dropoff_coords = data[['dropoff_latitude', 'dropoff_longitude']].to_numpy()
 data['distance'] = [
@@ -55,7 +57,7 @@ features = ['distance',
 X = data[features]
 y = data['fare_amount']
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
 
 model = XGBRegressor(n_estimators=100, random_state=42)
 model.fit(X_train, y_train)
@@ -78,6 +80,11 @@ test_cases = [
      {'pickup_coords': (37.774929, -122.419416), 
       'dropoff_coords': (37.759703, -122.428093), 
       'large_group_size': 0},
+
+    # San Jose to SFO
+    {'pickup_coords': (37.3352, -121.8811), 
+    'dropoff_coords': (37.6213, -122.3790),
+    'large_group_size': 0},
     
      # Long distance
      {'pickup_coords': (40.748817, -73.985428), 

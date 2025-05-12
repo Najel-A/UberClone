@@ -21,6 +21,7 @@ const mongoUri = process.env.MONGO_URI || "mongodb://localhost:27017";
 const mongoClient = new MongoClient(mongoUri);
 
 class PricingService {
+
   static async calculateRidePrice(rideDetails) {
     const fastApiUrl = process.env.FASTAPI_PRICE_URL || "http://localhost:8000/predict";
   
@@ -72,8 +73,7 @@ class PricingService {
       const ridesCollection = database.collection("rides");
 
       const rideCount = await ridesCollection.countDocuments({ driverId: null });
-      console.log("Number of rides in the database:", rideCount);
-
+      console.log("Number of ride requests from database:", rideCount);
       return rideCount;
     } catch (error) {
       console.error("Error retrieving ride request count from MongoDB:", error);

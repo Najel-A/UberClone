@@ -23,7 +23,13 @@ exports.createRideRequest = async (req, res, next) => {
     if (
       !rideData.customerId ||
       !rideData.pickupLocation ||
+      !rideData.pickupLocation.latitude ||
+      !rideData.pickupLocation.longitude ||
+      !rideData.pickupLocation.address || 
       !rideData.dropoffLocation ||
+      !rideData.dropoffLocation.latitude ||
+      !rideData.dropoffLocation.longitude ||
+      !rideData.dropoffLocation.address || 
       !rideData.dateTime ||
       !rideData.passenger_count
     ) {
