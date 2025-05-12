@@ -14,7 +14,7 @@ const allowedOrigins = process.env.FRONT_END_PORTS
   ? process.env.FRONT_END_PORTS.split(",").map(
       (port) => `http://localhost:${port.trim()}`
     )
-  : ["http://localhost:3000/"];
+  : ["http://localhost:3000"];
 
 app.use(
   cors({
@@ -55,5 +55,6 @@ app.use(
 );
 
 app.use("/api/admin", adminRoutes);
+
 
 module.exports = app;
