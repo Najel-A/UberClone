@@ -28,7 +28,8 @@ const rideSchema = new mongoose.Schema({
     enum: ['pending', 'accepted', 'completed'],
     default: 'pending',
     required: true
-  }
+  },
+  images: [{ type: String }]
 }, { timestamps: true });
 
 rideSchema.index({ pickupPoint: '2dsphere' }); // For MongoDB 

@@ -9,6 +9,7 @@ require('dotenv').config();
 
 const app = express();
 app.use(cors({ origin: '*' }));
+app.use('/uploads', express.static('uploads'));
 app.use((req, res, next) => {
     req.redisClient = redisClient; // Pass the Redis client to your routes
     next();

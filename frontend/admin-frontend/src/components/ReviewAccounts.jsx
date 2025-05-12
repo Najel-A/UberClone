@@ -8,10 +8,10 @@ const ReviewAccounts = () => {
 
   useEffect(() => {
     axios
-      .get(process.env.REACT_APP_ADMIN_BACKEND_PORT_URL + "/api/drivers")
+      .get(process.env.REACT_APP_ADMIN_BACKEND_PORT_URL + "/api/admin/drivers")
       .then((res) => setDrivers(res.data));
     axios
-      .get(process.env.REACT_APP_ADMIN_BACKEND_PORT_URL + "/api/customers")
+      .get(process.env.REACT_APP_ADMIN_BACKEND_PORT_URL + "/api/admin/customers")
       .then((res) => setCustomers(res.data));
   }, []);
 

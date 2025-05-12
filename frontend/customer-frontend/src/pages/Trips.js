@@ -69,7 +69,7 @@ const Trips = () => {
     if (rideAccepted) {
       const timeout = setTimeout(() => {
         navigate('/ride-in-progress');
-      }, 5000);
+      }, 1000);
       return () => clearTimeout(timeout);
     }
   }, [rideAccepted, navigate]);

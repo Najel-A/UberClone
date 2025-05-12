@@ -368,3 +368,32 @@ exports.getRideById = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+exports.uploadRideImages = async (req, res) => {
+  try {
+    const { rideId } = req.params;
+    const ride = await Ride.findById(rideId);
+    if (!ride) {
+      return res.status(404).json({ message: 'Ride not found' });
+    }
+    const imagePaths = req.files.map(file => `/uploads/${file.filename}`);
+    ride.images = ride.images ? ride.images.concat(imagePaths) : imagePaths;
+    await ride.save();
+    res.status(200).json({ message: 'Images uploaded', images: ride.images });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to upload images', error: error.message });
+  }
+};
+
+exports.getRideImages = async (req, res) => {
+  try {
+    const { rideId } = req.params;
+    const ride = await Ride.findById(rideId);
+    if (!ride) {
+      return res.status(404).json({ message: 'Ride not found' });
+    }
+    res.status(200).json({ images: ride.images || [] });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch images', error: error.message });
+  }
+};

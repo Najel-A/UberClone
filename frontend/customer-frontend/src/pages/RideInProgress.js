@@ -21,6 +21,10 @@ const RideInProgress = () => {
   const [rating, setRating] = useState(5);
   const [reviewSuccess, setReviewSuccess] = useState('');
   const [reviewError, setReviewError] = useState('');
+  const [images, setImages] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState('');
+  const [uploadError, setUploadError] = useState('');
 
   console.log('DRIVER SERVICE URL:', process.env.REACT_APP_DRIVER_SERVICE_URL);
 
@@ -215,6 +219,30 @@ const RideInProgress = () => {
     }
   };
 
+  const handleImageChange = (e) => {
+    setImages([...e.target.files]);
+  };
+
+  const handleUpload = async () => {
+    if (!images.length) return;
+    const formData = new FormData();
+    images.forEach((img) => formData.append('images', img));
+    setUploading(true);
+    setUploadSuccess('');
+    setUploadError('');
+    try {
+      const rideId = (latestRide || selectedRide)._id;
+      await axios.post(`${process.env.REACT_APP_RIDE_SERVICE_URL}/api/rides/${rideId}/upload-images`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setUploadSuccess('Images uploaded successfully!');
+      setImages([]);
+    } catch (err) {
+      setUploadError('Failed to upload images.');
+    }
+    setUploading(false);
+  };
+
   if (!user || !selectedRide) {
     return <div className="dashboard-card">No ride in progress.</div>;
   }
@@ -258,6 +286,15 @@ const RideInProgress = () => {
                 <button onClick={handleDownloadBill} style={{marginTop: 16}}>
                   Download Bill (PDF)
                 </button>
+              </div>
+              <div className="image-upload-section" style={{ marginTop: 24, padding: 16, background: '#f0f0f0', borderRadius: 8 }}>
+                <h3>Report an Issue (Upload Images)</h3>
+                <input type="file" multiple onChange={handleImageChange} />
+                <button onClick={handleUpload} disabled={uploading || !images.length} style={{ marginLeft: 8 }}>
+                  {uploading ? 'Uploading...' : 'Upload Images'}
+                </button>
+                {uploadSuccess && <div style={{ color: 'green', marginTop: 8 }}>{uploadSuccess}</div>}
+                {uploadError && <div style={{ color: 'red', marginTop: 8 }}>{uploadError}</div>}
               </div>
               {showReview && (
                 <div className="review-section" style={{ marginTop: 24, padding: 16, background: '#f8f9fa', borderRadius: 8 }}>
