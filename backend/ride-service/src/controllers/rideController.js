@@ -102,6 +102,7 @@ exports.getNearbyRideRequests = async (req, res) => {
   try {
     const rides = await Ride.find({
       driverId: null, // ride not yet accepted
+      status: { $nin: ['cancelled', 'completed'] }, // Exclude cancelled and completed
       pickupPoint: {
         $near: {
           $geometry: {
@@ -113,7 +114,7 @@ exports.getNearbyRideRequests = async (req, res) => {
       },
     });
 
-    res.json(rides);
+    res.json(rides || []);
   } catch (error) {
     console.error("Error fetching nearby rides:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -350,15 +351,10 @@ exports.getDriverRides = async (req, res, next) => {
       return res.status(400).json({ message: "Driver ID is required" });
     }
 
-    const rides = await RideService.getRidesByDriver(driverId);
+    // Only fetch rides that are not cancelled
+    const rides = await Ride.find({ driverId, status: { $ne: 'cancelled' } });
 
-    if (!rides || rides.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "No rides found for this driver" });
-    }
-
-    res.json(rides);
+    res.json(rides || []);
   } catch (error) {
     next(error);
   }
@@ -461,5 +457,33 @@ exports.getRideImages = async (req, res) => {
     res.status(200).json({ images: ride.images || [] });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch images', error: error.message });
+  }
+};
+
+exports.cancelRideRequest = async (req, res) => {
+  try {
+    const { rideId } = req.params;
+    // Accept cancelledBy from query or body, default to 'customer'
+    const cancelledBy = req.body.cancelledBy || req.query.cancelledBy || 'customer';
+    if (!rideId) {
+      return res.status(400).json({ message: "Ride ID is required" });
+    }
+    const ride = await Ride.findById(rideId);
+    if (!ride) {
+      return res.status(404).json({ message: "Ride not found" });
+    }
+    if (ride.status === "completed") {
+      return res.status(400).json({ message: "Cannot cancel a completed ride." });
+    }
+    if (ride.status === "cancelled") {
+      return res.status(400).json({ message: "Ride is already cancelled." });
+    }
+    ride.status = "cancelled";
+    ride.cancelledBy = cancelledBy;
+    await ride.save();
+    res.json({ message: "Ride cancelled successfully", ride });
+  } catch (error) {
+    console.error("Cancel ride error:", error);
+    res.status(500).json({ message: "Failed to cancel ride", error: error.message });
   }
 };

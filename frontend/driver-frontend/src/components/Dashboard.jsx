@@ -26,6 +26,9 @@ const Dashboard = () => {
   const [driverData, setDriverData] = useState(null);
   const [driverLoading, setDriverLoading] = useState(true);
   const [driverError, setDriverError] = useState(null);
+  const [cancelingRideId, setCancelingRideId] = useState(null);
+  const [cancelError, setCancelError] = useState("");
+  const [cancelSuccess, setCancelSuccess] = useState("");
   const navigate = useNavigate();
 
   // Fetch current driver status on component mount
@@ -43,8 +46,17 @@ const Dashboard = () => {
 
     try {
       // Get current location if becoming available
+      let locationToSend = undefined;
       if (newStatus === "available") {
         await updateLocationFromBrowser();
+        if (
+          typeof location.latitude === 'number' &&
+          typeof location.longitude === 'number' &&
+          !isNaN(location.latitude) &&
+          !isNaN(location.longitude)
+        ) {
+          locationToSend = location;
+        }
       }
 
       dispatch(
@@ -52,7 +64,7 @@ const Dashboard = () => {
           id: currentDriver._id,
           data: {
             status: newStatus,
-            currentLocation: location,
+            ...(locationToSend ? { currentLocation: locationToSend } : {}),
           },
         })
       );
@@ -154,6 +166,22 @@ const Dashboard = () => {
       setAcceptError(err.response?.data?.message || "Failed to accept ride");
     } finally {
       setAcceptingRideId(null);
+    }
+  };
+
+  const handleCancelRide = async (rideId) => {
+    setCancelingRideId(rideId);
+    setCancelError("");
+    setCancelSuccess("");
+    try {
+      await rideService.cancelRide(rideId);
+      setCancelSuccess("Ride cancelled successfully.");
+      setAvailableRides((rides) => rides.filter((r) => r._id !== rideId));
+      fetchLatestDriver();
+    } catch (err) {
+      setCancelError("Failed to cancel ride. Please try again.");
+    } finally {
+      setCancelingRideId(null);
     }
   };
 
@@ -350,19 +378,32 @@ const Dashboard = () => {
                       <span>
                         <strong>Pickup:</strong> {ride.pickupLocation.address} | <strong>Dropoff:</strong> {ride.dropoffLocation.address} | <strong>Price:</strong> ${ride.price}
                       </span>
-                      <Button
-                        variant="success"
-                        size="sm"
-                        disabled={acceptingRideId === ride._id}
-                        onClick={() => handleAcceptRide(ride._id)}
-                      >
-                        {acceptingRideId === ride._id ? "Accepting..." : "Accept Ride"}
-                      </Button>
+                      <div>
+                        <Button
+                          variant="success"
+                          size="sm"
+                          disabled={acceptingRideId === ride._id}
+                          onClick={() => handleAcceptRide(ride._id)}
+                          className="me-2"
+                        >
+                          {acceptingRideId === ride._id ? "Accepting..." : "Accept Ride"}
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          disabled={cancelingRideId === ride._id}
+                          onClick={() => handleCancelRide(ride._id)}
+                        >
+                          {cancelingRideId === ride._id ? "Cancelling..." : "Cancel Ride"}
+                        </Button>
+                      </div>
                     </li>
                   ))}
                 </ul>
               )}
               {acceptError && <div className="text-danger mt-2">{acceptError}</div>}
+              {cancelError && <div className="text-danger mt-2">{cancelError}</div>}
+              {cancelSuccess && <div className="text-success mt-2">{cancelSuccess}</div>}
             </Card.Body>
           </Card>
         </Col>
