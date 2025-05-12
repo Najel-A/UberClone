@@ -2,17 +2,31 @@
 # -*- coding: utf-8 -*-
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import pandas as pd
 from haversine import haversine, Unit
 import joblib
 import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 model = joblib.load("model.pkl")
 
 app = FastAPI()
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[os.getenv("CUSTOMER_FRONTEND_URL", "http://localhost:3007")],  # Get frontend URL from environment variable
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class PredictionInput(BaseModel):
     pickup_latitude: float

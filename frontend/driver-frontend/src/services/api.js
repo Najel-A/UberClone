@@ -38,6 +38,30 @@ export const driverService = {
   // Video and Status
   getDriverVideo: (id) => api.get(`/${id}/video`),
   updateDriverStatusAndLocation: (id, data) => api.put(`/${id}/status`, data),
+
+  // Wallet
+  getDriverWallet: (ssn) =>
+    axios.get(`${process.env.REACT_APP_BILLING_SERVICE_URL}/api/billing/getDriverWallet/${ssn}`),
+
+  // Profile Picture Upload
+  uploadProfilePicture: (driverId, formData) =>
+    axios.post(`${process.env.REACT_APP_DRIVER_SERVICE_URL}/api/drivers/${driverId}/profile-picture`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+
+  // Get Driver Ride History
+  getDriverRides: (driverId) =>
+    axios.get(`${process.env.REACT_APP_RIDE_SERVICE_URL}/api/rides/driver/${driverId}`),
+};
+
+// Ride Matching APIs
+export const rideService = {
+  getAvailableRides: (latitude, longitude) =>
+    axios.get(`${process.env.REACT_APP_RIDE_SERVICE_URL}/api/rides/getRides`, {
+      params: { latitude, longitude },
+    }),
+  acceptRide: (rideId, driverId) =>
+    axios.post(`${process.env.REACT_APP_RIDE_SERVICE_URL}/api/rides/acceptRide/${rideId}`, { driverId }),
 };
 
 export default driverService;

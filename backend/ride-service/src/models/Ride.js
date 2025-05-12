@@ -22,7 +22,15 @@ const rideSchema = new mongoose.Schema({
   dateTime: { type: Date, required: true },
   customerId: { type: String, required: true },
   driverId: { type: String, required: false },
-  price: {type: Number, required: true}
+  price: {type: Number, required: true},
+  status: {
+    type: String,
+    enum: ['pending', 'accepted', 'completed'],
+    default: 'pending',
+    required: true
+  },
+  images: [{ type: String }],
+  issueDescription: { type: String }
 }, { timestamps: true });
 
 rideSchema.index({ pickupPoint: '2dsphere' }); // For MongoDB 

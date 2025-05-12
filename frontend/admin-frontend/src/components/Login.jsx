@@ -104,6 +104,21 @@ export default function AdminLogin() {
           >
             {loading ? "Signing in..." : "Sign in"}
           </button>
+          <div style={{ textAlign: "center", marginTop: "1rem" }}>
+            <p style={{ margin: "0", color: "#666" }}>
+              Don't have an account?{" "}
+              <a
+                href="/signup"
+                style={{
+                  color: "#2563eb",
+                  textDecoration: "none",
+                  fontWeight: "500",
+                }}
+              >
+                Sign up here
+              </a>
+            </p>
+          </div>
         </form>
       </div>
     </div>

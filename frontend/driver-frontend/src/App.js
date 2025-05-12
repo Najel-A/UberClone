@@ -14,6 +14,8 @@ import Login from "./components/Login";
 import UpdateDriver from "./components/UpdateDriver";
 import DriverInfo from "./components/DriverInfo";
 import DriverIntroVideo from "./components/DriverIntroVideo";
+import Simulation from './Simulation';
+import DriverRideHistory from "./components/DriverRideHistory";
 import "./App.css";
 
 // Protected route component
@@ -78,6 +80,22 @@ function App() {
               element={
                 <PrivateRoute>
                   <DriverIntroVideo />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/simulation"
+              element={
+                <PrivateRoute>
+                  <Simulation />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/ride-history"
+              element={
+                <PrivateRoute>
+                  <DriverRideHistory />
                 </PrivateRoute>
               }
             />

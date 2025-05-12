@@ -11,10 +11,16 @@ exports.startRideRequestConsumer = async () => {
     await consumer.run({
       eachMessage: async ({ topic, partition, message }) => {
         try {
-          const ride = new Ride(JSON.parse(message.value.toString()));
-          return await ride.save();
-          console.log("saved to db ");
-        }catch (err) {
+          const rideData = JSON.parse(message.value.toString());
+          const existing = await Ride.findById(rideData._id);
+          if (!existing) {
+            const ride = new Ride(rideData);
+            await ride.save();
+            console.log("saved to db");
+          } else {
+            console.log("Ride already exists, skipping save");
+          }
+        } catch (err) {
           console.error("❌ Failed to save to db:", err.message);
         }
       },

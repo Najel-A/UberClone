@@ -1,24 +1,58 @@
-import React, { useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { FaCar, FaUsers, FaBolt, FaMapMarkerAlt, FaCreditCard } from 'react-icons/fa';
-import { setSelectedRide, clearSelectedRide } from '../slices/rideSlice';
-import '../styles/rideConfirmation.css';
+import React, { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import {
+  FaCar,
+  FaUsers,
+  FaBolt,
+  FaMapMarkerAlt,
+  FaCreditCard,
+} from "react-icons/fa";
+import { setSelectedRide, clearSelectedRide } from "../slices/rideSlice";
+import "../styles/rideConfirmation.css";
+import axios from "axios";
 
-const RideConfirmation = ({ ride, pickupLocation, dropoffLocation, distance, onConfirm, onBack }) => {
+const RideConfirmation = ({
+  ride,
+  pickupLocation,
+  dropoffLocation,
+  distance,
+  onConfirm,
+  onBack,
+}) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const selectedRide = useSelector((state) => state.ride.selectedRide);
   const user = useSelector((state) => state.user.user);
   const rideToShow = ride || selectedRide;
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [walletBalance, setWalletBalance] = useState(null);
+  const [walletError, setWalletError] = useState("");
+
+  useEffect(() => {
+    const fetchWallet = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.REACT_APP_BILLING_SERVICE_URL}/api/billing/getCustomerWallet/${user.id}`
+        );
+        setWalletBalance(res.data.balance);
+      } catch (err) {
+        setWalletError("Failed to fetch wallet balance");
+      }
+    };
+    fetchWallet();
+  }, [user.id]);
+
+  const canBook = walletBalance !== null && walletBalance >= rideToShow.price;
 
   if (!user) {
     return (
       <div className="dashboard-card">
-        <div className="alert alert-danger">You must be logged in to view this page.</div>
+        <div className="alert alert-danger">
+          You must be logged in to view this page.
+        </div>
       </div>
     );
   }
@@ -34,16 +68,23 @@ const RideConfirmation = ({ ride, pickupLocation, dropoffLocation, distance, onC
   };
 
   const handleConfirm = async () => {
-    console.log('Confirm button clicked', rideToShow);
+    console.log("Confirm button clicked", rideToShow);
     setLoading(true);
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
     try {
-      const pickupCoords = rideToShow.pickupCoords || rideToShow.pickup_coords || null;
-      const dropoffCoords = rideToShow.dropoffCoords || rideToShow.dropoff_coords || null;
-      console.log('pickupCoords:', pickupCoords, 'dropoffCoords:', dropoffCoords);
+      const pickupCoords =
+        rideToShow.pickupCoords || rideToShow.pickup_coords || null;
+      const dropoffCoords =
+        rideToShow.dropoffCoords || rideToShow.dropoff_coords || null;
+      console.log(
+        "pickupCoords:",
+        pickupCoords,
+        "dropoffCoords:",
+        dropoffCoords
+      );
       if (!pickupCoords || !dropoffCoords) {
-        setError('Pickup or dropoff coordinates are missing.');
+        setError("Pickup or dropoff coordinates are missing.");
         setLoading(false);
         return;
       }
@@ -53,48 +94,61 @@ const RideConfirmation = ({ ride, pickupLocation, dropoffLocation, distance, onC
         pickupLocation: {
           latitude: pickupCoords.lat,
           longitude: pickupCoords.lng,
-          address: pickupLocation
+          address: pickupLocation,
         },
         dropoffLocation: {
           latitude: dropoffCoords.lat,
           longitude: dropoffCoords.lng,
-          address: dropoffLocation
+          address: dropoffLocation,
         },
         dateTime: new Date().toISOString(),
         price: rideToShow.price,
         passenger_count: rideToShow.capacity || 1,
-        distanceCovered: distance
+        distanceCovered: distance,
+        name: rideToShow.name,
+        id: rideToShow.id,
       };
 
-      const response = await fetch('http://localhost:3005/api/rides', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      console.log("Sending payload:", payload);
+      const response = await axios.post(
+        `${process.env.REACT_APP_RIDE_SERVICE_URL}/api/rides`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }
+      );
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to book ride');
-      }
+      console.log("Response:", response.data);
+      const bookedRide = response.data;
 
-      const bookedRide = await response.json();
-      
-      // Update Redux state with the booked ride
-      dispatch(setSelectedRide({
-        ...rideToShow,
-        ...bookedRide,
-        status: 'waiting_for_driver'
-      }));
+      // Update Redux state with the booked ride (use backend response only)
+      dispatch(setSelectedRide(bookedRide));
 
-      setSuccess('Ride booked successfully!');
-      
+      setSuccess("Ride booked successfully!");
+
       // Wait a moment to show success message before navigating
       setTimeout(() => {
-        navigate('/trips');
+        navigate("/trips");
       }, 1500);
-
     } catch (err) {
-      setError(err.message || 'Failed to book ride');
+      console.error("Error booking ride:", err);
+      if (err.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error("Error response:", err.response.data);
+        setError(err.response.data.message || "Failed to book ride");
+      } else if (err.request) {
+        // The request was made but no response was received
+        console.error("No response received:", err.request);
+        setError("No response from server. Please try again.");
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error("Error setting up request:", err.message);
+        setError(err.message || "Failed to book ride");
+      }
     } finally {
       setLoading(false);
     }
@@ -102,11 +156,15 @@ const RideConfirmation = ({ ride, pickupLocation, dropoffLocation, distance, onC
 
   return (
     <div className="ride-confirmation-container">
-      <button className="back-button" onClick={onBack}>&larr; Back</button>
+      <button className="back-button" onClick={onBack}>
+        &larr; Back
+      </button>
       <h2>Confirm Your Ride</h2>
       <div className="ride-details">
         <div className="ride-summary">
-          <div className="ride-icon">{rideToShow?.icon || <FaCar size={24} />}</div>
+          <div className="ride-icon">
+            {rideToShow?.icon || <FaCar size={24} />}
+          </div>
           <div className="ride-info">
             <h3>{rideToShow?.name}</h3>
             <p>{rideToShow?.description}</p>
@@ -132,13 +190,38 @@ const RideConfirmation = ({ ride, pickupLocation, dropoffLocation, distance, onC
           </div>
         </div>
       </div>
-      {error && <div className="alert alert-danger" style={{ marginBottom: 12 }}>{error}</div>}
-      {success && <div className="alert alert-success" style={{ marginBottom: 12 }}>{success}</div>}
-      <button className="confirm-button" onClick={handleConfirm} disabled={loading}>
-        {loading ? 'Booking...' : 'Confirm Ride'}
+      {error && (
+        <div className="alert alert-danger" style={{ marginBottom: 12 }}>
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="alert alert-success" style={{ marginBottom: 12 }}>
+          {success}
+        </div>
+      )}
+      {walletError && (
+        <div className="alert alert-danger" style={{ marginBottom: 12 }}>
+          {walletError}
+        </div>
+      )}
+      <div style={{ marginBottom: 12 }}>
+        <strong>Wallet Balance:</strong> ${walletBalance?.toFixed(2) ?? "..."}
+      </div>
+      {!canBook && (
+        <div style={{ color: "red", marginBottom: 12 }}>
+          Insufficient wallet balance to book this ride.
+        </div>
+      )}
+      <button
+        className="confirm-button"
+        onClick={handleConfirm}
+        disabled={!canBook || loading}
+      >
+        {loading ? "Booking..." : "Confirm Ride"}
       </button>
     </div>
   );
 };
 
-export default RideConfirmation; 
+export default RideConfirmation;

@@ -4,8 +4,11 @@ import { useSelector, useDispatch } from "react-redux";
 import {
   updateDriverStatusAndLocation,
   setLocation,
+  setAcceptedRideId,
 } from "../redux/slices/driverSlice";
 import { fetchCurrentDriver } from "../redux/slices/authSlice";
+import { rideService, driverService } from "../services/api";
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
   const dispatch = useDispatch();
@@ -13,6 +16,17 @@ const Dashboard = () => {
   const { driverStatus, location, loading, error } = useSelector(
     (state) => state.driver
   );
+  const [availableRides, setAvailableRides] = useState([]);
+  const [ridesLoading, setRidesLoading] = useState(false);
+  const [acceptingRideId, setAcceptingRideId] = useState(null);
+  const [acceptError, setAcceptError] = useState(null);
+  const [walletBalance, setWalletBalance] = useState(null);
+  const [walletLoading, setWalletLoading] = useState(false);
+  const [walletError, setWalletError] = useState(null);
+  const [driverData, setDriverData] = useState(null);
+  const [driverLoading, setDriverLoading] = useState(true);
+  const [driverError, setDriverError] = useState(null);
+  const navigate = useNavigate();
 
   // Fetch current driver status on component mount
   // useEffect(() => {
@@ -70,6 +84,77 @@ const Dashboard = () => {
         reject(new Error("Geolocation not supported"));
       }
     });
+  };
+
+  // Poll for available rides every 5 seconds
+  useEffect(() => {
+    let interval;
+    const fetchRides = async () => {
+      if (driverStatus !== "available" || !location.latitude || !location.longitude) return;
+      setRidesLoading(true);
+      try {
+        const res = await rideService.getAvailableRides(location.latitude, location.longitude);
+        setAvailableRides(res.data);
+      } catch (err) {
+        setAvailableRides([]);
+      } finally {
+        setRidesLoading(false);
+      }
+    };
+    fetchRides();
+    interval = setInterval(fetchRides, 5000);
+    return () => clearInterval(interval);
+  }, [driverStatus, location.latitude, location.longitude]);
+
+  useEffect(() => {
+    const fetchWallet = async () => {
+      if (!currentDriver || !currentDriver._id) return;
+      setWalletLoading(true);
+      setWalletError(null);
+      try {
+        const res = await driverService.getDriverWallet(currentDriver._id);
+        setWalletBalance(res.data.balance);
+      } catch (err) {
+        setWalletError('Failed to fetch wallet balance');
+      } finally {
+        setWalletLoading(false);
+      }
+    };
+    fetchWallet();
+  }, [currentDriver]);
+
+  const fetchLatestDriver = async () => {
+    if (!currentDriver || !currentDriver._id) return;
+    setDriverLoading(true);
+    setDriverError(null);
+    try {
+      const res = await driverService.getDriver(currentDriver._id);
+      setDriverData(res.data);
+      dispatch({ type: 'auth/setCurrentDriver', payload: res.data });
+    } catch (err) {
+      setDriverError('Failed to fetch driver data');
+    } finally {
+      setDriverLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLatestDriver();
+  }, []);
+
+  const handleAcceptRide = async (rideId) => {
+    setAcceptingRideId(rideId);
+    setAcceptError(null);
+    try {
+      await rideService.acceptRide(rideId, currentDriver._id);
+      dispatch(setAcceptedRideId(rideId));
+      setAvailableRides((rides) => rides.filter((r) => r._id !== rideId));
+      navigate('/simulation');
+    } catch (err) {
+      setAcceptError(err.response?.data?.message || "Failed to accept ride");
+    } finally {
+      setAcceptingRideId(null);
+    }
   };
 
   if (!currentDriver) {
@@ -130,7 +215,57 @@ const Dashboard = () => {
             </Card.Body>
           </Card>
         </Col>
+        <Col lg={6} className="mb-4">
+          <Card className="shadow-sm h-100">
+            <Card.Body>
+              <div className="d-flex justify-content-between align-items-center">
+                <Card.Title>Driver Rating</Card.Title>
+                <Button variant="outline-primary" size="sm" onClick={fetchLatestDriver}>
+                  Refresh
+                </Button>
+              </div>
+              {driverLoading ? (
+                <p>Loading driver info...</p>
+              ) : driverError ? (
+                <p className="text-danger">{driverError}</p>
+              ) : (
+                <>
+                  <div className="d-flex align-items-center mt-3">
+                    <h2 className="mb-0 me-2">
+                      {driverData?.rating?.toFixed(1) || "N/A"}
+                    </h2>
+                    <div
+                      className="rating-stars"
+                      title={`Average: ${driverData?.rating?.toFixed(2) || 'N/A'} (${driverData?._ratings?.length || 0} ratings)`}
+                      style={{ fontSize: '1.5rem', cursor: 'pointer' }}
+                    >
+                      {"★".repeat(Math.round(driverData?.rating || 0))}
+                      {"☆".repeat(5 - Math.round(driverData?.rating || 0))}
+                    </div>
+                    <span className="ms-2 text-muted" style={{ fontSize: '1.1rem' }}>
+                      ({driverData?._ratings?.length || 0})
+                    </span>
+                  </div>
+                  {driverData?.reviews && driverData.reviews.length > 0 && (
+                    <div className="mt-3">
+                      <h6>Recent Reviews:</h6>
+                      <ul className="list-unstyled">
+                        {driverData.reviews.slice(0, 3).map((review, index) => (
+                          <li key={index} className="mb-2 text-muted">
+                            {review}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
 
+      <Row className="mt-4">
         <Col lg={6} className="mb-4">
           <Card className="shadow-sm h-100">
             <Card.Body>
@@ -153,9 +288,7 @@ const Dashboard = () => {
             </Card.Body>
           </Card>
         </Col>
-      </Row>
 
-      <Row>
         <Col lg={6} className="mb-4">
           <Card className="shadow-sm h-100">
             <Card.Body>
@@ -182,33 +315,54 @@ const Dashboard = () => {
             </Card.Body>
           </Card>
         </Col>
+      </Row>
 
+      <Row>
         <Col lg={6} className="mb-4">
           <Card className="shadow-sm h-100">
             <Card.Body>
-              <Card.Title>Driver Rating</Card.Title>
-              <div className="d-flex align-items-center mt-3">
-                <h2 className="mb-0 me-2">
-                  {currentDriver.rating?.toFixed(1) || "N/A"}
-                </h2>
-                <div className="rating-stars">
-                  {"★".repeat(Math.round(currentDriver.rating || 0))}
-                  {"☆".repeat(5 - Math.round(currentDriver.rating || 0))}
-                </div>
-              </div>
-
-              {currentDriver.reviews && currentDriver.reviews.length > 0 && (
-                <div className="mt-3">
-                  <h6>Recent Reviews:</h6>
-                  <ul className="list-unstyled">
-                    {currentDriver.reviews.slice(0, 3).map((review, index) => (
-                      <li key={index} className="mb-2 text-muted">
-                        {review}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              <Card.Title>Wallet</Card.Title>
+              {walletLoading ? (
+                <p>Loading wallet balance...</p>
+              ) : walletError ? (
+                <p className="text-danger">{walletError}</p>
+              ) : (
+                <h4>Balance: ${walletBalance?.toFixed(2) ?? '0.00'}</h4>
               )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      <Row>
+        <Col lg={12} className="mb-4">
+          <Card className="shadow-sm h-100">
+            <Card.Body>
+              <Card.Title>Available Ride Requests (within 10 miles)</Card.Title>
+              {ridesLoading ? (
+                <p>Loading rides...</p>
+              ) : availableRides.length === 0 ? (
+                <p>No available rides nearby.</p>
+              ) : (
+                <ul className="list-group">
+                  {availableRides.map((ride) => (
+                    <li key={ride._id} className="list-group-item d-flex justify-content-between align-items-center">
+                      <span>
+                        <strong>Pickup:</strong> {ride.pickupLocation.address} | <strong>Dropoff:</strong> {ride.dropoffLocation.address} | <strong>Price:</strong> ${ride.price}
+                      </span>
+                      <Button
+                        variant="success"
+                        size="sm"
+                        disabled={acceptingRideId === ride._id}
+                        onClick={() => handleAcceptRide(ride._id)}
+                      >
+                        {acceptingRideId === ride._id ? "Accepting..." : "Accept Ride"}
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {acceptError && <div className="text-danger mt-2">{acceptError}</div>}
             </Card.Body>
           </Card>
         </Col>

@@ -1,10 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { setUser } from '../slices/userSlice';
-import axios from 'axios';
-import '../styles/dashboard.css';
-import { FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt, FaCreditCard, FaTrash, FaWallet } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { setUser } from "../slices/userSlice";
+import axios from "axios";
+import "../styles/dashboard.css";
+import {
+  FaUser,
+  FaPhone,
+  FaEnvelope,
+  FaMapMarkerAlt,
+  FaCreditCard,
+  FaTrash,
+  FaWallet,
+  FaCamera,
+} from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const Profile = () => {
   const user = useSelector((state) => state.user.user);
@@ -13,41 +22,49 @@ const Profile = () => {
   const [profile, setProfile] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showAddMoneyModal, setShowAddMoneyModal] = useState(false);
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState("");
   const [walletLoading, setWalletLoading] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(0);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    phoneNumber: '',
-    email: '',
+    firstName: "",
+    lastName: "",
+    phoneNumber: "",
+    email: "",
     address: {
-      street: '',
-      city: '',
-      state: '',
-      zipCode: ''
+      street: "",
+      city: "",
+      state: "",
+      zipCode: "",
     },
     creditCardDetails: {
-      cardNumber: '',
-      expiryDate: ''
-    }
+      cardNumber: "",
+      expiryDate: "",
+    },
   });
+  const [profilePicPreview, setProfilePicPreview] = useState(null);
+  const [profilePicFile, setProfilePicFile] = useState(null);
+  const [profilePicUploading, setProfilePicUploading] = useState(false);
+  const [profilePicError, setProfilePicError] = useState("");
 
   useEffect(() => {
     if (user) {
       fetchProfile();
+      fetchWalletBalance();
     }
   }, [user]);
 
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3000/api/customers');
-      const customer = response.data.find(c => c._id === user.id);
+      const response = await axios.get(
+        process.env.REACT_APP_CUSTOMER_SERVICE_URL + "/api/customers"
+      );
+      const customer = response.data.find((c) => c._id === user.id);
       if (!customer) {
-        setError('Profile not found');
+        setError("Profile not found");
         setProfile(null);
         return;
       }
@@ -61,36 +78,48 @@ const Profile = () => {
           street: customer.address.street,
           city: customer.address.city,
           state: customer.address.state,
-          zipCode: customer.address.zipCode
+          zipCode: customer.address.zipCode,
         },
         creditCardDetails: {
           cardNumber: customer.creditCardDetails.cardNumber,
-          expiryDate: customer.creditCardDetails.expiryDate
-        }
+          expiryDate: customer.creditCardDetails.expiryDate,
+        },
       });
     } catch (err) {
-      setError('Failed to fetch profile data');
+      setError("Failed to fetch profile data");
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchWalletBalance = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.REACT_APP_BILLING_SERVICE_URL}/api/billing/getCustomerWallet/${user.id}`
+      );
+      setWalletBalance(response.data.balance);
+    } catch (err) {
+      console.error("Failed to fetch wallet balance:", err);
+      setError("Failed to fetch wallet balance");
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      setFormData(prev => ({
+    if (name.includes(".")) {
+      const [parent, child] = name.split(".");
+      setFormData((prev) => ({
         ...prev,
         [parent]: {
           ...prev[parent],
-          [child]: value
-        }
+          [child]: value,
+        },
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
   };
@@ -100,13 +129,16 @@ const Profile = () => {
     try {
       setLoading(true);
       const { _id, ...updateData } = formData;
-      await axios.put(`http://localhost:3000/api/customers/${user.id}`, updateData);
+      await axios.put(
+        `${process.env.REACT_APP_CUSTOMER_SERVICE_URL}/api/customers/${user.id}`,
+        updateData
+      );
       setProfile({ ...profile, ...formData });
       dispatch(setUser({ ...user, ...formData }));
       setIsEditing(false);
-      setError('');
+      setError("");
     } catch (err) {
-      setError('Failed to update profile');
+      setError("Failed to update profile");
       console.error(err);
     } finally {
       setLoading(false);
@@ -116,11 +148,13 @@ const Profile = () => {
   const handleDeleteAccount = async () => {
     try {
       setLoading(true);
-      await axios.delete(`http://localhost:3000/api/customers/${user.id}`);
+      await axios.delete(
+        `${process.env.REACT_APP_CUSTOMER_SERVICE_URL}/api/customers/${user.id}`
+      );
       dispatch(setUser(null)); // Clear user from Redux store
-      navigate('/login'); // Redirect to login page
+      navigate("/login"); // Redirect to login page
     } catch (err) {
-      setError('Failed to delete account');
+      setError("Failed to delete account");
       console.error(err);
     } finally {
       setLoading(false);
@@ -130,37 +164,75 @@ const Profile = () => {
 
   const handleAddMoney = async () => {
     if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
-      setError('Please enter a valid amount');
+      setError("Please enter a valid amount");
       return;
     }
 
     try {
       setWalletLoading(true);
-      const response = await axios.post(`http://localhost:3000/api/customers/${user.id}/wallet/add`, {
-        amount: parseFloat(amount)
-      });
-      
-      // Update profile with new wallet balance
-      setProfile(prev => ({
-        ...prev,
-        walletBalance: response.data.walletBalance
-      }));
-      
+      const response = await axios.post(
+        `${process.env.REACT_APP_BILLING_SERVICE_URL}/api/billing/addToCustomerWallet`,
+        {
+          ssn: user.id,
+          amount: parseFloat(amount),
+        }
+      );
+
+      // Update wallet balance
+      setWalletBalance(response.data.balance);
       setShowAddMoneyModal(false);
-      setAmount('');
-      setError('');
+      setAmount("");
+      setError("");
     } catch (err) {
-      setError('Failed to add money to wallet');
+      setError("Failed to add money to wallet");
       console.error(err);
     } finally {
       setWalletLoading(false);
     }
   };
 
+  const handleProfilePicChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfilePicFile(file);
+      setProfilePicPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleProfilePicUpload = async (e) => {
+    e.preventDefault();
+    if (!profilePicFile) return;
+    setProfilePicUploading(true);
+    setProfilePicError("");
+    try {
+      const formData = new FormData();
+      formData.append("profilePicture", profilePicFile);
+      const res = await axios.post(
+        `${process.env.REACT_APP_CUSTOMER_SERVICE_URL}/api/customers/${user.id}/profile-picture`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+      setProfile((prev) => ({
+        ...prev,
+        profilePicture: res.data.profilePicture,
+      }));
+      setProfilePicFile(null);
+      setProfilePicPreview(null);
+    } catch (err) {
+      setProfilePicError("Failed to upload profile picture");
+    } finally {
+      setProfilePicUploading(false);
+    }
+  };
+
   if (!user) {
     return (
       <div className="dashboard-card">
-        <div className="alert alert-danger">You must be logged in to view this page.</div>
+        <div className="alert alert-danger">
+          You must be logged in to view this page.
+        </div>
       </div>
     );
   }
@@ -191,7 +263,9 @@ const Profile = () => {
           <FaUser className="info-icon" />
           <div className="info-details">
             <label>Name</label>
-            <p>{profile.firstName} {profile.lastName}</p>
+            <p>
+              {profile.firstName} {profile.lastName}
+            </p>
           </div>
         </div>
         <div className="info-row">
@@ -223,7 +297,10 @@ const Profile = () => {
           <div className="info-details">
             <label>Address</label>
             <p>{profile.address.street}</p>
-            <p>{profile.address.city}, {profile.address.state} {profile.address.zipCode}</p>
+            <p>
+              {profile.address.city}, {profile.address.state}{" "}
+              {profile.address.zipCode}
+            </p>
           </div>
         </div>
       </div>
@@ -240,7 +317,9 @@ const Profile = () => {
           <FaCreditCard className="info-icon" />
           <div className="info-details">
             <label>Card Details</label>
-            <p>Card ending in {profile.creditCardDetails.cardNumber.slice(-4)}</p>
+            <p>
+              Card ending in {profile.creditCardDetails.cardNumber.slice(-4)}
+            </p>
             <p>Expires: {profile.creditCardDetails.expiryDate}</p>
           </div>
         </div>
@@ -258,7 +337,7 @@ const Profile = () => {
           <FaWallet className="info-icon" />
           <div className="info-details">
             <label>Balance</label>
-            <p>${profile.walletBalance?.toFixed(2) || '0.00'}</p>
+            <p>${walletBalance.toFixed(2)}</p>
           </div>
         </div>
         <button
@@ -280,7 +359,7 @@ const Profile = () => {
             className="btn btn-primary"
             onClick={() => setIsEditing(!isEditing)}
           >
-            {isEditing ? 'Cancel' : 'Edit Profile'}
+            {isEditing ? "Cancel" : "Edit Profile"}
           </button>
           <button
             className="btn btn-danger"
@@ -296,7 +375,10 @@ const Profile = () => {
         <div className="modal-overlay">
           <div className="modal-content">
             <h4>Delete Account</h4>
-            <p>Are you sure you want to delete your account? This action cannot be undone.</p>
+            <p>
+              Are you sure you want to delete your account? This action cannot
+              be undone.
+            </p>
             <div className="modal-buttons">
               <button
                 className="btn btn-secondary"
@@ -310,7 +392,7 @@ const Profile = () => {
                 onClick={handleDeleteAccount}
                 disabled={loading}
               >
-                {loading ? 'Deleting...' : 'Delete Account'}
+                {loading ? "Deleting..." : "Delete Account"}
               </button>
             </div>
           </div>
@@ -339,7 +421,7 @@ const Profile = () => {
                 className="btn btn-secondary"
                 onClick={() => {
                   setShowAddMoneyModal(false);
-                  setAmount('');
+                  setAmount("");
                 }}
                 disabled={walletLoading}
               >
@@ -350,12 +432,86 @@ const Profile = () => {
                 onClick={handleAddMoney}
                 disabled={walletLoading}
               >
-                {walletLoading ? 'Adding...' : 'Add Money'}
+                {walletLoading ? "Adding..." : "Add Money"}
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Profile Picture Section */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          flexDirection: "column",
+          marginBottom: 24,
+        }}
+      >
+        <div style={{ position: "relative", width: 120, height: 120 }}>
+          <img
+            src={
+              profilePicPreview ||
+              (profile && profile.profilePicture
+                ? `${process.env.REACT_APP_CUSTOMER_SERVICE_URL}${profile.profilePicture}`
+                : undefined) ||
+              "https://ui-avatars.com/api/?name=User&background=random"
+            }
+            alt="Profile"
+            style={{
+              width: 120,
+              height: 120,
+              borderRadius: "50%",
+              objectFit: "cover",
+              border: "2px solid #eee",
+            }}
+          />
+          <label
+            htmlFor="profile-pic-upload"
+            style={{
+              position: "absolute",
+              bottom: 0,
+              right: 0,
+              background: "#fff",
+              borderRadius: "50%",
+              padding: 8,
+              cursor: "pointer",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+            }}
+          >
+            <FaCamera />
+          </label>
+          <input
+            id="profile-pic-upload"
+            type="file"
+            accept="image/*"
+            style={{ display: "none" }}
+            onChange={handleProfilePicChange}
+          />
+        </div>
+        {profilePicFile && (
+          <form
+            onSubmit={handleProfilePicUpload}
+            style={{
+              marginTop: 12,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={profilePicUploading}
+            >
+              {profilePicUploading ? "Uploading..." : "Upload Photo"}
+            </button>
+            {profilePicError && (
+              <div className="text-danger mt-2">{profilePicError}</div>
+            )}
+          </form>
+        )}
+      </div>
 
       {!isEditing ? (
         <div className="profile-content">
@@ -504,8 +660,12 @@ const Profile = () => {
           </div>
 
           <div className="button-group">
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? <div className="loading-spinner" /> : 'Save Changes'}
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={loading}
+            >
+              {loading ? <div className="loading-spinner" /> : "Save Changes"}
             </button>
           </div>
         </form>
@@ -514,4 +674,4 @@ const Profile = () => {
   );
 };
 
-export default Profile; 
+export default Profile;

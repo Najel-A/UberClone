@@ -102,6 +102,9 @@ const Navbar = () => {
                 <Nav.Link as={Link} to="/intro-video">
                   Intro Video
                 </Nav.Link>
+                <Nav.Link as={Link} to="/ride-history">
+                  Ride History
+                </Nav.Link>
               </>
             ) : (
               // Links for guests
