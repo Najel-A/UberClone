@@ -11,8 +11,10 @@ import {
   FaCreditCard,
   FaTrash,
   FaWallet,
+  FaCamera
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+
 
 const Profile = () => {
   const user = useSelector((state) => state.user.user);
@@ -43,6 +45,10 @@ const Profile = () => {
       expiryDate: "",
     },
   });
+  const [profilePicPreview, setProfilePicPreview] = useState(null);
+  const [profilePicFile, setProfilePicFile] = useState(null);
+  const [profilePicUploading, setProfilePicUploading] = useState(false);
+  const [profilePicError, setProfilePicError] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -179,6 +185,35 @@ const Profile = () => {
       console.error(err);
     } finally {
       setWalletLoading(false);
+    }
+  };
+
+  const handleProfilePicChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfilePicFile(file);
+      setProfilePicPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleProfilePicUpload = async (e) => {
+    e.preventDefault();
+    if (!profilePicFile) return;
+    setProfilePicUploading(true);
+    setProfilePicError('');
+    try {
+      const formData = new FormData();
+      formData.append('profilePicture', profilePicFile);
+      const res = await axios.post(`http://localhost:3000/api/customers/${user.id}/profile-picture`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setProfile((prev) => ({ ...prev, profilePicture: res.data.profilePicture }));
+      setProfilePicFile(null);
+      setProfilePicPreview(null);
+    } catch (err) {
+      setProfilePicError('Failed to upload profile picture');
+    } finally {
+      setProfilePicUploading(false);
     }
   };
 
@@ -393,6 +428,35 @@ const Profile = () => {
           </div>
         </div>
       )}
+
+      {/* Profile Picture Section */}
+      <div style={{ display: 'flex', alignItems: 'center', flexDirection: 'column', marginBottom: 24 }}>
+        <div style={{ position: 'relative', width: 120, height: 120 }}>
+          <img
+            src={profilePicPreview || (profile && profile.profilePicture ? `http://localhost:3000${profile.profilePicture}` : undefined) || "https://ui-avatars.com/api/?name=User&background=random"}
+            alt="Profile"
+            style={{ width: 120, height: 120, borderRadius: '50%', objectFit: 'cover', border: '2px solid #eee' }}
+          />
+          <label htmlFor="profile-pic-upload" style={{ position: 'absolute', bottom: 0, right: 0, background: '#fff', borderRadius: '50%', padding: 8, cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
+            <FaCamera />
+          </label>
+          <input
+            id="profile-pic-upload"
+            type="file"
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={handleProfilePicChange}
+          />
+        </div>
+        {profilePicFile && (
+          <form onSubmit={handleProfilePicUpload} style={{ marginTop: 12, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <button type="submit" className="btn btn-primary" disabled={profilePicUploading}>
+              {profilePicUploading ? 'Uploading...' : 'Upload Photo'}
+            </button>
+            {profilePicError && <div className="text-danger mt-2">{profilePicError}</div>}
+          </form>
+        )}
+      </div>
 
       {!isEditing ? (
         <div className="profile-content">
