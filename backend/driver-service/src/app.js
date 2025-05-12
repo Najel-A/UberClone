@@ -22,7 +22,8 @@ app.use(session({
   }));
 
 const upload = multer({ dest: 'uploads/' });
-// app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve uploads folder statically
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 app.use('/api/drivers', driverRoutes);
 

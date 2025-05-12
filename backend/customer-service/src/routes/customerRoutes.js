@@ -16,4 +16,7 @@ router.post('/customers/:id/generate-bill', customerController.generateBill);
 router.get('/customers/:id/nearby-drivers', customerController.findNearbyDrivers);
 router.post('/customers/:id/upload-images', upload.array('files'), customerController.uploadImages);
 
+// Upload customer profile picture
+router.post('/customers/:id/profile-picture', upload.single('profilePicture'), customerController.uploadProfilePicture);
+
 module.exports = router;

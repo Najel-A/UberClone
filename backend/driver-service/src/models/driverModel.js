@@ -115,7 +115,8 @@ const driverSchema = new mongoose.Schema({
   ridesHistory: [{
     type: String,
     ref: 'Ride'
-  }]
+  }],
+  profilePicture: { type: String },
 }, {
   timestamps: true,
   toJSON: { virtuals: true },

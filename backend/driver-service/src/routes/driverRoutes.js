@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const driverController = require('../controllers/driverController');
+const upload = require('../utils/multer');
 const { validateDriverData, validateDriverUpdate } = require('../utils/validation');
 
 // Login Driver
@@ -13,6 +14,9 @@ router.post('/logout', driverController.logoutDriver);
 router.post('/signup', 
   validateDriverData, 
   driverController.createDriver);
+
+// Upload driver profile picture
+router.post('/:id/profile-picture', upload.single('profilePicture'), driverController.uploadProfilePicture);
 
 // Add Review and Rating
 router.post('/:id/review', driverController.addReviewAndRating);

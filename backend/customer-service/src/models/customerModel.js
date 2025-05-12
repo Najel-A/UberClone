@@ -25,6 +25,7 @@ const customerSchema = new mongoose.Schema({
   ridesHistory: [{ type: String }],
   rating: { type: Number, default: 0 },
   reviews: [{ type: String }],
+  profilePicture: { type: String },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Customer', customerSchema);

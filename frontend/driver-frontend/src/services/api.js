@@ -42,6 +42,12 @@ export const driverService = {
   // Wallet
   getDriverWallet: (ssn) =>
     axios.get(`${process.env.REACT_APP_BILLING_SERVICE_URL}/api/billing/getDriverWallet/${ssn}`),
+
+  // Profile Picture Upload
+  uploadProfilePicture: (driverId, formData) =>
+    axios.post(`${process.env.REACT_APP_DRIVER_SERVICE_URL}/api/drivers/${driverId}/profile-picture`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
 };
 
 // Ride Matching APIs
