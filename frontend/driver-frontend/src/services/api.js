@@ -48,6 +48,10 @@ export const driverService = {
     axios.post(`${process.env.REACT_APP_DRIVER_SERVICE_URL}/api/drivers/${driverId}/profile-picture`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
+
+  // Get Driver Ride History
+  getDriverRides: (driverId) =>
+    axios.get(`${process.env.REACT_APP_RIDE_SERVICE_URL}/api/rides/driver/${driverId}`),
 };
 
 // Ride Matching APIs

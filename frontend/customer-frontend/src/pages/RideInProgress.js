@@ -62,6 +62,17 @@ const RideInProgress = () => {
     }
   };
 
+  const getBase64ImageFromUrl = async (imageUrl) => {
+    const response = await fetch(imageUrl);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
   const handleDownloadBill = async () => {
     const rideForBill = latestRide || selectedRide;
     // Fetch the latest user profile for card details
@@ -74,14 +85,21 @@ const RideInProgress = () => {
       }
     } catch (err) {}
 
-    // Fetch driver name if possible
+    // Fetch driver name and image if possible
     let driverName = '';
+    let driverImageUrl = '';
     if (rideForBill.driverId) {
       try {
         const res = await axios.get(`${process.env.REACT_APP_DRIVER_SERVICE_URL}/api/drivers/${rideForBill.driverId}`);
         driverName = `${res.data.firstName || res.data.firstname || ''} ${res.data.lastName || res.data.lastname || ''}`.trim();
+        if (res.data.profilePicture) {
+          driverImageUrl = res.data.profilePicture.startsWith('http')
+            ? res.data.profilePicture
+            : `${process.env.REACT_APP_DRIVER_SERVICE_URL}${res.data.profilePicture}`;
+        }
       } catch (e) {
         driverName = rideForBill.driverId;
+        driverImageUrl = '';
       }
     }
     const customerName = userProfile.firstName || userProfile.firstname || userProfile.name || 'N/A';
@@ -90,72 +108,95 @@ const RideInProgress = () => {
     const last4 = cardNumber ? cardNumber.slice(-4) : 'N/A';
     const doc = new jsPDF();
 
-    // Header
-    doc.setFontSize(18);
+    // Header and driver image
+    doc.setFontSize(20);
     doc.setTextColor(80, 80, 200);
     doc.setFont('helvetica', 'bold');
-    doc.text('Thanks for riding Uber!', 10, 15);
+    doc.text('Thanks for riding Uber!', 15, 20);
 
-    // Customer and trip info
+    // Add driver image in a box if available
+    if (driverImageUrl) {
+      try {
+        const base64Image = await getBase64ImageFromUrl(driverImageUrl);
+        // Draw a subtle border box for the image
+        doc.setDrawColor(180);
+        doc.setLineWidth(0.2);
+        doc.rect(155, 10, 40, 40, 'S');
+        doc.addImage(base64Image, 'JPEG', 157, 12, 36, 36); // Centered in the box
+      } catch (e) {
+        // Ignore image errors
+      }
+    }
+
+    // Customer and trip info section
+    let y = 30;
     doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Billed To:`, 10, 25, { maxWidth: 40 });
+    doc.text(`Billed To:`, 15, y);
     doc.setFont('helvetica', 'bold');
-    doc.text(`${customerName} ${customerLastName}`, 40, 25);
+    doc.text(`${customerName} ${customerLastName}`, 45, y);
+    y += 8;
     doc.setFont('helvetica', 'normal');
-    doc.text(`Trip Date:`, 10, 32); doc.text(`${new Date(rideForBill.dateTime).toLocaleString()}`, 40, 32);
-    doc.text(`Pickup Location:`, 10, 39); doc.text(`${rideForBill.pickupLocation?.address || ''}`, 40, 39);
-    doc.text(`Dropoff Location:`, 10, 46); doc.text(`${rideForBill.dropoffLocation?.address || ''}`, 40, 46);
-    doc.text(`Credit Card:`, 10, 53); doc.text(`**** **** **** ${last4}`, 40, 53);
-    doc.text(`Driver:`, 10, 60); doc.text(`${driverName || rideForBill.driverId || 'N/A'}`, 40, 60);
+    doc.text(`Trip Date:`, 15, y); doc.text(`${new Date(rideForBill.dateTime).toLocaleString()}`, 45, y);
+    y += 8;
+    doc.text(`Pickup Location:`, 15, y); doc.text(`${rideForBill.pickupLocation?.address || ''}`, 45, y);
+    y += 8;
+    doc.text(`Dropoff Location:`, 15, y); doc.text(`${rideForBill.dropoffLocation?.address || ''}`, 45, y);
+    y += 8;
+    doc.text(`Credit Card:`, 15, y); doc.text(`**** **** **** ${last4}`, 45, y);
+    y += 8;
+    doc.text(`Driver:`, 15, y); doc.text(`${driverName || rideForBill.driverId || 'N/A'}`, 45, y);
 
     // Section background for total
+    y += 12;
     doc.setFillColor(240, 240, 255);
-    doc.rect(8, 65, 60, 20, 'F');
+    doc.roundedRect(12, y, 70, 22, 4, 4, 'F');
     doc.setFontSize(16);
     doc.setTextColor(0, 0, 0);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Billed to Card`, 10, 75);
+    doc.text(`Billed to Card`, 18, y + 10);
     doc.setFontSize(22);
     doc.setTextColor(0, 0, 180);
     doc.setFont('helvetica', 'bold');
-    doc.text(`$${rideForBill.price?.toFixed(2) || 'N/A'}`, 10, 85);
+    doc.text(`$${rideForBill.price?.toFixed(2) || 'N/A'}`, 18, y + 20);
 
     // Line separator
+    y += 28;
     doc.setDrawColor(150);
-    doc.line(10, 90, 200, 90);
+    doc.line(15, y, 195, y);
 
     // Fare Breakdown
+    y += 10;
     doc.setFontSize(14);
     doc.setTextColor(0, 0, 0);
     doc.setFont('helvetica', 'bold');
-    doc.text('Fare Breakdown', 10, 100);
+    doc.text('Fare Breakdown', 15, y);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(12);
-    let y = 108;
-    doc.text('Base Fare:', 12, y); doc.text('$7.00', 60, y, { align: 'right' });
-    y += 7;
-    doc.text('Distance:', 12, y); doc.text('$8.84', 60, y, { align: 'right' });
-    y += 7;
-    doc.text('Time:', 12, y); doc.text('$9.00', 60, y, { align: 'right' });
-    y += 7;
-    doc.text('Rounding Down:', 12, y); doc.text('($0.90)', 60, y, { align: 'right' });
-    y += 7;
-    doc.text('Discount subtotal:', 12, y); doc.text('($0.90)', 60, y, { align: 'right' });
-    y += 10;
+    let fareY = y + 8;
+    doc.text('Base Fare:', 18, fareY); doc.text('$7.00', 70, fareY, { align: 'right' });
+    fareY += 7;
+    doc.text('Distance:', 18, fareY); doc.text('$8.84', 70, fareY, { align: 'right' });
+    fareY += 7;
+    doc.text('Time:', 18, fareY); doc.text('$9.00', 70, fareY, { align: 'right' });
+    fareY += 7;
+    doc.text('Rounding Down:', 18, fareY); doc.text('($0.90)', 70, fareY, { align: 'right' });
+    fareY += 7;
+    doc.text('Discount subtotal:', 18, fareY); doc.text('($0.90)', 70, fareY, { align: 'right' });
+    fareY += 10;
     doc.setFont('helvetica', 'bold');
-    doc.text('Total Fare:', 12, y); doc.text(`$${rideForBill.price?.toFixed(2) || 'N/A'}`, 60, y, { align: 'right' });
+    doc.text('Total Fare:', 18, fareY); doc.text(`$${rideForBill.price?.toFixed(2) || 'N/A'}`, 70, fareY, { align: 'right' });
 
     // Trip Statistics
-    y = 100;
+    let statsY = y;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(14);
-    doc.text('Trip Statistics', 120, y);
+    doc.text('Trip Statistics', 120, statsY);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(12);
-    y += 8;
-    doc.text('Distance:', 122, y); doc.text(`${rideForBill.distanceCovered?.toFixed(2) || 'N/A'} miles`, 170, y, { align: 'right' });
+    statsY += 8;
+    doc.text('Distance:', 122, statsY); doc.text(`${rideForBill.distanceCovered?.toFixed(2) || 'N/A'} miles`, 170, statsY, { align: 'right' });
 
     doc.save('Uber_Ride_Receipt.pdf');
   };
