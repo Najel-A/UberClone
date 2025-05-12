@@ -96,6 +96,7 @@ const Profile = () => {
   const fetchWalletBalance = async () => {
     try {
       const response = await axios.get(
+
         `${process.env.REACT_APP_BILLING_SERVICE_URL}/api/billing/getCustomerWallet/${user.id}`
       );
       setWalletBalance(response.data.balance);

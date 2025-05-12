@@ -1,0 +1,50 @@
+# ride-service.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ride-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ride-service
+  template:
+    metadata:
+      labels:
+        app: ride-service
+    spec:
+      containers:
+      - name: ride-service
+        image: your-registry/ride-service:latest  # Update with your image
+        ports:
+        - containerPort: 5003
+        env:
+        - name: MONGO_URI
+          value: "mongodb://admin:adminpassword@mongodb:27017/ride_db?authSource=admin"
+        envFrom:
+        - secretRef:
+            name: ride-service-secrets
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ride-service
+spec:
+  selector:
+    app: ride-service
+  ports:
+    - protocol: TCP
+      port: 5003
+      targetPort: 5003
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ride-service-secrets
+type: Opaque
+stringData:
+  .env.docker: |
+    # Contents of your ./backend/ride-service/.env.docker file
+    # (Remove this comment and paste the actual content)

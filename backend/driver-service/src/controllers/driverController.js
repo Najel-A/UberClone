@@ -410,23 +410,50 @@ exports.addReviewAndRating = async (req, res) => {
 exports.uploadProfilePicture = async (req, res) => {
   try {
     const { id } = req.params;
-    if (!req.file)
-      return res.status(400).json({ message: "No image provided" });
-    const imagePath = `/uploads/${req.file.filename}`;
-    const driver = await Driver.findByIdAndUpdate(
-      id,
-      { profilePicture: imagePath },
-      { new: true }
-    );
-    if (!driver) return res.status(404).json({ message: "Driver not found" });
-    res.status(200).json({
-      message: "Profile picture uploaded successfully",
-      profilePicture: imagePath,
-      driver,
-    });
+
+    if (!req.file) return res.status(400).json({ message: 'No image provided' });
+    const imagePath = `/uploads/images/${req.file.filename}`;
+    const driver = await Driver.findByIdAndUpdate(id, { profilePicture: imagePath }, { new: true });
+    if (!driver) return res.status(404).json({ message: 'Driver not found' });
+    res.status(200).json({ message: 'Profile picture uploaded successfully', profilePicture: imagePath, driver });
+
   } catch (err) {
     res
       .status(500)
       .json({ message: "Internal server error", error: err.message });
+  }
+};
+
+// Upload Driver Video
+exports.uploadDriverVideo = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No video file uploaded" });
+    }
+
+    const driver = await Driver.findById(req.params.id);
+    if (!driver) {
+      throw new NotFoundError("Driver not found");
+    }
+
+    // Store the video URL/path as an absolute URL
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const videoUrl = `${baseUrl}/uploads/videos/${req.file.filename}`;
+    driver.introductionMedia = {
+      ...driver.introductionMedia,
+      video: videoUrl
+    };
+
+    await driver.save();
+
+    res.status(200).json({
+      message: "Video uploaded successfully",
+      videoUrl: videoUrl
+    });
+  } catch (err) {
+    if (err instanceof NotFoundError) {
+      return res.status(404).json({ message: err.message });
+    }
+    res.status(500).json({ message: "Error uploading video", error: err.message });
   }
 };

@@ -22,7 +22,7 @@ app = FastAPI()
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.getenv("CUSTOMER_FRONTEND_URL", "http://localhost:3007")],  # Get frontend URL from environment variable
+    allow_origins=[os.getenv("CUSTOMER_FRONTEND_URL", "http://localhost:3000")],  # Get frontend URL from environment variable
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

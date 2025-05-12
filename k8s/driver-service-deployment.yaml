@@ -1,0 +1,50 @@
+# driver-service.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: driver-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: driver-service
+  template:
+    metadata:
+      labels:
+        app: driver-service
+    spec:
+      containers:
+      - name: driver-service
+        image: your-registry/driver-service:latest  # Update with your image
+        ports:
+        - containerPort: 5001
+        env:
+        - name: MONGO_URI
+          value: "mongodb://admin:adminpassword@mongodb:27017/driver_db?authSource=admin"
+        envFrom:
+        - secretRef:
+            name: driver-service-secrets
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: driver-service
+spec:
+  selector:
+    app: driver-service
+  ports:
+    - protocol: TCP
+      port: 5001
+      targetPort: 5001
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: driver-service-secrets
+type: Opaque
+stringData:
+  .env.docker: |
+    # Contents of your ./backend/driver-service/.env.docker file
+    # (Remove this comment and paste the actual content)

@@ -62,7 +62,7 @@ exports.createRideRequest = async (req, res, next) => {
     // Check customer wallet balance before booking
     try {
       const billingServiceUrl =
-        process.env.BILLING_SERVICE_URL || "http://localhost:5004";
+        process.env.BILLING_SERVICE_URL;
       const walletRes = await axios.get(
         `${billingServiceUrl}/api/billing/getCustomerWallet/${customerId}`
       );
@@ -102,6 +102,7 @@ exports.getNearbyRideRequests = async (req, res) => {
   try {
     const rides = await Ride.find({
       driverId: null, // ride not yet accepted
+      status: { $nin: ['cancelled', 'completed'] }, // Exclude cancelled and completed
       pickupPoint: {
         $near: {
           $geometry: {
@@ -113,7 +114,7 @@ exports.getNearbyRideRequests = async (req, res) => {
       },
     });
 
-    res.json(rides);
+    res.json(rides || []);
   } catch (error) {
     console.error("Error fetching nearby rides:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -124,11 +125,12 @@ exports.acceptRideRequest = async (req, res, next) => {
   try {
     const { id } = req.params; // ride ID
     const { driverId } = req.body;
-
+    console.log("driverId", driverId);
+    console.log("id", id);
     if (!driverId) {
       return res.status(400).json({ message: "Driver ID is required" });
     }
-
+    
     // Fetch the ride
     const ride = await Ride.findById(id);
     if (!ride) {
@@ -145,18 +147,7 @@ exports.acceptRideRequest = async (req, res, next) => {
     if (!/^\d{3}-\d{2}-\d{4}$/.test(driverId)) {
       const driverServiceUrl =
         process.env.DRIVER_SERVICE_URL || "http://localhost:5001/api/drivers";
-      let driverRes;
-      try {
-        driverRes = await axios.get(
-          `${driverServiceUrl}/api/drivers/${driverSsn}`
-        );
-      } catch (err) {
-        console.error(
-          "Axios error (driver-service call for location):",
-          err.response ? err.response.data : err.message
-        );
-        throw err;
-      }
+      const driverRes = await axios.get(`${driverServiceUrl}/${driverId}`);
       driverSsn = driverRes.data._id;
     }
 
@@ -174,18 +165,7 @@ exports.acceptRideRequest = async (req, res, next) => {
     // Fetch driver location from driver-service
     const driverServiceUrl =
       process.env.DRIVER_SERVICE_URL || "http://localhost:5001/api/drivers";
-    let driverRes;
-    try {
-      driverRes = await axios.get(
-        `${driverServiceUrl}/api/drivers/${driverSsn}`
-      );
-    } catch (err) {
-      console.error(
-        "Axios error (driver-service call for location):",
-        err.response ? err.response.data : err.message
-      );
-      throw err;
-    }
+    const driverRes = await axios.get(`${driverServiceUrl}/${driverSsn}`);
     const driver = driverRes.data;
     if (
       !driver.currentLocation ||
@@ -339,7 +319,7 @@ exports.getCustomerRides = async (req, res, next) => {
 
     // Fetch driver names for each ride
     const driverServiceUrl =
-      process.env.DRIVER_SERVICE_URL || "http://localhost:5001/api/drivers";
+      process.env.DRIVER_SERVICE_URL || "http://driver-service:5001/api/drivers";
     const ridesWithDriverNames = await Promise.all(
       rides.map(async (ride) => {
         let driverName = "N/A";
@@ -374,15 +354,33 @@ exports.getDriverRides = async (req, res, next) => {
       return res.status(400).json({ message: "Driver ID is required" });
     }
 
-    const rides = await RideService.getRidesByDriver(driverId);
+    // Only fetch rides that are not cancelled
+    const rides = await Ride.find({ driverId, status: { $ne: 'cancelled' } });
 
-    if (!rides || rides.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "No rides found for this driver" });
-    }
+    // Fetch customer information for each ride
+    const customerServiceUrl = process.env.CUSTOMER_SERVICE_URL || "http://customer-service:5000/api/customers";
+    const ridesWithCustomerInfo = await Promise.all(
+      rides.map(async (ride) => {
+        let customerInfo = { firstName: "N/A", lastName: "N/A" };
+        if (ride.customerId) {
+          try {
+            const customerRes = await axios.get(`${customerServiceUrl}/${ride.customerId}`);
+            customerInfo = {
+              firstName: customerRes.data.firstName || "N/A",
+              lastName: customerRes.data.lastName || "N/A"
+            };
+          } catch (e) {
+            console.error("Error fetching customer info:", e);
+          }
+        }
+        return {
+          ...ride.toObject(),
+          customerName: `${customerInfo.firstName} ${customerInfo.lastName}`.trim()
+        };
+      })
+    );
 
-    res.json(rides);
+    res.json(ridesWithCustomerInfo || []);
   } catch (error) {
     next(error);
   }
@@ -538,5 +536,33 @@ exports.getAllCompletedRides = async (req, res) => {
       message: "Failed to fetch completed rides",
       error: error.message,
     });
+  }
+};
+
+exports.cancelRideRequest = async (req, res) => {
+  try {
+    const { rideId } = req.params;
+    // Accept cancelledBy from query or body, default to 'customer'
+    const cancelledBy = req.body.cancelledBy || req.query.cancelledBy || 'customer';
+    if (!rideId) {
+      return res.status(400).json({ message: "Ride ID is required" });
+    }
+    const ride = await Ride.findById(rideId);
+    if (!ride) {
+      return res.status(404).json({ message: "Ride not found" });
+    }
+    if (ride.status === "completed") {
+      return res.status(400).json({ message: "Cannot cancel a completed ride." });
+    }
+    if (ride.status === "cancelled") {
+      return res.status(400).json({ message: "Ride is already cancelled." });
+    }
+    ride.status = "cancelled";
+    ride.cancelledBy = cancelledBy;
+    await ride.save();
+    res.json({ message: "Ride cancelled successfully", ride });
+  } catch (error) {
+    console.error("Cancel ride error:", error);
+    res.status(500).json({ message: "Failed to cancel ride", error: error.message });
   }
 };
