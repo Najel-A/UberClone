@@ -32,14 +32,18 @@ const allowedOrigins = [
   process.env.CUSTOMER_FRONTEND_URL,
   process.env.RIDE_SERVICE_URL,
   process.env.ADMIN_SERVICE_URL,
-  "http://localhost:3000", // Admin service
-  "http://localhost:3001", // Billing service
-  "http://localhost:3002", // Customer service
-  "http://localhost:3003", // Driver service
-  "http://localhost:3004", // Driver frontend
-  "http://localhost:3005", // Ride service
-  "http://localhost:3006", // Admin frontend
-  "http://localhost:3007", // Customer frontend
+  "http://admin-service:5002", // Admin service
+  "http://billing-service:5004", // Billing service
+  "http://customer-service:5000", // Customer service
+  "http://driver-service:5001", // Driver service
+  "http://localhost:3001", // Driver frontend
+  "http://ride-service:5003", // Ride service
+  "http://localhost:3002", // Admin frontend
+  "http://localhost:3000", // Customer frontend
+  "http://localhost:5002", // Admin service
+  "http://localhost:5004", // Billing service
+  "http://localhost:5000", // Customer service
+  "http://localhost:5001", // Driver service
 ].filter(Boolean);
 
 app.use(

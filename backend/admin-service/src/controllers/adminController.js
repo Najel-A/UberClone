@@ -119,7 +119,7 @@ exports.addDriver = async (req, res) => {
     const driverData = req.body;
 
     // Send the driver data to the driver-service signup endpoint
-    const driverServiceUrl = "http://driver-service:3003/api/drivers/signup";
+    const driverServiceUrl = "http://driver-service:5001/api/drivers/signup";
     const response = await axios.post(driverServiceUrl, driverData, {
       headers: {
         "Content-Type": "application/json",
@@ -152,7 +152,7 @@ exports.addCustomer = async (req, res) => {
     const customerData = req.body;
 
     // Send the driver data to the customer-service signup endpoint
-    const customerServiceUrl = "http://customer-service:3002/api/customers";
+    const customerServiceUrl = "http://customer-service:5000/api/customers";
     const response = await axios.post(customerServiceUrl, customerData, {
       headers: {
         "Content-Type": "application/json",
@@ -292,7 +292,7 @@ exports.deleteCustomer = async (req, res) => {
     const { id } = req.params;
 
     // Send delete request to customer-service
-    const customerServiceUrl = `http://customer-service:3002/api/customers/${id}`;
+    const customerServiceUrl = `http://customer-service:5000/api/customers/${id}`;
     const response = await axios.delete(customerServiceUrl, {
       headers: {
         "Content-Type": "application/json",
@@ -325,7 +325,7 @@ exports.deleteDriver = async (req, res) => {
     const { id } = req.params;
 
     // Send delete request to driver-service
-    const driverServiceUrl = `http://driver-service:3003/api/drivers/${id}`;
+    const driverServiceUrl = `http://driver-service:5001/api/drivers/${id}`;
     const response = await axios.delete(driverServiceUrl, {
       headers: {
         "Content-Type": "application/json",
@@ -356,7 +356,7 @@ exports.deleteDriver = async (req, res) => {
 exports.getAllCustomers = async (req, res) => {
   try {
     // Send request to customer-service to get all customers
-    const customerServiceUrl = "http://customer-service:3002/api/customers";
+    const customerServiceUrl = "http://customer-service:5000/api/customers";
     const response = await axios.get(customerServiceUrl, {
       headers: {
         "Content-Type": "application/json",
@@ -391,7 +391,7 @@ exports.getAllDrivers = async (req, res) => {
     const queryParams = req.query;
 
     // Send request to driver-service to get all drivers
-    const driverServiceUrl = "http://driver-service:3003/api/drivers";
+    const driverServiceUrl = "http://driver-service:5001/api/drivers";
     const response = await axios.get(driverServiceUrl, {
       headers: {
         "Content-Type": "application/json",
@@ -425,7 +425,7 @@ exports.getCustomerByEmail = async (req, res) => {
     const { email } = req.params;
 
     // Send request to customer-service to get customer by email
-    const customerServiceUrl = `http://customer-service:3002/api/customers/email/${email}`;
+    const customerServiceUrl = `http://customer-service:5000/api/customers/email/${email}`;
     const response = await axios.get(customerServiceUrl, {
       headers: {
         "Content-Type": "application/json",
@@ -458,7 +458,7 @@ exports.getDriverByEmail = async (req, res) => {
     const { email } = req.params;
 
     // Send request to driver-service to get driver by email
-    const driverServiceUrl = `http://driver-service:3003/api/drivers/email/${email}`;
+    const driverServiceUrl = `http://driver-service:5001/api/drivers/email/${email}`;
     const response = await axios.get(driverServiceUrl, {
       headers: {
         "Content-Type": "application/json",
@@ -493,7 +493,7 @@ exports.updateDriver = async (req, res) => {
     const driverData = req.body;
 
     // Send update request to driver-service
-    const driverServiceUrl = `http://driver-service:3003/api/drivers/${id}`;
+    const driverServiceUrl = `http://driver-service:5001/api/drivers/${id}`;
     const response = await axios.put(driverServiceUrl, driverData, {
       headers: {
         "Content-Type": "application/json",
@@ -527,7 +527,7 @@ exports.updateCustomer = async (req, res) => {
     const customerData = req.body;
 
     // Send update request to customer-service
-    const customerServiceUrl = `http://customer-service:3002/api/customers/${id}`;
+    const customerServiceUrl = `http://customer-service:5000/api/customers/${id}`;
     const response = await axios.put(customerServiceUrl, customerData, {
       headers: {
         "Content-Type": "application/json",
@@ -580,7 +580,7 @@ exports.getAllBills = async (req, res) => {
     if (status) queryParams.append("status", status);
 
     // Send request to billing-service to get all bills
-    const billingServiceUrl = `http://billing-service:3001/api/billing/bills${
+    const billingServiceUrl = `http://billing-service:5004/api/billing/bills${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`;
 
@@ -616,7 +616,7 @@ exports.getBillById = async (req, res) => {
     const { id } = req.params;
 
     // Send request to billing-service to get bill by ID
-    const billingServiceUrl = `http://billing-service:3001/api/billing/bills/${id}`;
+    const billingServiceUrl = `http://billing-service:5004/api/billing/bills/${id}`;
     const response = await axios.get(billingServiceUrl, {
       headers: {
         "Content-Type": "application/json",
@@ -647,7 +647,7 @@ exports.getBillById = async (req, res) => {
 exports.getCompletedRides = async (req, res) => {
   try {
     // Use hardcoded URL like other service calls
-    const rideServiceUrl = "http://localhost:3005";
+    const rideServiceUrl = "http://ride-service:5003";
     console.log("Making request to ride service at:", rideServiceUrl);
 
     const response = await axios.get(

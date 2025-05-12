@@ -15,9 +15,10 @@ const allowedOrigins = [
     ? process.env.FRONT_END_PORTS.split(",").map(
         (port) => `http://localhost:${port.trim()}`
       )
-    : ["http://localhost:3000"]),
-  process.env.BILLING_SERVICE_URL || "http://billing-service:3004",
-  process.env.RIDE_SERVICE_URL || "http://localhost:3005",
+    : ["http://localhost:3002"]),
+  process.env.BILLING_SERVICE_URL || "http://billing-service:5004",
+  process.env.RIDE_SERVICE_URL || "http://ride-service:5004",
+  "http://localhost:5004"
 ];
 
 app.use(

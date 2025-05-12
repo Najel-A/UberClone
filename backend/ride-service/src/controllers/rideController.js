@@ -146,7 +146,7 @@ exports.acceptRideRequest = async (req, res, next) => {
     let driverSsn = driverId;
     if (!/^\d{3}-\d{2}-\d{4}$/.test(driverId)) {
       const driverServiceUrl =
-        process.env.DRIVER_SERVICE_URL || "http://localhost:5001/api/drivers";
+        process.env.DRIVER_SERVICE_URL || "http://driver-service:5001/api/drivers";
       const driverRes = await axios.get(`${driverServiceUrl}/${driverId}`);
       driverSsn = driverRes.data._id;
     }
@@ -164,7 +164,7 @@ exports.acceptRideRequest = async (req, res, next) => {
 
     // Fetch driver location from driver-service
     const driverServiceUrl =
-      process.env.DRIVER_SERVICE_URL || "http://localhost:5001/api/drivers";
+      process.env.DRIVER_SERVICE_URL || "http://driver-service:5001/api/drivers";
     const driverRes = await axios.get(`${driverServiceUrl}/${driverSsn}`);
     const driver = driverRes.data;
     if (
@@ -226,7 +226,7 @@ exports.rideCompleted = async (req, res) => {
     if (!ride) {
       return res.status(404).json({ message: "Ride not found" });
     }
-
+    console.log("ride", ride);
     // Ensure all required fields are present
     if (
       !ride.customerId ||
@@ -260,10 +260,10 @@ exports.rideCompleted = async (req, res) => {
       updatedAt: new Date(), // Set completion time
       distanceCovered: ride.distanceCovered || 0,
     };
-
+    console.log("rideData into kafka", rideData);
     // Emit the event with complete ride data
     await emitCompletedRideEvent({ ride: rideData });
-
+    console.log("rideData emitted to kafka");
     return res.status(202).json({
       message: "Ride completed",
       ride: rideData,
@@ -505,7 +505,7 @@ exports.getAllCompletedRides = async (req, res) => {
 
     // Fetch driver names for each ride
     const driverServiceUrl =
-      process.env.DRIVER_SERVICE_URL || "http://localhost:5001/api/drivers";
+      process.env.DRIVER_SERVICE_URL || "http://driver-service:5001/api/drivers";
     const ridesWithDriverNames = await Promise.all(
       rides.map(async (ride) => {
         let driverName = "N/A";

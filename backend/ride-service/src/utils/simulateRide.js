@@ -37,7 +37,7 @@ exports.simulateRide = async (rideId, start, end, steps = 20, delay = 500) => {
   try {
     console.log("Ride id:", rideId);
     const rideServiceUrl =
-      process.env.RIDE_SERVICE_URL || "http://localhost:3005";
+      process.env.RIDE_SERVICE_URL || "http://localhost:5003";
     await axios.post(`${rideServiceUrl}/api/rides/rideCompleted`, {
       id: rideId,
     });
