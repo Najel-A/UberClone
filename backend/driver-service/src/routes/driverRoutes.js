@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const driverController = require("../controllers/driverController");
+const upload = require("../utils/multer");
 const {
   validateDriverData,
   validateDriverUpdate,
@@ -20,6 +21,12 @@ router.get("/", driverController.listDrivers);
 
 // Get Driver by Email
 router.get("/email/:email", driverController.getDriverByEmail);
+
+// Upload driver profile picture
+router.post('/:id/profile-picture', upload.single('profilePicture'), driverController.uploadProfilePicture);
+
+// Add Review and Rating
+router.post('/:id/review', driverController.addReviewAndRating);
 
 // Get Driver by ID
 router.get("/:id", driverController.getDriver);

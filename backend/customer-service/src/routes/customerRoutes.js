@@ -24,4 +24,9 @@ router.post(
   customerController.uploadImages
 );
 
+// Upload customer profile picture
+router.post('/customers/:id/profile-picture', upload.single('profilePicture'), customerController.uploadProfilePicture);
+
+router.get('/customers/:id', customerController.getCustomerById);
+
 module.exports = router;

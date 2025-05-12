@@ -92,6 +92,10 @@ const driverSchema = new mongoose.Schema({
     type: String,
     maxlength: 500
   }],
+  _ratings: {
+    type: [Number],
+    default: []
+  },
   introductionMedia: {
     images: [{
       type: String,
@@ -111,7 +115,8 @@ const driverSchema = new mongoose.Schema({
   ridesHistory: [{
     type: String,
     ref: 'Ride'
-  }]
+  }],
+  profilePicture: { type: String },
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
