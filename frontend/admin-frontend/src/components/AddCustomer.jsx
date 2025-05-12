@@ -16,6 +16,7 @@ const AddCustomer = () => {
     },
     phoneNumber: "",
     email: "",
+    password: "",
     creditCardDetails: {
       cardNumber: "",
       expiryDate: "",
@@ -33,6 +34,7 @@ const AddCustomer = () => {
     lastName: "",
     phoneNumber: "",
     email: "",
+    password: "",
     cardNumber: "",
     expiryDate: "",
     cvv: "",
@@ -231,6 +233,17 @@ const AddCustomer = () => {
             ? "Name can only contain letters, spaces, and hyphens"
             : "",
       }));
+    } else if (name === "password") {
+      setForm({ ...form, [name]: value });
+
+      if (value.length < 6) {
+        setErrors((prev) => ({
+          ...prev,
+          password: "Password must be at least 6 characters long.",
+        }));
+      } else {
+        setErrors((prev) => ({ ...prev, password: "" }));
+      }
     } else {
       setForm({ ...form, [name]: value });
     }
@@ -264,6 +277,10 @@ const AddCustomer = () => {
       return alert("Invalid email format.");
     }
 
+    if (!form.password || form.password.length < 6) {
+      return alert("Password must be at least 6 characters long.");
+    }
+
     const ccDigits = form.creditCardDetails.cardNumber.replace(/\D/g, "");
     if (ccDigits.length !== 16) {
       return alert("Credit card must be 16 digits.");
@@ -290,8 +307,9 @@ const AddCustomer = () => {
         state: form.address.state,
         zipCode: form.address.zipCode,
       },
-      phoneNumber: form.phoneNumber.replace(/\D/g, ""), // Store only digits
+      phoneNumber: "+1" + form.phoneNumber.replace(/\D/g, ""), // Format as +1XXXXXXXXXX
       email: form.email,
+      password: form.password,
       creditCardDetails: {
         cardNumber: form.creditCardDetails.cardNumber.replace(/\D/g, ""), // Store only digits
         expiryDate: form.creditCardDetails.expiryDate,
@@ -305,8 +323,14 @@ const AddCustomer = () => {
 
     try {
       await axios.post(
-        process.env.REACT_APP_ADMIN_BACKEND_PORT_URL + "/api/admin/customers",
-        formattedData
+        `${process.env.REACT_APP_CUSTOMER_SERVICE_URL}/api/customers`,
+        formattedData,
+        {
+          withCredentials: true,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
       );
       alert("Customer added successfully!");
       // Reset form after successful submission
@@ -322,6 +346,7 @@ const AddCustomer = () => {
         },
         phoneNumber: "",
         email: "",
+        password: "",
         creditCardDetails: {
           cardNumber: "",
           expiryDate: "",
@@ -473,6 +498,24 @@ const AddCustomer = () => {
               />
               {errors.email && (
                 <div className="invalid-feedback">{errors.email}</div>
+              )}
+            </div>
+
+            <div className="col-md-6 mb-3">
+              <label className="form-label">Password</label>
+              <input
+                type="password"
+                className={`form-control ${
+                  errors.password ? "is-invalid" : ""
+                }`}
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                required
+                minLength="6"
+              />
+              {errors.password && (
+                <div className="invalid-feedback">{errors.password}</div>
               )}
             </div>
 

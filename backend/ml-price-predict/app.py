@@ -8,6 +8,10 @@ import pandas as pd
 from haversine import haversine, Unit
 import joblib
 import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -18,7 +22,7 @@ app = FastAPI()
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3004"],  # Your frontend URL
+    allow_origins=[os.getenv("CUSTOMER_FRONTEND_URL", "http://localhost:3007")],  # Get frontend URL from environment variable
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

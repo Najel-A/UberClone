@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import axios from "../utils/axiosConfig";
 import { validStates, isValidState } from "../utils/states";
+import { useNavigate } from "react-router-dom";
 
 export default function Signup() {
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     adminId: "",
     firstName: "",
@@ -196,20 +198,7 @@ export default function Signup() {
         formattedData
       );
       alert("Admin registered successfully!");
-
-      // Reset form after successful submission
-      setForm({
-        adminId: "",
-        firstName: "",
-        lastName: "",
-        address: "",
-        city: "",
-        state: "",
-        zipCode: "",
-        phoneNumber: "",
-        email: "",
-        password: "",
-      });
+      navigate("/login"); // Redirect to login page after successful signup
     } catch (error) {
       alert(
         "Error during registration: " +

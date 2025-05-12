@@ -553,3 +553,92 @@ exports.updateCustomer = async (req, res) => {
       .json({ message: "Internal server error", error: err.message });
   }
 };
+
+// Get All Bills with Search
+exports.getAllBills = async (req, res) => {
+  try {
+    const {
+      billId,
+      customerId,
+      driverId,
+      minAmount,
+      maxAmount,
+      startDate,
+      endDate,
+      status,
+    } = req.query;
+
+    // Build query parameters for billing service
+    const queryParams = new URLSearchParams();
+    if (billId) queryParams.append("billId", billId);
+    if (customerId) queryParams.append("customerId", customerId);
+    if (driverId) queryParams.append("driverId", driverId);
+    if (minAmount) queryParams.append("minAmount", minAmount);
+    if (maxAmount) queryParams.append("maxAmount", maxAmount);
+    if (startDate) queryParams.append("startDate", startDate);
+    if (endDate) queryParams.append("endDate", endDate);
+    if (status) queryParams.append("status", status);
+
+    // Send request to billing-service to get all bills
+    const billingServiceUrl = `http://billing-service:3001/api/bills${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+
+    const response = await axios.get(billingServiceUrl, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    // Return the response from the billing-service
+    res.status(200).json(response.data);
+  } catch (err) {
+    console.error("Error getting bills:", err.message);
+
+    // Handle errors from the billing-service
+    if (err.response) {
+      return res.status(err.response.status).json({
+        message: err.response.data.message || "Error from billing-service",
+        error: err.response.data.error || err.message,
+      });
+    }
+
+    // Handle internal server errors
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: err.message });
+  }
+};
+
+// Get Bill by ID
+exports.getBillById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Send request to billing-service to get bill by ID
+    const billingServiceUrl = `http://billing-service:3004/api/bills/${id}`;
+    const response = await axios.get(billingServiceUrl, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    // Return the response from the billing-service
+    res.status(200).json(response.data);
+  } catch (err) {
+    console.error("Error getting bill:", err.message);
+
+    // Handle errors from the billing-service
+    if (err.response) {
+      return res.status(err.response.status).json({
+        message: err.response.data.message || "Error from billing-service",
+        error: err.response.data.error || err.message,
+      });
+    }
+
+    // Handle internal server errors
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: err.message });
+  }
+};
