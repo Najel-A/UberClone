@@ -162,25 +162,30 @@ exports.createCustomerWallet = async (req, res, next) => {
 exports.createDriverWallet = async (req, res, next) => {
   try {
     const { ssn } = req.body;
+    console.log("Received request to create driver wallet for SSN:", ssn);
 
     if (!ssn) {
+      console.log("SSN is missing in request");
       return res.status(400).json({ message: "SSN is required" });
     }
 
     // Check if wallet already exists
     const existingWallet = await DriverWallet.findOne({ where: { ssn } });
     if (existingWallet) {
+      console.log("Wallet already exists for SSN:", ssn);
       return res
         .status(409)
         .json({ message: "Wallet already exists for this driver" });
     }
 
+    console.log("Creating new wallet for SSN:", ssn);
     // Create new wallet with default balance of 0
     const wallet = await DriverWallet.create({
       ssn,
       wallet: 0,
     });
 
+    console.log("Wallet created successfully:", wallet);
     res.status(201).json({
       message: "Driver wallet created successfully",
       wallet: {
@@ -189,6 +194,7 @@ exports.createDriverWallet = async (req, res, next) => {
       },
     });
   } catch (err) {
+    console.error("Error in createDriverWallet:", err);
     next(err);
   }
 };

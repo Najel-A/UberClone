@@ -1,3 +1,4 @@
+require("dotenv").config();
 const path = require("path");
 const axios = require("axios");
 const jwt = require("jsonwebtoken");
@@ -27,8 +28,39 @@ exports.createCustomer = async (req, res) => {
     });
     await customer.save();
 
-    res.status(201).json(customer);
+    // Create wallet for the customer
+    try {
+      console.log("Creating wallet for customer:", customer._id);
+      // Use the Docker container name for inter-service communication
+      const billingServiceUrl =
+        process.env.BILLING_SERVICE_URL || "http://billing-service:3001";
+      console.log("Billing service URL:", billingServiceUrl);
+
+      const response = await axios.post(
+        `${billingServiceUrl}/api/billing/createCustomerWallet`,
+        {
+          ssn: customer._id.toString(), // Ensure _id is converted to string
+        }
+      );
+
+      console.log("Wallet creation response:", response.data);
+    } catch (walletError) {
+      console.error("Error creating customer wallet:", {
+        message: walletError.message,
+        response: walletError.response?.data,
+        status: walletError.response?.status,
+        url: `${billingServiceUrl}/api/billing/createCustomerWallet`,
+      });
+      // Continue with customer creation even if wallet creation fails
+      // The wallet can be created later if needed
+    }
+
+    res.status(201).json({
+      ...customer.toObject(),
+      message: "Customer created successfully",
+    });
   } catch (err) {
+    console.error("Error in createCustomer:", err);
     res
       .status(500)
       .json({ message: "Internal server error", error: err.message });

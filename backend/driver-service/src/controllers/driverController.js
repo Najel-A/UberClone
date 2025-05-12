@@ -1,7 +1,9 @@
+require("dotenv").config();
 const Driver = require("../models/driverModel");
 const { NotFoundError, ConflictError } = require("../utils/errors");
 const { hashPassword, comparePassword } = require("../utils/passwordHash");
 const jwt = require("jsonwebtoken");
+const axios = require("axios");
 
 // Create Driver
 exports.createDriver = async (req, res) => {
@@ -20,8 +22,40 @@ exports.createDriver = async (req, res) => {
     driverData.password = await hashPassword(driverData.password);
 
     const driver = await Driver.create(driverData);
-    res.status(201).json(driver);
+
+    // Create wallet for the driver
+    try {
+      console.log("Creating wallet for driver:", driver._id);
+      // Use the Docker container name for inter-service communication
+      const billingServiceUrl =
+        process.env.BILLING_SERVICE_URL || "http://billing-service:3001";
+      console.log("Billing service URL:", billingServiceUrl);
+
+      const response = await axios.post(
+        `${billingServiceUrl}/api/billing/createDriverWallet`,
+        {
+          ssn: driver._id.toString(), // Ensure _id is converted to string
+        }
+      );
+
+      console.log("Wallet creation response:", response.data);
+    } catch (walletError) {
+      console.error("Error creating driver wallet:", {
+        message: walletError.message,
+        response: walletError.response?.data,
+        status: walletError.response?.status,
+        url: `${billingServiceUrl}/api/billing/createDriverWallet`,
+      });
+      // Continue with driver creation even if wallet creation fails
+      // The wallet can be created later if needed
+    }
+
+    res.status(201).json({
+      ...driver.toObject(),
+      message: "Driver created successfully",
+    });
   } catch (err) {
+    console.error("Error in createDriver:", err);
     if (err.name === "ValidationError") {
       return res.status(400).json({
         message: "Validation failed",
@@ -31,7 +65,9 @@ exports.createDriver = async (req, res) => {
     if (err instanceof ConflictError) {
       return res.status(409).json({ message: err.message });
     }
-    res.status(500).json({ message: "Internal server error" });
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: err.message });
   }
 };
 
@@ -81,7 +117,7 @@ exports.getDriver = async (req, res) => {
     if (!driver) {
       throw new NotFoundError("Driver not found");
     }
-    console.log('Driver document returned:', driver);
+    console.log("Driver document returned:", driver);
     if (!driver.currentLocation) {
       driver.currentLocation = { latitude: null, longitude: null };
     }
