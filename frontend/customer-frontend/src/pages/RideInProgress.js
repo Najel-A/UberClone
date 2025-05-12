@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import jsPDF from 'jspdf';
 import { submitDriverReview } from '../customer/customerAPI';
+import '../styles/RideInProgress.css';
+import { clearSelectedRide } from '../slices/rideSlice';
 
 const RideInProgress = () => {
   const user = useSelector((state) => state.user.user);
   const selectedRide = useSelector((state) => state.ride.selectedRide);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [distanceCovered, setDistanceCovered] = useState(0);
   const [totalDistance, setTotalDistance] = useState(1); // Avoid division by zero
   const [status, setStatus] = useState('in_progress');
@@ -25,6 +28,7 @@ const RideInProgress = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState('');
   const [uploadError, setUploadError] = useState('');
+  const [description, setDescription] = useState('');
 
   console.log('DRIVER SERVICE URL:', process.env.REACT_APP_DRIVER_SERVICE_URL);
 
@@ -112,85 +116,88 @@ const RideInProgress = () => {
     const last4 = cardNumber ? cardNumber.slice(-4) : 'N/A';
     const doc = new jsPDF();
 
-    // Header and driver image
-    doc.setFontSize(20);
+    // Header
+    doc.setFontSize(24);
     doc.setTextColor(80, 80, 200);
     doc.setFont('helvetica', 'bold');
-    doc.text('Thanks for riding Uber!', 15, 20);
+    doc.text('Thanks for riding Uber!', 15, 25);
 
-    // Add driver image in a box if available
+    // Draw driver image on the right
+    let imageY = 20;
     if (driverImageUrl) {
       try {
         const base64Image = await getBase64ImageFromUrl(driverImageUrl);
-        // Draw a subtle border box for the image
         doc.setDrawColor(180);
         doc.setLineWidth(0.2);
-        doc.rect(155, 10, 40, 40, 'S');
-        doc.addImage(base64Image, 'JPEG', 157, 12, 36, 36); // Centered in the box
-      } catch (e) {
-        // Ignore image errors
-      }
+        doc.rect(150, imageY - 5, 45, 45, 'S');
+        doc.addImage(base64Image, 'JPEG', 153, imageY - 2, 39, 39);
+      } catch (e) {}
     }
 
-    // Customer and trip info section
-    let y = 30;
-    doc.setFontSize(12);
+    // Customer and trip info section (left column)
+    let y = 40;
+    doc.setFontSize(13);
     doc.setTextColor(0, 0, 0);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Billed To:`, 15, y);
+    doc.text('Billed To:', 15, y);
     doc.setFont('helvetica', 'bold');
-    doc.text(`${customerName} ${customerLastName}`, 45, y);
+    doc.text(`${customerName} ${customerLastName}`, 50, y);
     y += 8;
     doc.setFont('helvetica', 'normal');
-    doc.text(`Trip Date:`, 15, y); doc.text(`${new Date(rideForBill.dateTime).toLocaleString()}`, 45, y);
+    doc.text('Trip Date:', 15, y);
+    doc.text(`${new Date(rideForBill.dateTime).toLocaleString()}`, 50, y);
     y += 8;
-    doc.text(`Pickup Location:`, 15, y); doc.text(`${rideForBill.pickupLocation?.address || ''}`, 45, y);
+    doc.text('Pickup Location:', 15, y);
+    doc.text(`${rideForBill.pickupLocation?.address || ''}`, 50, y);
     y += 8;
-    doc.text(`Dropoff Location:`, 15, y); doc.text(`${rideForBill.dropoffLocation?.address || ''}`, 45, y);
+    doc.text('Dropoff Location:', 15, y);
+    doc.text(`${rideForBill.dropoffLocation?.address || ''}`, 50, y);
     y += 8;
-    doc.text(`Credit Card:`, 15, y); doc.text(`**** **** **** ${last4}`, 45, y);
+    doc.text('Credit Card:', 15, y);
+    doc.text(`**** **** **** ${last4}`, 50, y);
     y += 8;
-    doc.text(`Driver:`, 15, y); doc.text(`${driverName || rideForBill.driverId || 'N/A'}`, 45, y);
+    doc.text('Driver:', 15, y);
+    doc.text(`${driverName || rideForBill.driverId || 'N/A'}`, 50, y);
 
-    // Section background for total
-    y += 12;
-    doc.setFillColor(240, 240, 255);
-    doc.roundedRect(12, y, 70, 22, 4, 4, 'F');
-    doc.setFontSize(16);
-    doc.setTextColor(0, 0, 0);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Billed to Card`, 18, y + 10);
-    doc.setFontSize(22);
-    doc.setTextColor(0, 0, 180);
+    // Billed to Card section
+    y += 20;
+    doc.setFillColor(230, 230, 255);
+    doc.roundedRect(15, y, 90, 32, 10, 10, 'F');
+    doc.setFontSize(18);
+    doc.setTextColor(40, 40, 120);
     doc.setFont('helvetica', 'bold');
-    doc.text(`$${rideForBill.price?.toFixed(2) || 'N/A'}`, 18, y + 20);
+    doc.text('Billed to Card', 25, y + 12);
+    doc.setFontSize(24);
+    doc.setTextColor(60, 60, 200);
+    const billedToCard = rideForBill.price || subtotal;
+    doc.text(billedToCard.toFixed(2), 25, y + 26);
 
-    // Line separator
-    y += 28;
-    doc.setDrawColor(150);
-    doc.line(15, y, 195, y);
+    // Proportional fare breakdown to match billed to card
+    const baseFare = 3.00;
+    const distanceFare = (rideForBill.distanceCovered || 0) * 1.5;
+    const serviceFee = 2.00;
+    const subtotal = baseFare + distanceFare + serviceFee;
+    const scale = subtotal > 0 ? billedToCard / subtotal : 1;
+    const baseFareScaled = baseFare * scale;
+    const distanceFareScaled = distanceFare * scale;
+    const serviceFeeScaled = serviceFee * scale;
 
-    // Fare Breakdown
-    y += 10;
-    doc.setFontSize(14);
+    y += 45;
+    doc.setFontSize(15);
     doc.setTextColor(0, 0, 0);
     doc.setFont('helvetica', 'bold');
     doc.text('Fare Breakdown', 15, y);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(12);
     let fareY = y + 8;
-    doc.text('Base Fare:', 18, fareY); doc.text('$7.00', 70, fareY, { align: 'right' });
+    doc.text('Base Fare:', 18, fareY); doc.text(`$${baseFareScaled.toFixed(2)}`, 70, fareY, { align: 'right' });
     fareY += 7;
-    doc.text('Distance:', 18, fareY); doc.text('$8.84', 70, fareY, { align: 'right' });
+    doc.text('Distance:', 18, fareY); doc.text(`$${distanceFareScaled.toFixed(2)}`, 70, fareY, { align: 'right' });
     fareY += 7;
-    doc.text('Time:', 18, fareY); doc.text('$9.00', 70, fareY, { align: 'right' });
-    fareY += 7;
-    doc.text('Rounding Down:', 18, fareY); doc.text('($0.90)', 70, fareY, { align: 'right' });
-    fareY += 7;
-    doc.text('Discount subtotal:', 18, fareY); doc.text('($0.90)', 70, fareY, { align: 'right' });
-    fareY += 10;
+    doc.text('Service Fee:', 18, fareY); doc.text(`$${serviceFeeScaled.toFixed(2)}`, 70, fareY, { align: 'right' });
+    fareY += 3;
     doc.setFont('helvetica', 'bold');
-    doc.text('Total Fare:', 18, fareY); doc.text(`$${rideForBill.price?.toFixed(2) || 'N/A'}`, 70, fareY, { align: 'right' });
+    doc.text('Total Fare:', 18, fareY); doc.text(`$${billedToCard.toFixed(2)}`, 70, fareY, { align: 'right' });
 
     // Trip Statistics
     let statsY = y;
@@ -227,6 +234,7 @@ const RideInProgress = () => {
     if (!images.length) return;
     const formData = new FormData();
     images.forEach((img) => formData.append('images', img));
+    formData.append('description', description);
     setUploading(true);
     setUploadSuccess('');
     setUploadError('');
@@ -237,10 +245,16 @@ const RideInProgress = () => {
       });
       setUploadSuccess('Images uploaded successfully!');
       setImages([]);
+      setDescription('');
     } catch (err) {
       setUploadError('Failed to upload images.');
     }
     setUploading(false);
+  };
+
+  const handleNavigateHome = () => {
+    dispatch(clearSelectedRide());
+    navigate('/dashboard');
   };
 
   if (!user || !selectedRide) {
@@ -264,7 +278,7 @@ const RideInProgress = () => {
             fontWeight: 'bold',
             boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
           }}
-          onClick={() => navigate('/dashboard')}
+          onClick={handleNavigateHome}
         >
           Home
         </button>
@@ -289,6 +303,13 @@ const RideInProgress = () => {
               </div>
               <div className="image-upload-section" style={{ marginTop: 24, padding: 16, background: '#f0f0f0', borderRadius: 8 }}>
                 <h3>Report an Issue (Upload Images)</h3>
+                <textarea
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
+                  placeholder="Describe the issue..."
+                  rows={3}
+                  style={{ width: '100%', marginBottom: 8, borderRadius: 4, border: '1px solid #ccc', padding: 8 }}
+                />
                 <input type="file" multiple onChange={handleImageChange} />
                 <button onClick={handleUpload} disabled={uploading || !images.length} style={{ marginLeft: 8 }}>
                   {uploading ? 'Uploading...' : 'Upload Images'}

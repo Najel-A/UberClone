@@ -119,6 +119,15 @@ exports.acceptRideRequest = async (req, res, next) => {
       driverSsn = driverRes.data._id;
     }
 
+    // Prevent driver from accepting multiple rides at the same time
+    const existingActiveRide = await Ride.findOne({
+      driverId: driverSsn,
+      status: { $in: ['accepted', 'in_progress'] }
+    });
+    if (existingActiveRide) {
+      return res.status(400).json({ message: 'Driver already has an active ride.' });
+    }
+
     // Fetch driver location from driver-service
     const driverServiceUrl = process.env.DRIVER_SERVICE_URL || 'http://localhost:3001/api/drivers';
     const driverRes = await axios.get(`${driverServiceUrl}/${driverSsn}`);
@@ -378,6 +387,9 @@ exports.uploadRideImages = async (req, res) => {
     }
     const imagePaths = req.files.map(file => `/uploads/${file.filename}`);
     ride.images = ride.images ? ride.images.concat(imagePaths) : imagePaths;
+    if (req.body.description) {
+      ride.issueDescription = req.body.description;
+    }
     await ride.save();
     res.status(200).json({ message: 'Images uploaded', images: ride.images });
   } catch (error) {

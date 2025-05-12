@@ -29,7 +29,8 @@ const rideSchema = new mongoose.Schema({
     default: 'pending',
     required: true
   },
-  images: [{ type: String }]
+  images: [{ type: String }],
+  issueDescription: { type: String }
 }, { timestamps: true });
 
 rideSchema.index({ pickupPoint: '2dsphere' }); // For MongoDB 
