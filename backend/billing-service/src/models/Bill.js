@@ -5,9 +5,10 @@ const Bill = sequelize.define(
   "Bill",
   {
     billId: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
       primaryKey: true,
-      comment: "Unique identifier for the bill",
+      allowNull: false,
     },
     date: {
       type: DataTypes.DATE,
@@ -62,7 +63,7 @@ const Bill = sequelize.define(
     },
   },
   {
-    timestamps: true, // Automatically adds `createdAt` and `updatedAt` fields
+    timestamps: true, // Automatically adds createdAt and updatedAt fields
     tableName: "bills", // Name of the table in the database
   }
 );

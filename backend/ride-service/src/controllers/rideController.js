@@ -147,7 +147,9 @@ exports.acceptRideRequest = async (req, res, next) => {
         process.env.DRIVER_SERVICE_URL || "http://localhost:5001/api/drivers";
       let driverRes;
       try {
-        driverRes = await axios.get(`${driverServiceUrl}/${driverSsn}`);
+        driverRes = await axios.get(
+          `${driverServiceUrl}/api/drivers/${driverSsn}`
+        );
       } catch (err) {
         console.error(
           "Axios error (driver-service call for location):",
@@ -174,7 +176,9 @@ exports.acceptRideRequest = async (req, res, next) => {
       process.env.DRIVER_SERVICE_URL || "http://localhost:5001/api/drivers";
     let driverRes;
     try {
-      driverRes = await axios.get(`${driverServiceUrl}/${driverSsn}`);
+      driverRes = await axios.get(
+        `${driverServiceUrl}/api/drivers/${driverSsn}`
+      );
     } catch (err) {
       console.error(
         "Axios error (driver-service call for location):",
