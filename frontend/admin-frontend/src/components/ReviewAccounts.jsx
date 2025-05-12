@@ -75,8 +75,12 @@ const ReviewAccounts = () => {
 
   // Fetch all drivers and customers on component mount
   useEffect(() => {
-    fetchAllDrivers();
-    fetchAllCustomers();
+    axios
+      .get(process.env.REACT_APP_ADMIN_BACKEND_PORT_URL + "/api/admin/drivers")
+      .then((res) => setDrivers(res.data));
+    axios
+      .get(process.env.REACT_APP_ADMIN_BACKEND_PORT_URL + "/api/admin/customers")
+      .then((res) => setCustomers(res.data));
   }, []);
 
   const fetchAllDrivers = async () => {

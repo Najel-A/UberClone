@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
-import { setUser, logout as logoutAction } from "../slices/userSlice";
-import { setPredictedPrice, setRideHistory } from "../slices/rideSlice";
-import Profile from "./Profile";
-import RideSelection from "./RideSelection";
-import LocationMap from "./Map";
-import axios from "axios";
-import "../styles/dashboard.css";
+
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { setUser, logout as logoutAction } from '../slices/userSlice';
+import { setPredictedPrice, setRideHistory, clearSelectedRide } from '../slices/rideSlice';
+import Profile from './Profile';
+import RideSelection from './RideSelection';
+import LocationMap from './Map';
+import axios from 'axios';
+import '../styles/dashboard.css';
+
 
 // Use environment variable for API key
 const LOCATIONIQ_API_KEY = process.env.REACT_APP_LOCATIONIQ_API_KEY;
@@ -111,6 +113,17 @@ const Dashboard = () => {
     setLoading(true);
     setError("");
 
+    // Check if pickup and dropoff locations are the same
+    if (
+      pickupLocation.street.trim().toLowerCase() === dropoffLocation.street.trim().toLowerCase() &&
+      pickupLocation.city.trim().toLowerCase() === dropoffLocation.city.trim().toLowerCase() &&
+      pickupLocation.state.trim().toLowerCase() === dropoffLocation.state.trim().toLowerCase()
+    ) {
+      setError('Pickup and dropoff locations cannot be the same.');
+      setLoading(false);
+      return;
+    }
+
     try {
       // Get coordinates for pickup and dropoff locations
       const pickup = await getCoordinates(pickupLocation);
@@ -170,6 +183,15 @@ const Dashboard = () => {
   const handleSelectRide = (ride) => {
     console.log("Selected ride:", ride);
     // Here you would typically make an API call to book the ride
+  };
+
+  const handleStartNewBooking = () => {
+    setPickupLocation({ street: '', city: '', state: '' });
+    setDropoffLocation({ street: '', city: '', state: '' });
+    setPickupCoords(null);
+    setDropoffCoords(null);
+    setShowRideSelection(false);
+    dispatch(clearSelectedRide());
   };
 
   const renderBookRide = () => (
@@ -348,8 +370,8 @@ const Dashboard = () => {
           <button
             className={`nav-tab ${activeTab === "book-ride" ? "active" : ""}`}
             onClick={() => {
-              setActiveTab("book-ride");
-              setShowRideSelection(false);
+              setActiveTab('book-ride');
+              handleStartNewBooking();
             }}
           >
             Book Ride

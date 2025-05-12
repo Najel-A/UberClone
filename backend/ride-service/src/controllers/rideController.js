@@ -149,6 +149,15 @@ exports.acceptRideRequest = async (req, res, next) => {
       driverSsn = driverRes.data._id;
     }
 
+    // Prevent driver from accepting multiple rides at the same time
+    const existingActiveRide = await Ride.findOne({
+      driverId: driverSsn,
+      status: { $in: ['accepted', 'in_progress'] }
+    });
+    if (existingActiveRide) {
+      return res.status(400).json({ message: 'Driver already has an active ride.' });
+    }
+
     // Fetch driver location from driver-service
     const driverServiceUrl =
       process.env.DRIVER_SERVICE_URL || "http://localhost:5001/api/drivers";
@@ -420,5 +429,37 @@ exports.getRideById = async (req, res) => {
     res.json(ride);
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.uploadRideImages = async (req, res) => {
+  try {
+    const { rideId } = req.params;
+    const ride = await Ride.findById(rideId);
+    if (!ride) {
+      return res.status(404).json({ message: 'Ride not found' });
+    }
+    const imagePaths = req.files.map(file => `/uploads/${file.filename}`);
+    ride.images = ride.images ? ride.images.concat(imagePaths) : imagePaths;
+    if (req.body.description) {
+      ride.issueDescription = req.body.description;
+    }
+    await ride.save();
+    res.status(200).json({ message: 'Images uploaded', images: ride.images });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to upload images', error: error.message });
+  }
+};
+
+exports.getRideImages = async (req, res) => {
+  try {
+    const { rideId } = req.params;
+    const ride = await Ride.findById(rideId);
+    if (!ride) {
+      return res.status(404).json({ message: 'Ride not found' });
+    }
+    res.status(200).json({ images: ride.images || [] });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch images', error: error.message });
   }
 };
