@@ -1,0 +1,50 @@
+# customer-service.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: customer-service
+  template:
+    metadata:
+      labels:
+        app: customer-service
+    spec:
+      containers:
+      - name: customer-service
+        image: your-registry/customer-service:latest  # Update with your image
+        ports:
+        - containerPort: 5000
+        env:
+        - name: MONGO_URI
+          value: "mongodb://admin:adminpassword@mongodb:27017/customer_db?authSource=admin"
+        envFrom:
+        - secretRef:
+            name: customer-service-secrets
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: customer-service
+spec:
+  selector:
+    app: customer-service
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: customer-service-secrets
+type: Opaque
+stringData:
+  .env.docker: |
+    # Contents of your ./backend/customer-service/.env.docker file
+    # (Remove this comment and paste the actual content)

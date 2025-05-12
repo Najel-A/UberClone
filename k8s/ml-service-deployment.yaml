@@ -1,0 +1,33 @@
+# ml-price-predict.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-price-predict
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ml-price-predict
+  template:
+    metadata:
+      labels:
+        app: ml-price-predict
+    spec:
+      containers:
+      - name: ml-price-predict
+        image: your-registry/ml-price-predict:latest  # Update with your image
+        ports:
+        - containerPort: 8000
+        
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-price-predict
+spec:
+  selector:
+    app: ml-price-predict
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000

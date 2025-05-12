@@ -1,0 +1,35 @@
+# customer-frontend.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: customer-frontend
+  template:
+    metadata:
+      labels:
+        app: customer-frontend
+    spec:
+      containers:
+      - name: customer-frontend
+        image: your-registry/customer-frontend:latest  # Update with your image
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: customer-frontend
+spec:
+  type: LoadBalancer  # Or NodePort if you're not using a cloud provider
+  selector:
+    app: customer-frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      nodePort: 30000  # Only for NodePort type, optional

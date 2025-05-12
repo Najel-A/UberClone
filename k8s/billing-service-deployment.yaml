@@ -1,0 +1,60 @@
+# billing-service.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: billing-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: billing-service
+  template:
+    metadata:
+      labels:
+        app: billing-service
+    spec:
+      containers:
+      - name: billing-service
+        image: your-registry/billing-service:latest  # Update with your image
+        ports:
+        - containerPort: 5004
+        env:
+        - name: DB_TYPE
+          value: "mysql"
+        - name: DB_HOST
+          value: "mysql"
+        - name: DB_PORT
+          value: "3306"
+        - name: DB_NAME
+          value: "uber_clone"
+        - name: DB_USER
+          value: "user"
+        - name: DB_PASSWORD
+          value: "userpassword"
+        envFrom:
+        - secretRef:
+            name: billing-service-secrets
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: billing-service
+spec:
+  selector:
+    app: billing-service
+  ports:
+    - protocol: TCP
+      port: 5004
+      targetPort: 5004
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: billing-service-secrets
+type: Opaque
+stringData:
+  .env.docker: |
+    # Contents of your ./backend/billing-service/.env.docker file
+    # (Remove this comment and paste the actual content)
