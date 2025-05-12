@@ -19,9 +19,40 @@ app.use((req, res, next) => {
   next();
 });
 
+/* Inserting a middleware (after debug logging) to set Referrer-Policy header */
+app.use((req, res, next) => {
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  next();
+});
+
+// CORS configuration
+const allowedOrigins = [
+  process.env.ADMIN_FRONTEND_URL,
+  process.env.DRIVER_FRONTEND_URL,
+  process.env.CUSTOMER_FRONTEND_URL,
+  process.env.RIDE_SERVICE_URL,
+  "http://localhost:3000", // Customer frontend
+  "http://localhost:3001", // Driver frontend
+  "http://localhost:3002", // Admin frontend
+  "http://localhost:3004", // Additional frontend
+  "http://localhost:3005", // Ride service
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: "*",
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps, curl, postman)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.indexOf(origin) === -1) {
+        console.log("Blocked by CORS:", origin);
+        const msg =
+          "The CORS policy for this site does not allow access from the specified Origin.";
+        return callback(new Error(msg), false);
+      }
+      console.log("Allowed by CORS:", origin);
+      return callback(null, true);
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: [
@@ -30,10 +61,33 @@ app.use(
       "Cookie",
       "Origin",
       "Accept",
+      "X-Requested-With",
+      "Access-Control-Allow-Origin",
+      "Access-Control-Allow-Headers",
+      "Access-Control-Allow-Methods",
+      "Access-Control-Allow-Credentials",
     ],
     exposedHeaders: ["set-cookie"],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   })
 );
+
+// Add headers middleware
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", req.headers.origin);
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+  );
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ limit: "20mb", extended: true }));
 

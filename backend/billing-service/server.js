@@ -3,7 +3,7 @@ const sequelize = require("./src/config/db");
 const app = require("./src/app");
 const CustomerWallet = require("./src/models/CustomerWallet");
 const DriverWallet = require("./src/models/DriverWallet");
-const PORT = process.env.PORT || 3004;
+const PORT = process.env.PORT || 3001;
 const billingConsumer = require("./src/events/billing/billingConsumer");
 (async () => {
   try {

@@ -145,23 +145,43 @@ exports.acceptRideRequest = async (req, res, next) => {
     if (!/^\d{3}-\d{2}-\d{4}$/.test(driverId)) {
       const driverServiceUrl =
         process.env.DRIVER_SERVICE_URL || "http://localhost:5001/api/drivers";
-      const driverRes = await axios.get(`${driverServiceUrl}/${driverId}`);
+      let driverRes;
+      try {
+        driverRes = await axios.get(`${driverServiceUrl}/${driverSsn}`);
+      } catch (err) {
+        console.error(
+          "Axios error (driver-service call for location):",
+          err.response ? err.response.data : err.message
+        );
+        throw err;
+      }
       driverSsn = driverRes.data._id;
     }
 
     // Prevent driver from accepting multiple rides at the same time
     const existingActiveRide = await Ride.findOne({
       driverId: driverSsn,
-      status: { $in: ['accepted', 'in_progress'] }
+      status: { $in: ["accepted", "in_progress"] },
     });
     if (existingActiveRide) {
-      return res.status(400).json({ message: 'Driver already has an active ride.' });
+      return res
+        .status(400)
+        .json({ message: "Driver already has an active ride." });
     }
 
     // Fetch driver location from driver-service
     const driverServiceUrl =
       process.env.DRIVER_SERVICE_URL || "http://localhost:5001/api/drivers";
-    const driverRes = await axios.get(`${driverServiceUrl}/${driverSsn}`);
+    let driverRes;
+    try {
+      driverRes = await axios.get(`${driverServiceUrl}/${driverSsn}`);
+    } catch (err) {
+      console.error(
+        "Axios error (driver-service call for location):",
+        err.response ? err.response.data : err.message
+      );
+      throw err;
+    }
     const driver = driverRes.data;
     if (
       !driver.currentLocation ||
@@ -437,17 +457,19 @@ exports.uploadRideImages = async (req, res) => {
     const { rideId } = req.params;
     const ride = await Ride.findById(rideId);
     if (!ride) {
-      return res.status(404).json({ message: 'Ride not found' });
+      return res.status(404).json({ message: "Ride not found" });
     }
-    const imagePaths = req.files.map(file => `/uploads/${file.filename}`);
+    const imagePaths = req.files.map((file) => `/uploads/${file.filename}`);
     ride.images = ride.images ? ride.images.concat(imagePaths) : imagePaths;
     if (req.body.description) {
       ride.issueDescription = req.body.description;
     }
     await ride.save();
-    res.status(200).json({ message: 'Images uploaded', images: ride.images });
+    res.status(200).json({ message: "Images uploaded", images: ride.images });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to upload images', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to upload images", error: error.message });
   }
 };
 
@@ -456,10 +478,12 @@ exports.getRideImages = async (req, res) => {
     const { rideId } = req.params;
     const ride = await Ride.findById(rideId);
     if (!ride) {
-      return res.status(404).json({ message: 'Ride not found' });
+      return res.status(404).json({ message: "Ride not found" });
     }
     res.status(200).json({ images: ride.images || [] });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch images', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to fetch images", error: error.message });
   }
 };

@@ -580,7 +580,7 @@ exports.getAllBills = async (req, res) => {
     if (status) queryParams.append("status", status);
 
     // Send request to billing-service to get all bills
-    const billingServiceUrl = `http://billing-service:3001/api/bills${
+    const billingServiceUrl = `http://billing-service:3001/api/billing/bills${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`;
 
@@ -616,7 +616,7 @@ exports.getBillById = async (req, res) => {
     const { id } = req.params;
 
     // Send request to billing-service to get bill by ID
-    const billingServiceUrl = `http://billing-service:3004/api/bills/${id}`;
+    const billingServiceUrl = `http://billing-service:3001/api/billing/bills/${id}`;
     const response = await axios.get(billingServiceUrl, {
       headers: {
         "Content-Type": "application/json",
