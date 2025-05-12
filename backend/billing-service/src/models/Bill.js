@@ -63,7 +63,7 @@ const Bill = sequelize.define(
     },
   },
   {
-    timestamps: true, // Automatically adds `createdAt` and `updatedAt` fields
+    timestamps: true, // Automatically adds createdAt and updatedAt fields
     tableName: "bills", // Name of the table in the database
   }
 );

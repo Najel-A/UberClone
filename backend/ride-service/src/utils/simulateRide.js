@@ -35,8 +35,9 @@ exports.simulateRide = async (rideId, start, end, steps = 20, delay = 500) => {
 
   // After simulation, trigger ride completion for wallet update
   try {
+    console.log("Ride id:", rideId);
     const rideServiceUrl =
-      process.env.RIDE_SERVICE_URL || "http://localhost:5003";
+      process.env.RIDE_SERVICE_URL || "http://localhost:3005";
     await axios.post(`${rideServiceUrl}/api/rides/rideCompleted`, {
       id: rideId,
     });

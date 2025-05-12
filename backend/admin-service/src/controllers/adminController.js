@@ -580,7 +580,7 @@ exports.getAllBills = async (req, res) => {
     if (status) queryParams.append("status", status);
 
     // Send request to billing-service to get all bills
-    const billingServiceUrl = `http://billing-service:3001/api/bills${
+    const billingServiceUrl = `http://billing-service:3001/api/billing/bills${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`;
 
@@ -616,7 +616,7 @@ exports.getBillById = async (req, res) => {
     const { id } = req.params;
 
     // Send request to billing-service to get bill by ID
-    const billingServiceUrl = `http://billing-service:3004/api/bills/${id}`;
+    const billingServiceUrl = `http://billing-service:3001/api/billing/bills/${id}`;
     const response = await axios.get(billingServiceUrl, {
       headers: {
         "Content-Type": "application/json",
@@ -640,5 +640,58 @@ exports.getBillById = async (req, res) => {
     res
       .status(500)
       .json({ message: "Internal server error", error: err.message });
+  }
+};
+
+// Get Completed Rides
+exports.getCompletedRides = async (req, res) => {
+  try {
+    // Use hardcoded URL like other service calls
+    const rideServiceUrl = "http://localhost:3005";
+    console.log("Making request to ride service at:", rideServiceUrl);
+
+    const response = await axios.get(
+      `${rideServiceUrl}/api/rides/completed/all`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    res.status(200).json(response.data);
+  } catch (err) {
+    console.error("Error getting completed rides:", {
+      message: err.message,
+      code: err.code,
+      url: err.config?.url,
+      method: err.config?.method,
+      headers: err.config?.headers,
+      fullError: err,
+    });
+
+    if (err.code === "ECONNREFUSED") {
+      return res.status(503).json({
+        message: "Ride service is not available",
+        error:
+          "Service connection refused. Please ensure the ride service is running and accessible",
+        details: err.message,
+        attemptedUrl: `${rideServiceUrl}/api/rides/completed/all`,
+      });
+    }
+
+    if (err.response) {
+      return res.status(err.response.status).json({
+        message: err.response.data.message || "Error from ride-service",
+        error: err.response.data.error || err.message,
+      });
+    }
+
+    res.status(500).json({
+      message: "Internal server error",
+      error: err.message,
+      details: err.code,
+      attemptedUrl: `${rideServiceUrl}/api/rides/completed/all`,
+    });
   }
 };
