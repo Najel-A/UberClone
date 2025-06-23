@@ -22,7 +22,3 @@ JWT_SECRET= <Your-JWT-Secret>
 
 mkdir uploads
 ```
-
-### TODO
-Fix the findDrivers
-Fix the billing (requires billing service)

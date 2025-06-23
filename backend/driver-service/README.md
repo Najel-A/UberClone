@@ -21,9 +21,6 @@ SESSION_SECRET= <Your-Session-Secret>
 JWT_SECRET= <Your-JWT-Secret>
 
 ```
-
+## Create directory for uploads
 mkdir uploads
 ```
-
-### TODO
-Fix the images/media uploads

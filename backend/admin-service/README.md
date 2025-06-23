@@ -23,6 +23,3 @@ JWT_SECRET= <Your-JWT-Secret>
 FRONT_END_PORTS= 3000,3001,3002  # Comma-separated list of allowed frontend ports
 
 ```
-
-### TODO
-Complete the other services so they can become integrated with the admin service.

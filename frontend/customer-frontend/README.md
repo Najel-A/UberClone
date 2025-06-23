@@ -1,4 +1,9 @@
 # Uber Customer Frontend
+```text
+The customer frontend is the main entry point for customers to interact with the application.
+It is responsible for displaying the main page, as well as the various pages that are available to customers.
+It is running on port 3000.
+```
 
 ## Environment Variables Setup
 

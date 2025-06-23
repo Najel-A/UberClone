@@ -4,7 +4,19 @@
 ```text
 npm install
 ```
+## Hidden files
+```text
+touch .env (Add the following)
+MONGO_URI= <MongoDB URI>
+PORT= <Port>
+SESSION_SECRET= <Your-Session-Secret>
+JWT_SECRET= <Your-JWT-Secret>
 
-### TODO
-Either Adjust the ML-Price-Service to match the schema for the Ride-Service for naming conventions to match everything else. 
+```text
+touch .env.docker (Add the following)
+MONGO_URI= <MongoDB URI>
+PORT= <Port>
+SESSION_SECRET= <Your-Session-Secret>
+JWT_SECRET= <Your-JWT-Secret>
 
+```
