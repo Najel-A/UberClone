@@ -31,4 +31,7 @@ router.get('/', driverController.listDrivers);
 // Get Driver Video
 router.get('/:id/video', driverController.getDriverVideo);
 
+// Update Driver Status and Location
+router.put('/:id/status', driverController.updateDriverStatusAndLocation);
+
 module.exports = router;

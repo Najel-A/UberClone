@@ -27,6 +27,50 @@ exports.createCustomer = async (req, res) => {
   }
 };
 
+// Update customer details
+exports.updateCustomer = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { _id, email, password, ...rest } = req.body;
+    console.log();
+
+    // Prevent updating `_id`
+    if (_id) {
+      return res.status(400).json({ message: "Updating '_id' is not allowed" });
+    }
+
+    const updateData = { ...rest };
+
+    // If a new email is provided, validate and add it to the update
+    if (email) {
+      const existingCustomer = await Customer.findOne({ email });
+      if (existingCustomer && existingCustomer._id !== id) {
+        return res.status(409).json({ message: "Email is already in use" });
+      }
+
+      updateData.email = email;
+    }
+
+    // If a new password is provided, hash it before updating
+    if (password) {
+      const hashedPassword = await hashPassword(password);
+      updateData.password = hashedPassword;
+    }
+
+    // Update the customer
+    const customer = await Customer.findByIdAndUpdate(id, updateData, { new: true });
+
+    if (!customer) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    res.json(customer);
+  } catch (err) {
+    console.error("Error updating customer:", err.message);
+    res.status(500).json({ message: "Internal server error", error: err.message });
+  }
+};
+
 // Login Customer
 exports.loginCustomer = async (req, res) => {
     const { email, password } = req.body;

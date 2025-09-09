@@ -7,7 +7,6 @@ import pandas as pd
 from haversine import haversine, Unit
 import joblib
 import os
-from datetime import datetime
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -21,7 +20,8 @@ class PredictionInput(BaseModel):
     dropoff_latitude: float
     dropoff_longitude: float
     passenger_count: int
-    pickup_datetime: str
+    ride_requests: int
+    drivers: int
 
 @app.post("/predict")
 def predict_fare(input_data: PredictionInput):
@@ -32,13 +32,13 @@ def predict_fare(input_data: PredictionInput):
     dropoff_coords = (input_data.dropoff_latitude, input_data.dropoff_longitude)
     distance = haversine(pickup_coords, dropoff_coords, unit=Unit.KILOMETERS)
 
-    try:
-        pickup_datetime = datetime.strptime(input_data.pickup_datetime, '%Y-%m-%d %H:%M:%S.%f')
-    except ValueError:
-        raise HTTPException(status_code=400, detail="pickup_datetime must follow the format 'YYYY-MM-DD HH:MM:SS.ffffff'")
+    large_group_size = 1 if input_data.passenger_count >= 5 else 0
 
-    hour = pickup_datetime.hour
-    day_of_week = pickup_datetime.weekday()
+    alpha = 0.8
+    R = input_data.ride_requests
+    D = max(1, input_data.drivers)
+    multiplier = 1 + alpha * (R - D) / D
+    multiplier = max(1.0, min(multiplier, 2.5))
 
     test_case = pd.DataFrame({
         'distance': [distance],
@@ -46,10 +46,10 @@ def predict_fare(input_data: PredictionInput):
         'pickup_latitude': [input_data.pickup_latitude],
         'dropoff_longitude': [input_data.dropoff_longitude],
         'dropoff_latitude': [input_data.dropoff_latitude],
-        'passenger_count': [input_data.passenger_count],
-        'hour': [hour],
-        'day_of_week': [day_of_week]
+        'large_group_size': large_group_size,
     })
 
     predicted_fare = model.predict(test_case)
-    return {"predicted_fare": round(float(predicted_fare[0]), 2)}
+    fare = float(predicted_fare[0]) * multiplier
+
+    return {"fare": round(fare, 2)}

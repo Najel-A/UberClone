@@ -19,6 +19,7 @@ DB_USER= <MySQL DB User>
 DB_PASSWORD= <MySQL DB Password>
 DB_HOST= <MySQL DB Host>
 DB_PORT= <MySQL DB Port>
+KAFKA_BROKERS = <kafka ports>
 
 ```text
 touch .env.docker (Add the following)

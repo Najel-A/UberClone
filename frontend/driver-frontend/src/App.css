@@ -1,0 +1,116 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* App-wide styles */
+
+/* Add a custom font class for Uber's typography */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+body, html {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* Uber-style buttons with high paddings */
+.btn {
+  padding: 0.6rem 1.5rem;
+  border-radius: 8px;
+  text-transform: capitalize;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-lg {
+  padding: 0.8rem 2rem;
+  font-size: 1.1rem;
+}
+
+/* Subtle animations for hover states */
+.card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0px 12px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Active state for dashboard items */
+.dashboard-card-active {
+  border-left: 4px solid var(--secondary-color);
+}
+
+/* Special styling for the status badge */
+.badge {
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  border-radius: 30px;
+}
+
+/* Uber style form controls with larger paddings */
+.form-control {
+  padding: 0.8rem 1rem;
+  height: auto;
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+/* Responsive container with black background for the app */
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-secondary);
+}
+
+/* Footer styling */
+footer {
+  padding: 1.5rem 0;
+  margin-top: auto;
+  font-size: 0.9rem;
+}

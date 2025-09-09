@@ -1,0 +1,122 @@
+/* RideConfirmation Page Styles */
+.ride-confirmation-container {
+  max-width: 500px;
+  margin: 40px auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  padding: 32px 24px 24px 24px;
+  font-family: 'Inter', Arial, sans-serif;
+  position: relative;
+}
+
+.ride-confirmation-container h2 {
+  text-align: center;
+  color: #222;
+  margin-bottom: 24px;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.ride-confirmation-container .back-button {
+  position: absolute;
+  left: 24px;
+  top: 24px;
+  background: none;
+  border: none;
+  color: black;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.ride-confirmation-container .back-button:hover {
+  color: black;
+}
+
+.ride-confirmation-container .ride-details {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px 16px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.ride-confirmation-container .ride-summary {
+  display: flex;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.ride-confirmation-container .ride-icon {
+  margin-right: 18px;
+  color: black;
+  font-size: 2.2rem;
+  display: flex;
+  align-items: center;
+}
+.ride-confirmation-container .ride-info h3 {
+  margin: 0 0 4px 0;
+  font-size: 1.3rem;
+  color: #222;
+}
+.ride-confirmation-container .ride-info p {
+  margin: 0 0 2px 0;
+  color: #555;
+  font-size: 1rem;
+}
+
+.ride-confirmation-container .location-details {
+  margin-bottom: 18px;
+}
+.ride-confirmation-container .location-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #444;
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.ride-confirmation-container .billing-details {
+  background: #e9f7ef;
+  border-radius: 8px;
+  padding: 14px 12px;
+  margin-top: 10px;
+}
+.ride-confirmation-container .billing-details h4 {
+  margin: 0 0 10px 0;
+  color: #1e7e34;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+.ride-confirmation-container .bill-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.1rem;
+  color: #222;
+  font-weight: 500;
+}
+
+.ride-confirmation-container .confirm-button {
+  width: 100%;
+  padding: 12px 0;
+  background: linear-gradient(90deg, #000000 0%, #000000 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 18px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.ride-confirmation-container .confirm-button:hover {
+    background: linear-gradient(90deg, #000000 0%, #000000 100%);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+@media (max-width: 600px) {
+  .ride-confirmation-container {
+    padding: 16px 4px 16px 4px;
+  }
+} 
